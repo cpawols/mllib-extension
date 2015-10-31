@@ -10,5 +10,6 @@ setup(name='reduct_feature_selection',
       packages=['reduct_feature_selection'],
       install_requires=[
           'markdown',
+          'numpy',
       ],
       zip_safe=False)
