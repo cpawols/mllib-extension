@@ -67,7 +67,3 @@ class DistinguishTable:
         :return: Counter with frequency od each attribute
         """
         return Counter(reduce(append, [list(e) for e in list(itertools.chain(*distinguish_matrix))]))
-
-
-
-
