@@ -1,5 +1,4 @@
 """Test for distinguish table class"""
-from collections import Counter
 from unittest import TestCase
 import numpy as np
 
@@ -13,7 +12,7 @@ class TestCsvReaderTest(TestCase):
         frequency_of_attributes = (
             DistinguishTable.compute_frequency_of_attribute(res))
         expected_output = [[set(), {0, 1}], [{0, 1}, set()]]
-        self.assertEqual(frequency_of_attributes, Counter({0: 2, 1: 2}))
+        self.assertEqual(frequency_of_attributes, ([(0.0, 2), (1.0, 2)]))
         self.assertEqual(res, expected_output)
 
     def test_two_objects(self):
@@ -24,7 +23,7 @@ class TestCsvReaderTest(TestCase):
             DistinguishTable.compute_frequency_of_attribute(actual_output))
         self.assertEqual(actual_output,
                          expected_output)
-        self.assertEqual(frequency_of_attribute, Counter({0: 2}))
+        self.assertEqual(frequency_of_attribute, ([(0, 2)]))
 
     def test_four_objects(self):
         input_data = np.array([[1, 1, 0, 1, 1], [0, 1, 0, 1, 0],
@@ -44,7 +43,7 @@ class TestCsvReaderTest(TestCase):
         expected_output[3][2] = {1, 2, 3}
 
         self.assertEqual(frequency_of_attributes,
-                         Counter({0.0: 4, 1.0: 4, 2.0: 4, 3.0: 4}))
+                         ([(0.0, 4), (1.0, 4), (2.0, 4), (3.0, 4)]))
         self.assertEqual(expected_output, actual_output)
 
     def test_empty_decision_table(self):
@@ -60,5 +59,5 @@ class TestCsvReaderTest(TestCase):
             DistinguishTable.compute_frequency_of_attribute(actual_output))
         expected_output = [[set() for _ in range(4)] for _ in range(4)]
 
-        self.assertEqual(frequency_of_attributes, Counter())
+        self.assertEqual(frequency_of_attributes, [])
         self.assertEqual(actual_output, expected_output)

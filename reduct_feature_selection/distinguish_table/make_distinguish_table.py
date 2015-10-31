@@ -4,6 +4,7 @@ This class compute distinguish table using decision system in array form
 from collections import Counter
 from numpy import append
 import itertools
+import operator
 
 
 class DistinguishTable:
@@ -66,4 +67,8 @@ class DistinguishTable:
         :param distinguish_matrix: distinguish table
         :return: Counter with frequency od each attribute
         """
-        return Counter(reduce(append, [list(e) for e in list(itertools.chain(*distinguish_matrix))]))
+        #
+        return sorted(
+            dict(Counter(reduce(append, [list(e) for e in list(itertools.chain(*distinguish_matrix))]))).items(),
+            key=operator.itemgetter(1))
+        # return Counter(reduce(append, [list(e) for e in list(itertools.chain(*distinguish_matrix))]))
