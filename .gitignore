@@ -1,5 +1,5 @@
 #Idea configuration
-.idea/
+.idea
 # Compiled python modules.
 *.pyc
 
