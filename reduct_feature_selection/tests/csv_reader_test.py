@@ -14,4 +14,3 @@ class TestCsvReaderTest(TestCase):
         matrix = CSVReader.read_csv("/home/pawols/Develop/Mgr/mllib-extension/data/csv_test_float_numbers.csv")
         expected_output = np.array([[1.1, 3.1, 3.3], [1.2, 0.9, 3.111]])
         assert_array_equal(matrix, expected_output)
-        
