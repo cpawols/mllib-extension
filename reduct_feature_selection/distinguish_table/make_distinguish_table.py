@@ -1,6 +1,9 @@
 """
 This class compute distinguish table using decision system in array form
 """
+from collections import Counter
+from numpy import append
+import itertools
 
 
 class DistinguishTable:
@@ -55,3 +58,16 @@ class DistinguishTable:
                         decision_column_number, distinguish_matrix,
                         first_object, i, j, second_object)
         return distinguish_matrix
+
+    @staticmethod
+    def compute_frequency_of_attribute(distinguish_matrix):
+        """
+        This function compute frequency of attributes in distinguish table
+        :param distinguish_matrix: distinguish table
+        :return: Counter with frequency od each attribute
+        """
+        return Counter(reduce(append, [list(e) for e in list(itertools.chain(*distinguish_matrix))]))
+
+
+
+
