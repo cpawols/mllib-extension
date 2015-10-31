@@ -12,4 +12,6 @@ setup(name='reduct_feature_selection',
           'markdown',
           'numpy',
       ],
+      test_suite='nose.collector',
+      tests_require=['nose'],
       zip_safe=False)
