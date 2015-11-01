@@ -35,3 +35,8 @@ class TestEavConverter(TestCase):
         real_output = EavConverter.convert_to_array(eav_example)
         self.assertTrue(np.array_equal(expected_ouput, real_output),
                         msg="wrong conversion from empty eav")
+
+    def test_wrong_array_format_exception(self):
+        with self.assertRaises(TypeError, msg="don't raise wrong format exception"):
+            array_example = np.array([[0, 1], [4, 5]])
+            EavConverter.convert_to_eav(array_example)
