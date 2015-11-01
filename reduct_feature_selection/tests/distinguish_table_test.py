@@ -2,7 +2,7 @@
 from unittest import TestCase
 import numpy as np
 
-from distinguish_table.make_distinguish_table import DistinguishTable
+from reduct_feature_selection.distinguish_table.make_distinguish_table import DistinguishTable
 
 
 class TestCsvReaderTest(TestCase):
