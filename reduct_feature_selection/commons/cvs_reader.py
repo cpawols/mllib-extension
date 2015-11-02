@@ -17,12 +17,11 @@ class CSVReader:
 
     @staticmethod
     def read_csv(path):
-
         """
-        This function read to np.array csv dile
+        This function read to np.array csv file
         :param path: path to csv file
         :return: np.array
         """
         if not os.path.isfile(path):
-            raise ValueError("File does not exist!")
+            raise ValueError("File does not exist!", path)
         return genfromtxt(path, delimiter=', ')
