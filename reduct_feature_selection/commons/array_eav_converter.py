@@ -21,7 +21,7 @@ class EavConverter:
         if array.size:
             rows = range(array.shape[0])
             colnames = array.dtype.names
-            list_of_eav = [[(r, c, array[c][r]) for c in colnames] for r in rows]
+            list_of_eav = ([(r, c, array[c][r]) for c in colnames] for r in rows)
             return reduce(operator.add, list_of_eav)
         return []
 
