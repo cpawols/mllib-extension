@@ -29,8 +29,7 @@ class DistinguishTable:
         different_elements = set()
         for k, (first_element, second_element) in (
                 enumerate(zip(first_object, second_object))):
-            if first_element != second_element and (
-                        k < decision_column_number):
+            if first_element != second_element and (k < decision_column_number):
                 different_elements.add(k)
         distinguish_matrix[i][j] = set(different_elements)
         distinguish_matrix[j][i] = set(different_elements)
@@ -67,8 +66,8 @@ class DistinguishTable:
         :param distinguish_matrix: distinguish table
         :return: Counter with frequency od each attribute
         """
-        #
         return sorted(
-            dict(Counter(reduce(append, [list(e) for e in list(itertools.chain(*distinguish_matrix))]))).items(),
+            dict(Counter(reduce(append,
+                                (list(e) for e in itertools.chain(*distinguish_matrix))))).items(),
             key=operator.itemgetter(1))
-        # return Counter(reduce(append, [list(e) for e in list(itertools.chain(*distinguish_matrix))]))
+
