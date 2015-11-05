@@ -70,4 +70,3 @@ class DistinguishTable:
             dict(Counter(reduce(append,
                                 (list(e) for e in itertools.chain(*distinguish_matrix))))).items(),
             key=operator.itemgetter(1))
-
