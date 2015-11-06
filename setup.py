@@ -6,7 +6,7 @@ setup(name='reduct_feature_selection',
       url='https://github.com/cpawols/mllib-extension',
       author='Pawel Olszewski, Krzysztof Rutkowski',
       author_email='cpawols@gmail.com, krisun17@gmail.com',
-      license='free',
+      license='Beerware',
       packages=['reduct_feature_selection'],
       install_requires=[
           'markdown',
