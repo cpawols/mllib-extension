@@ -67,6 +67,7 @@ class DistinguishTable:
         :return: Counter with frequency od each attribute
         """
         return sorted(
-            dict(Counter(reduce(append,
-                                (list(e) for e in itertools.chain(*distinguish_matrix))))).items(),
+            dict(Counter(
+                reduce(append,
+                       (list(e) for e in itertools.chain(*distinguish_matrix))))).items(),
             key=operator.itemgetter(1))
