@@ -1,7 +1,11 @@
 # from __future__ import print_function
-
-from pyspark import SparkContext, SparkConf
-
+import sys
+try:
+    from pyspark import SparkContext
+    from pyspark import SparkConf
+except ImportError as e:
+    print ("Error importing Spark Modules", e)
+    sys.exit(1)
 
 if __name__ == "__main__":
 
@@ -16,6 +20,7 @@ if __name__ == "__main__":
 
     output = sortedCount.collect()
 
+    print(type(output))
     #print(output.unitcount())
     table = []
 

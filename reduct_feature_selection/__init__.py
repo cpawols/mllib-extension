@@ -1,6 +1,11 @@
+import os
+import sys
+#from settings import spark_home, pythonpath
 __author__ = 'krzysztof'
 
-from markdown import markdown
+os.environ['SPARK_HOME'] = "/home/krzysztof/mgr/spark-1.5.1"
+# Append to PYTHONPATH so that pyspark could be found
+sys.path.append("/home/krzysztof/mgr/spark-1.5.1/python")
 
-def welcome():
-    return markdown('Welcome to our project!')
+# Now we are ready to import Spark Modules
+
