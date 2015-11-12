@@ -84,7 +84,7 @@ class Eav:
         num_chunks = 10
         eav_rdd_part = sc.parallelize(self.eav, num_chunks)
         self.eav = eav_rdd_part.mapPartitions(Eav._compare)\
-            .reduce(lambda x, y: sorted(x+y)).collect()
+            .reduce(lambda x, y: sorted(x+y, key=lambda el: (el[1], el[2], el[0])))
         self.update_index(0)
         self.update_index(1)
 

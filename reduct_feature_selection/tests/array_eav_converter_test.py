@@ -56,4 +56,11 @@ class TestEav(TestCase):
         sort_eav.sort()
         self.assertEqual(expected_output, sort_eav.eav)
 
+    def test_merge_sort(self):
+        eav_example = [(0, 'x', 5), (0, 'y', 8), (1, 'x', 4), (1, 'y', 5), (1, 'z', 2), (0, 'z', 3)]
+        expected_output = [(1, 'x', 4), (0, 'x', 5), (1, 'y', 5), (0, 'y', 8), (1, 'z', 2), (0, 'z', 3)]
+        sort_eav = Eav(eav_example)
+        sort_eav.merge_sort()
+        self.assertEqual(expected_output, sort_eav.eav)
+
 
