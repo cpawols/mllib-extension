@@ -63,4 +63,15 @@ class TestEav(TestCase):
         sort_eav.merge_sort()
         self.assertEqual(expected_output, sort_eav.eav)
 
+    def test_consistent(self):
+        eav_example_consistent = Eav([(0, 'x', 0), (0, 'y', 1), (1, 'x', 4), (1, 'y', 5)])
+        eav_example_consistent.dec = {0: 1, 1: 0}
+        eav_example_inconsistent = Eav([(0, 'x', 0), (0, 'y', 1), (1, 'x', 0), (1, 'y', 1)])
+        eav_example_inconsistent.dec = {0: 1, 1: 0}
+        self.assertTrue(not eav_example_inconsistent.is_consistent())
+        self.assertTrue(eav_example_consistent.is_consistent())
+
+
+
+
 

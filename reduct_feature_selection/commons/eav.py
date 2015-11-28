@@ -11,12 +11,21 @@ __author__ = 'krzysztof'
 class Eav:
     def __init__(self, eav):
         self.eav = eav
+        self.dec = {}
         self._obj_index = self.update_index(0)
         self._attr_index = self.update_index(1)
 
     @classmethod
     def from_array(cls, array):
         return cls(cls.convert_to_eav(array))
+
+    @property
+    def dec(self):
+        return self.dec
+
+    @dec.setter
+    def dec(self, value):
+        self.dec = value
 
     @staticmethod
     def convert_to_eav(array):
@@ -61,6 +70,9 @@ class Eav:
     def get_attribute(self, attr):
         return self._attr_index[attr]
 
+    def get_obj_attrs(self, obj):
+        return [self.eav[ind][2] for ind in self._obj_index[obj]]
+
     def get_obj_count(self):
         objects = [x[0] for x in self.eav]
         return len(set(objects))
@@ -84,9 +96,17 @@ class Eav:
         num_chunks = 10
         eav_rdd_part = sc.parallelize(self.eav, num_chunks)
         self.eav = eav_rdd_part.mapPartitions(Eav._compare)\
-            .reduce(lambda x, y: sorted(x+y, key=lambda el: (el[1], el[2], el[0])))
+            .reduce(lambda x, y: sorted(x+y, key=lambda x: (x[1], x[2], x[0])))
         self.update_index(0)
         self.update_index(1)
+
+    def is_consistent(self):
+        same_dec = [(ob1, ob2) for ob1, dec1 in self.dec.iteritems() for ob2, dec2 in self.dec.iteritems()
+                    if not dec1 == dec2 and not ob1 == ob2]
+        for (ob1, ob2) in same_dec:
+            if self.get_obj_attrs(ob1) == self.get_obj_attrs(ob2):
+                return False
+        return True
 
 if __name__ == "__main__":
     None
