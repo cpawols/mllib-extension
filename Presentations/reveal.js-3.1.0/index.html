@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Rough sets methods wiht application of MapReduce paradigm </title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h3>Rough sets methods wiht application of MapReduce paradigm</h3>
+					<p>
+						<h6> Paweł Olszewski \(& \) Krzysztof Rutkowski</h6>
+					</p>
+				</section>
+				
+				<section>
+				
+				 <h2> Plan of presentation </h2>
+				 
+				 <p class=fragment>A few words about BigData</p>
+				 <p class=fragment>5xV</p>
+				 <p class=fragment>Quite a few words about Spark</p>
+				 <p class=fragment>Application to rules extraction</p>
+				 <p class=fragment>Our plans for rest of life...:)</p>
+				 
+				
+				</section>
+
+				<section>
+					<section>
+                                            The time of Bigdata
+                                            <img  src="bigdata.jpg">
+                                        </section>
+					
+					<section>
+					
+					<img  src="5V.png">
+					</section>
+					
+					<section>
+					Volume
+					TODOIMAGE
+					</section>
+					
+					<section>
+					Velocity
+					</section>
+					
+					<section>
+					Variety
+					</section>
+					<section>
+					Value
+					</section>
+					<section>
+					Veracity
+					</section>
+					   
+				</section>
+				
+				<section>
+                                    <section>
+                                    <h2>How to deal with it? </h2>
+                                    
+                                    <img  class=fragment src=http://spark.apache.org/docs/latest/img/spark-logo-hd.png>
+                                    TODO
+                                    </section>
+                                    <section>
+                                    Typical MapReduce workflow
+                                        <img src=http://xiaochongzhang.me/blog/wp-content/uploads/2013/05/MapReduce_Work_Structure.png>
+                                    </section>
+                                    <section>
+                                    Spark workflow
+                                        <img src=http://www.ebaytechblog.com/wp-content/uploads/2014/05/spark_example_diagram.png>
+                                    </section>
+				</section>
+				
+				<section>
+                                    <section>
+                                    Rough set preliminaries
+                                    </section>
+                                    
+                                    <section>
+                                    Let's define...
+                                    </section>
+                                    
+                                    <section>
+                                    <img src=wzory/1.png>
+                                    </section>
+                                    
+                                    <section>
+                                    Let's define information set with respect to subset of attributes
+                                    </br>
+                                    <img src=wzory/3.png></br>
+                                    <img src=wzory/2.png>
+                                    </section>
+                                    
+                                    <section>
+                                    Indiscernibility equivalence relation
+                                    </br>
+                                    <img src=wzory/4.png>
+                                    
+                                    </br>
+                                    <p class=fragment> Notice we can define partition of objects 
+                                    
+                                    </br>
+                                    <img src=wzory/5.png></p>
+                                    </section>
+                                    
+                                    </section>
+                                    <section>
+                                    
+                                    <section>
+                                    Parallel searching for partition of decision system.
+                                    </section>
+                                    
+                                    <section>
+                                    We can search for partitions independently
+                                    <img src=wzory/5-5.png>
+                                    </section>
+                                    
+                                    <section>
+                                    Map phase
+                                    </br>
+                                    <img src=wzory/6.png>
+                                    </section>
+				
+                                    <section>
+                                    Combine phase
+                                    </br>
+                                    <img src=wzory/7.png>
+                                    </section>
+                                    
+                                    <section>
+                                    Reduce phase
+                                    </br>
+                                    <img src=wzory/8.png>
+                                    </section>
+                                    
+                                    <section>
+                                    Example 
+                                    </br>
+                                    <img src=wzory/9.png>
+                                    </section>
+                                    
+                                    <section>
+                                    Rule acquisition of rough sets
+                                    </br>
+                                    <img src=wzory/10.png>
+                                    </section>
+                            </section>
+				
+				
+				
+				
+				
+				
+				<section>
+				  <section>
+				  <h3>Implementation of MapReduce paradigm</h3>
+				  </section>
+				  <section>
+				   <a href="https://hadoop.apache.org/docs/r1.2.1/mapred_tutorial.html"> <img src="https://lynnlangit.files.wordpress.com/2013/05/hadoop_mapreduce.jpeg"></a>
+				  </section>
+				  <section>
+				  <a href=http://spark.apache.org/docs/latest/index.html><img  src=http://www.dataversity.net/wp-content/uploads/2015/06/spark-logo.png></a>
+				  </section>
+				  
+				  <section>
+				  Spark should be a bit faster than hadoop...
+				   <p class=fragment> <a href=http://spark.apache.org/images/logistic-regression.png><img src=http://spark.apache.org/images/logistic-regression.png></p></a>
+				   <p class=fragment> Hadoop write all data into HHD/SSD while spark has all data in cache...</p>
+				  </section>
+				  
+				  
+				  
+				  <section>
+				  <a href=http://blog.explainmydata.com/2014/05/spark-should-be-better-than-mapreduce.html>Spark should be better than MapReduce (if only it worked)</a>	
+				  </section>
+				</section>
+			
+				<section>
+				<section>
+				  <b> MonteCarlo feature selection </b>
+				</section>  
+				   <section>
+				    Random Reducts
+				    <p class=fragment> <img src=/home/pawols/Dokumenty/MIM/Mgr/Presentation/27102015/reveal.js-3.1.0/img/random.png></p>
+				   </section>
+				   
+				   <section>
+				     <p>
+				      \[FScore_i = \frac{ \sum_{k=1}^s \sum_{l=1}^{t_k} \mathbb{I}(a_i \in RED_{k,l}) }
+				      { \sum_{k=1}^s \mathbb{I}(a_i \in SUB_k) }\]
+				  </p>
+				  <br><br>
+				  <p>
+				      <ul style="list-style: none">
+					  <li> \(s\) - number of subsets of attributes</li>
+					  <li> \(t_k\) - number of reducts in \(k\)'st  subset</li>
+					  <li> \(RED_{k,l}\) - \(l\)'st  reduct in \(k\)'st subset</li>
+					  <li> \(SUB_k\) - \(k\)'st subset of attributes</li>
+				      </ul>
+				  </p>
+				   </section>
+				  <section>
+				  <img src=/home/pawols/Dokumenty/MIM/Mgr/Presentation/27102015/reveal.js-3.1.0/img/random2.png>
+				  </section>
+				  <section>
+				    <p>
+					\[wAcc = \frac{ 1 }{ c } \sum_{i=1}^c \frac{ n_{ii} }{ n_{i1} + \dots + n_{ic} } \]
+				    </p>
+				    <br><br>
+				    <p>
+					<ul style="list-style: none">
+					    <li> \(n_{ij}\) - number of object from class \(i\) which was classifiered like \(j\) </li>
+					    <li> \(i,j = 1, \dots, c\) </li>
+					</ul>
+				    </p>
+				</section>
+				 <section>
+				  <p>
+				      \[ RI_{g_k} = \sum_{\tau=1}^{st} wAcc^u \sum_{n_{g_k}(\tau)} IG(n_{g_k}(\tau)) \left( \frac{ \textrm{no. in } n_{g_k}(\tau) }{ \textrm{no. in } \tau } \right)^v \]
+				  </p>
+				  <br>
+				  <ul style="list-style: none">
+				      <li> \(\tau\) - tree </li>
+				      <li> \(g_k\) - attribut </li>
+				      <li> \(n_{g_k}(\tau)\) - node of tree where rozbicie na \(g_k\) </li>
+				      <li> \(\textrm{no. in } n_{g_k}(\tau)\) - number of objects in node</li>
+				      <li> \(\textrm{no. in }(\tau)\) - number of attribute in root</li>
+				  </ul>
+			      </section>
+				
+			      <section>
+				<h2>Fast cutoff</h2>
+				<p>
+				    \[ N = \underset{ n \in \{1, \dots, d \} }{ \textrm{argmin} } \left( \left( 1 - \frac{\sum_{k=1}^n Score_k}{\sum_{k=1}^d Score_k} \right)^2 + \left( \frac{n}{d} \right)^2 \right) \]
+				</p>
+				<br>
+				<ul style="list-style: none">
+				    <li> \(N\) - number of importan attributes</li>
+				    <li> \(Score_k\) - of \(k\)-th attribute</li>
+				    <li> \(d\) - number of all attributes </li>
+				</ul>
+			      </section>
+			      
+			      <section>
+				<img src=/home/pawols/Dokumenty/MIM/Mgr/Presentation/27102015/reveal.js-3.1.0/img/cut.png>
+			      </section>
+				
+			      
+			       <section>
+			      <table>
+				<tr><td></td><td>Ref</td><td>Reducts</td><td>Trees</td></tr>
+				<tr><td>Acc</td><td>81.58%</td><td>82.63%</td><td >86.31%</td></tr>
+				<tr><td>Attr</td><td>22,277</td><td>855</td><td>167</td></tr>
+				<tr><td>Time</td><td>148 sec</td><td>2 min 24 sec</td><td>20 min 5 sec</td></tr>
+				</table>
+			      </section>
+			      </section>
+				
+			    <section>
+			    <section>
+				 <h5>Attribute selection using rough sets and rules</h5>
+				  
+				  <p class=fragment>We will create indiscernibility matrix</p>
+				  
+				  <p class=fragment>And generating rules</p>
+				  
+			    </section>
+				
+				
+				<section>
+				How to distinguish objects \(X_1\) od \(X_i\) by decision?
+				<br></br>
+				  <span class=fragment><table>
+				    <tr> <td>Object</td><td>a</td><td>b</td><td>c</td><td>d</td><td>dec</td></tr>
+				    <tr> <td>\(X_1\)</td><td>0</td><td>1</td><td>0</td><td>1</td><td>+</td></tr>
+				    <tr> <td>\(X_2\)</td><td>1</td><td>0</td><td>0</td><td>1</td><td>-</td></tr>
+				    <tr> <td>\(X_3\)</td><td>0</td><td>1</td><td>1</td><td>0</td><td>+</td></tr>
+				    <tr> <td>\(X_4\)</td><td>1</td><td>1</td><td>0</td><td>0</td><td>-</td></tr>
+				    
+				  </table></span>
+				
+				<p class=fragment> We have to make indiscernibility matrix</p>
+				</section>
+				
+				
+				
+				<section>
+				We will choose those arguments thanks to them we can distinguish object \(X_1\) from object \(X_i\)
+				
+				<span class=fragment>
+		<div class=id>	  
+			 <table id="previous-arrow">
+			 <tr><td>Object</td><td>\(X_1\)</td></tr>
+			 <tr><td>\(X_2\)</td><td>\(a\) \(b\)</td></tr>
+			 <tr><td>\(X_4\)</td><td>\(a\) \(d\)</td></tr>
+			 </table>
+		</div>
+			</span>
+			<p class=fragment>And we implicants</p>
+			<p class=fragment>( \(a=0 \vee b=1  \)  ) \(\wedge\) 
+					  ( \(a=0 \vee d=1  \)  )
+			</p>
+			<p class=fragment>And we can reduce this implicant to \(b\)</p>
+			<p class=fragment>And we obtain the following rule <br> \(a=0 \Rightarrow  dec  = + \)
+			
+			</section>
+			<section>
+			How to find the minimal rules?
+			<p class=fragment> It's complicated</p>
+			</section>
+			
+			<section>
+			Order attributes by frequency and trying cover each row in distinguish column
+			</section>
+			
+			<section>
+			We're trying cover each (or almost each) object in decision table by generated rule.
+			<p class=fragment> For this table we obtain two rules </p>
+			
+			
+			<p class=fragment> \(a=0 \Rightarrow +\) <br>
+					  \(a=1 \Rightarrow -\) </p>
+			</section>
+			<section>
+			We can repeat this procedure for each objec and we will obtain the following table
+			</br>
+			
+			<table>
+				<tr><td></td><td>\(X_1\)</td><td>\(X_2\)</td><td>\(X_3\)</td></tr>
+				<tr><td></td><td>\(ab\)</td><td>\(abcd\)</td><td>\(ac\)</td></tr>
+				<tr><td></td><td>\(ad\)</td><td></td><td></td></tr>
+				</table>
+			</section>
+			
+			<section>
+			<h6>How select attributes from this algorith?</h6>
+			<p class=fragment>By frequency</p>
+			<p class=fragment>Using only a few rules</p>
+			
+			</section>
+			
+			<section>
+			<h6>By frequency</h6>
+			<p class=fragment>Count all appearing of each attribute and</p>
+			<p class=fragment>Find cutoff point (in some way...)</p> 
+			</section>
+			
+			<section>
+			<h6>Using only a few (the shortest) rules</h6>
+			<p class=fragment>We can choose only a few the shortest rules(from each column of distinguish table) and trying coverage the set of object using this rules.</p>
+			
+			
+			</section>
+			
+			<section>
+			<h5>How to parallel this algorithm?</h5>
+			</section>
+			
+			<section>
+			Assuming  dataset has more than \(1000\) rows and more than \(20 000\) of columns we can consider...
+			</section>
+			
+			<section>
+			a few approaches...
+			
+			<li><p class=fragment>We can compute each column of distinguish matrix on different computer</p></li>
+			<li><p class=fragment>We can divide table by rows and compute each fragemnt on different computer </p> </li>
+			</section>
+			
+			
+			<section>
+			Second approaches
+			<p class=fragment>Using only the shortest rules we can send to another pack of object the shortest rules and trying coverage rest of object</p>
+			<p class=fragment> (Example on the blackboard)</p>
+			</section>
+			</section>
+			
+			<section>
+			<section>
+			A few words about experiment which take place last year...
+			</section>
+			
+			<section>
+			Attribute selection by frequency of attribute in distinguish table
+			<p class=fragment> During experiments was problem with rules generator. <br>
+			All rules was generated in string form and it wasn't possible to getting (fast) numbers of attributes which was in table</p>
+			</section>
+			<section>
+			But the results was the following
+			<p class=fragment>
+			<table >
+
+				    <tr><td></td><td>Reducts</td><td>Reducts</td><td>Rules</td><td>Rules </td><td>Rules</td></tr>
+
+				    <tr><td>Acc</td><td>83.58%</td><td>90%</td><td>84.21%</td><td><p>89.36%</p></td><td>90.6%</td></tr>
+
+				    <tr><td>Atrr</td><td>6</td><td>7</td><td>6</td><td><p >7</p></td><td>8</td></tr>				
+
+			<!--	    <tr><td>Attr</td><td>[1, 0, 2, 4, 3, 7, 5]</td><td><p class="fragment">[1, 0, 4, 2, 15, 8, 3]</p></td><td> [1, 0, 4, 15, 3, 2]</td></tr> -->
+
+				    
+
+				    <tr><td>Time</td><td>10.7 sec</td><td>19.7 sec</td><td>70.2 sec</td><td><p >73.2 sec</p></td><td>163.4 sec</td></tr>
+
+				  
+
+				</table>
+
+			</p>
+			</section>
+			</section>
+			<section>
+			Further work
+			<align=left>
+			<li><p class=fragment> Generating artifficial dataset </p> </li>
+			<li><p class=fragment> Implementing "rules" algorithm in singel node version </p> </li>
+			<li><p class=fragment> Implementing "rules" algorithm using spark</p> </li>
+			<li><p class=fragment> Implementing algorithm which select attributes by frequency</p> </li>
+			<li><p class=fragment> Experiment with rules having origin from trees </p> </li>
+			<li><p class=fragment> And many more... </p> </li>
+			</section>
+				
+			<section>
+			Questions?
+			</section>
+			<section>
+			Thank You :)
+			</section>
+			
+			
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+				
+				math: {
+				    mathjax: 'http://cdn.mathjax.org/mathjax/latest/MathJax.js',
+				    config: 'TeX-AMS_HTML-full'  // See http://docs.mathjax.org/en/latest/config-files.html
+				},
+
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{src: 'plugin/math/math.js', async: true}
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
