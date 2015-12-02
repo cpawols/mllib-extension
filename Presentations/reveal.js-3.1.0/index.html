@@ -92,8 +92,43 @@
                                     TODO
                                     </section>
                                     <section>
+                                    	<ul>
+                                    	<li>let us tackle problems too big for a single machine</li>
+                                    	<li>good, high level api (Scala, Python, Java)</li>
+                                    	<li>new concepts for more efficient operations (RDD)</li>
+                                    	</ul>
+                                    </section>
+                                    <section>
                                     Typical MapReduce workflow
                                         <img src=http://xiaochongzhang.me/blog/wp-content/uploads/2013/05/MapReduce_Work_Structure.png>
+                                    </section>
+                                    <section>
+                                    	Resilent Distributed Dataset (RDD)
+                                    </section>
+                                    <section>
+                                    	<ul>
+                                    	<li>immutable, partitioned collection of objects stored in RAM or on disk</li>
+                                    	<li>build through lazy paralell transformations</li>
+                                    	<li>automatically rebuilt on failure</li>
+                                    	</ul>
+                                    </section>
+                                    <section>
+                                    	Operations on RDD
+                                    </section>
+                                    <section>
+                                    	<ul>
+                                    	<li>transformations (lazy): map, filter, groupBy, union ... </li>
+                                    	<li>actions: reduce, count, collect, save ... </li>
+                                    	</ul>
+                                    </section>
+                                    <section>
+                                    	Why it is efficient?
+                                    </section>
+                                    <section>
+                                    	<ul>
+                                    	<li>laziness of transformations</li>
+                                    	<li>RDD can be persist in memory (persist, cache functions) to further use</li>
+                                    	</ul>
                                     </section>
                                     <section>
                                     Spark workflow
