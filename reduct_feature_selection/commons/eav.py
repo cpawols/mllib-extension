@@ -3,7 +3,7 @@ A class for converting numpy array to EAV format
 """
 import operator
 import numpy as np
-from settings import conf, sc
+from settings import sc
 
 __author__ = 'krzysztof'
 
