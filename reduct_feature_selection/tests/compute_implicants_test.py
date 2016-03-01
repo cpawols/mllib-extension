@@ -2,9 +2,9 @@
 from unittest import TestCase
 import numpy as np
 
-
+from reduct_feature_selection.commons.implicants_rules import Implicants
 from reduct_feature_selection.commons.make_distinguish_table import DistinguishTable
-from rule_classifier.implicants_rules import Implicants
+
 
 
 class TestComputeImplicants(TestCase):
