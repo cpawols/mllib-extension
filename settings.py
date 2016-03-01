@@ -14,5 +14,5 @@ csv_file3 = os.getcwd() + "/data/csv_test_float_numbersDOESNOTEXIST.csv"
 conf = SparkConf().setAppName("PythonSort")
 sc = SparkContext(conf=conf)
 # configure the environmental variables
-spark_home = "/home/krzysztof/mgr/spark-1.5.1"
-pythonpath = "/home/krzysztof/mgr/spark-1.5.1/python"
+spark_home = "home/pawols/Spark/spark-1.5.1"
+pythonpath = "home/pawols/Spark/spark-1.5.1/python"
