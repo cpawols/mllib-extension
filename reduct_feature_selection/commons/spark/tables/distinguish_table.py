@@ -13,7 +13,8 @@ Divide decision system into attribute chunks:
 As input we take numpy array which will be converted to list of tuples because spark rdd object doesn't support np.array
 """
 import numpy as np
-from numpy.ma import transpose
+from numpy.ma import transpose, copy
+
 
 
 class DistinguishTable:
@@ -32,36 +33,38 @@ class DistinguishTable:
     def __init__(self, decision_system):
         self.decision_system = decision_system
 
-    def _transopse_matrix(self):
+    def _transopse_matrix(self, matrix):
         """Transpose a numpy matrix"""
-        decision_system_transpose = transpose(self.decision_system)
+        decision_system_transpose = transpose(matrix)
         return decision_system_transpose
 
-    def _get_decision_list(self):
+    def _get_decision_list(self, matrix):
         """Return a decision list"""
-        return self.decision_system[:, -1]
+        return matrix[:, -1]
 
     def _convert_to_list_of_tuples(self, local_decision_system):
         """Convert np.array to list of tuples"""
         list_of_tuples = [tuple(row, ) + (i,) for i, row in enumerate(local_decision_system)]
         return list_of_tuples
 
-    def _remove_decision_column(self):
+    def _remove_decision_column(self, matrix):
         """Removing decision column from np array"""
-        self.decision_system = np.delete(self.decision_system, -1, 1)
+        return np.delete(matrix, -1, 1)
 
     def _prepare_data_make_distinguish_table(self):
         """Preparing decision system"""
-        decisions = self._get_decision_list()
-        self._remove_decision_column()
-        transopse_decision_system = self._transopse_matrix()
+        # TODO make it cleaner
+        copyd = copy(self.decision_system)
+        decisions = self._get_decision_list(copyd)
+        copyd = self._remove_decision_column(copyd)
+        transopse_decision_system = self._transopse_matrix(copyd)
         list_of_tuples = self._convert_to_list_of_tuples(transopse_decision_system)
         return list_of_tuples, decisions
 
-    def make_table(self):
+    def make_table(self, system, decisions):
         """ Computing decision table"""
 
-        system, decisions = self._prepare_data_make_distinguish_table()
+        # system, decisions = self._prepare_data_make_distinguish_table()
 
         if len(system[0]) - 1 != len(decisions):
             raise ValueError("Different length of decisions and objects")
@@ -78,9 +81,18 @@ class DistinguishTable:
 
         return res
 
+    def spark_part(self, decision_system, subtable_num=5):
+        pass
+        # convert_ds = self._convert_to_list_of_tuples(decision_system)
+        # dec_par = sc.parallelize(convert_ds, subtable_num)
+        # par = dec_par.map(self.make_table)
+        # print(par)
+
+
+
 
 if __name__ == "__main__":
-    
+
     x = {'a': [1, 2], 'b': [3, 4]}
     y = {'a': [3], 'b': [1, 2]}
     res = {}

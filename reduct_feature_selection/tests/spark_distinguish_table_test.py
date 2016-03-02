@@ -10,18 +10,19 @@ class TestDistinguishTable(TestCase):
         decision_system = np.array([[1, 1, 0, 1], [0, 1, 0, 0], [1, 1, 1, 1]])
         a = DistinguishTable(decision_system)
         a._convert_to_list_of_tuples(a.decision_system)
-        self.assertEqual(a._convert_to_list_of_tuples(a.decision_system), [(1, 1, 0, 1,0), (0, 1, 0, 0,1), (1, 1, 1, 1,2)])
+        self.assertEqual(a._convert_to_list_of_tuples(a.decision_system),
+                         [(1, 1, 0, 1, 0), (0, 1, 0, 0, 1), (1, 1, 1, 1, 2)])
 
     def test_trnapose_matrix(self):
         decision_system = np.array([[1, 1], [0, 0]])
         a = DistinguishTable(decision_system)
-        assert_array_equal(a._transopse_matrix(), np.array([[1, 0], [1, 0]]))
+        assert_array_equal(a._transopse_matrix(a.decision_system), np.array([[1, 0], [1, 0]]))
 
     def test_remove_decision_column(self):
         decision_system = np.array([[1, 1, 0, 1], [0, 1, 0, 0], [1, 1, 1, 1]])
         a = DistinguishTable(decision_system)
-        a._remove_decision_column(a.decision_system)
-        self.assertEqual(a._convert_to_list_of_tuples(a.decision_system), [(1, 1, 0,0), (0, 1, 0,1), (1, 1, 1,2)])
+        a.decision_system = a._remove_decision_column(a.decision_system)
+        self.assertEqual(a._convert_to_list_of_tuples(a.decision_system), [(1, 1, 0, 0), (0, 1, 0, 1), (1, 1, 1, 2)])
 
     def test_make_table(self):
         decision_system = np.array(
@@ -29,10 +30,11 @@ class TestDistinguishTable(TestCase):
         a = DistinguishTable(decision_system)
         expected_result = {(0, 1): [0, 1], (1, 2): [0, 2, 4], (1, 3): [1, 3],
                            (0, 4): [0, 1], (3, 4): [1, 3], (2, 4): [0, 2, 4]}
-        self.assertEqual(expected_result, a.make_table())
+        system, decision = a._prepare_data_make_distinguish_table()[0], a._prepare_data_make_distinguish_table()[1]
+        self.assertEqual(expected_result, a.make_table(system, decision))
 
     def test_all_object_the_same_decision(self):
         decision_system = np.array([[0, 0, 1, 1], [1, 1, 1, 1]])
         a = DistinguishTable(decision_system)
-        self.assertEqual({}, a.make_table())
-
+        system, decision = a._prepare_data_make_distinguish_table()[0], a._prepare_data_make_distinguish_table()[1]
+        self.assertEqual({}, a.make_table(system, decision))
