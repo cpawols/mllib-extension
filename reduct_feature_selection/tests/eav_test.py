@@ -1,9 +1,10 @@
 """
 Test for EavConverter class
 """
-from unittest import TestCase
 import numpy as np
-from reduct_feature_selection.commons.eav import Eav
+from unittest import TestCase
+
+from commons.tables.eav import Eav
 
 __author__ = 'krzysztof'
 

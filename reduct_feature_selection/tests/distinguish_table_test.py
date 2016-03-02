@@ -1,8 +1,8 @@
 """Test for distinguish table class"""
-from unittest import TestCase
 import numpy as np
+from unittest import TestCase
 
-from reduct_feature_selection.commons.make_distinguish_table import DistinguishTable
+from commons.tables.make_distinguish_table import DistinguishTable
 
 
 class TestCsvReaderTest(TestCase):
