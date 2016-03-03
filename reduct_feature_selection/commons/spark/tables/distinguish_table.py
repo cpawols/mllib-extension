@@ -15,39 +15,32 @@ As input we take numpy array which will be converted to list of tuples because s
 import numpy as np
 from numpy.ma import transpose, copy
 
+from pyspark import SparkConf, SparkContext
 
 
 class DistinguishTable:
-    # @staticmethod
-    # def compute_distinguish_table(decision_system, subtable_num):
-    #     row_number = decision_system.shape[0]
-    #     col_number = decision_system.shape[1]
-    #     decision_number = col_number - 1
-    #     decision_system = np.transpose(decision_system)
-    #     dec_list = list(tuple(row) for row in decision_system)
-    #     dec_par = sc.parallelize(dec_list, subtable_num)
-    #     par = dec_par.map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y).sortByKey().collect()
-    #     print(par)
-    #     print(dec_list)
-
     def __init__(self, decision_system):
         self.decision_system = decision_system
 
-    def _transopse_matrix(self, matrix):
+    @staticmethod
+    def _transopse_matrix(matrix):
         """Transpose a numpy matrix"""
         decision_system_transpose = transpose(matrix)
         return decision_system_transpose
 
-    def _get_decision_list(self, matrix):
+    @staticmethod
+    def _get_decision_list(matrix):
         """Return a decision list"""
         return matrix[:, -1]
 
-    def _convert_to_list_of_tuples(self, local_decision_system):
+    @staticmethod
+    def _convert_to_list_of_tuples(local_decision_system):
         """Convert np.array to list of tuples"""
         list_of_tuples = [tuple(row, ) + (i,) for i, row in enumerate(local_decision_system)]
         return list_of_tuples
 
-    def _remove_decision_column(self, matrix):
+    @staticmethod
+    def _remove_decision_column(matrix):
         """Removing decision column from np array"""
         return np.delete(matrix, -1, 1)
 
@@ -61,41 +54,47 @@ class DistinguishTable:
         list_of_tuples = self._convert_to_list_of_tuples(transopse_decision_system)
         return list_of_tuples, decisions
 
-    def make_table(self, system, decisions):
+    @staticmethod
+    def join_dictionaries(x, y):
+        """Join two dictionaries into one"""
+        dicts = [x, y]
+        super_dict = {}
+        for d in dicts:
+            for k, v in d.iteritems():
+                if k in super_dict:
+                    super_dict[k] = super_dict[k] + [element for element in v]
+                else:
+                    super_dict[k] = [element for element in v]
+        return super_dict
+
+    @staticmethod
+    def make_table(system, decisions=None):
         """ Computing decision table"""
-
-        # system, decisions = self._prepare_data_make_distinguish_table()
-
-        if len(system[0]) - 1 != len(decisions):
-            raise ValueError("Different length of decisions and objects")
-
         res = dict()
+        res.update()
         for i, attributes in enumerate(system):
             for j in range(len(attributes) - 1):
                 for k in range(j, len(attributes) - 1):
-                    if j != k and system[i][j] != system[i][k] and decisions[j] != decisions[k]:
+                    if j != k and attributes[j] != attributes[k] and decisions[j] != decisions[k]:
                         if (j, k) not in res:
                             res[(j, k)] = [attributes[-1]]
                         else:
                             res[(j, k)].append(attributes[-1])
+        yield res
 
-        return res
-
-    def spark_part(self, decision_system, subtable_num=5):
-        pass
-        # convert_ds = self._convert_to_list_of_tuples(decision_system)
-        # dec_par = sc.parallelize(convert_ds, subtable_num)
-        # par = dec_par.map(self.make_table)
-        # print(par)
-
+    def spark_part(self, conf, number_of_chunks=2):
+        system, decisions = self._prepare_data_make_distinguish_table()
+        sc = SparkContext(conf=conf)
+        system_rdd = sc.parallelize(system, number_of_chunks)
+        result = system_rdd.mapPartitions(lambda x: self.make_table(x, decisions)).reduce(self.join_dictionaries)
+        return result
 
 
 
 if __name__ == "__main__":
+    decision_system = np.array([[1, 0, 2,1], [0, 1,2,0],[1,1,1,1],[3,3,3,1],[2,1,0,0]])
+    conf = SparkConf().setAppName("aaaa")
+    A = DistinguishTable(decision_system)
+    result = A.spark_part(conf, number_of_chunks=1)
+    print result
 
-    x = {'a': [1, 2], 'b': [3, 4]}
-    y = {'a': [3], 'b': [1, 2]}
-    res = {}
-    for (k1, v1), (k2, v2) in zip(x.items(), y.items()):
-        res[k1] = v1 + v2
-        # print res
