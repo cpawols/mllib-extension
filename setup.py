@@ -11,7 +11,8 @@ setup(name='reduct_feature_selection',
       install_requires=[
           'markdown',
           'numpy',
-          'py4j'
+          'py4j',
+          'PyYAML'
       ],
       test_suite='nose.collector',
       tests_require=['nose'],

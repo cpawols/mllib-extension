@@ -1,4 +1,5 @@
-from settings import sc
+#from settings import sc
+from settings import Configuration
 
 __author__ = 'krzysztof'
 
@@ -22,8 +23,8 @@ def compute_ind_class(decision_system, attr_set, subtable_num):
 
     num_chunks = subtable_num
 
-    rdd_subtable = sc.parallelize(subtable_as_list, num_chunks)
-    rdd_dec_subtable = sc.parallelize(dec_subtable_as_list, num_chunks)
+    rdd_subtable = Configuration.sc.parallelize(subtable_as_list, num_chunks)
+    rdd_dec_subtable = Configuration.sc.parallelize(dec_subtable_as_list, num_chunks)
 
     partitions = rdd_subtable.map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y).sortByKey().collect()
     rules = rdd_dec_subtable.map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y).sortByKey().collect()

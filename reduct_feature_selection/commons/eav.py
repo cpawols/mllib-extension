@@ -3,7 +3,8 @@ A class for converting numpy array to EAV format
 """
 import operator
 import numpy as np
-from settings import sc
+#from settings import sc
+from settings import Configuration
 
 __author__ = 'krzysztof'
 
@@ -82,7 +83,7 @@ class Eav:
         return len(set(objects))
 
     def sort(self):
-        eav_rdd = sc.parallelize(self.eav)
+        eav_rdd = Configuration.sc.parallelize(self.eav)
         self.eav = eav_rdd.map(lambda x: ((x[1], x[2], x[0]), 1)).sortByKey()\
             .map(lambda (k, v): (k[2], k[0], k[1])).collect()
         self.update_index(0)
@@ -94,7 +95,7 @@ class Eav:
 
     def merge_sort(self):
         num_chunks = 10
-        eav_rdd_part = sc.parallelize(self.eav, num_chunks)
+        eav_rdd_part = Configuration.sc.parallelize(self.eav, num_chunks)
         self.eav = eav_rdd_part.mapPartitions(Eav._compare)\
             .reduce(lambda x, y: sorted(x+y, key=lambda x: (x[1], x[2], x[0])))
         self.update_index(0)
