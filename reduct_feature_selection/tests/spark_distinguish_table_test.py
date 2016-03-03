@@ -2,6 +2,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from unittest import TestCase
 
+from pyspark import SparkConf
+
 from commons.spark.tables.distinguish_table import DistinguishTable
 
 
@@ -31,10 +33,13 @@ class TestDistinguishTable(TestCase):
         expected_result = {(0, 1): [0, 1], (1, 2): [0, 2, 4], (1, 3): [1, 3],
                            (0, 4): [0, 1], (3, 4): [1, 3], (2, 4): [0, 2, 4]}
         system, decision = a._prepare_data_make_distinguish_table()[0], a._prepare_data_make_distinguish_table()[1]
-        self.assertEqual(expected_result, a.make_table(system, decision))
+        self.assertEqual(expected_result, next(a.make_table(system, decision)))
 
     def test_all_object_the_same_decision(self):
         decision_system = np.array([[0, 0, 1, 1], [1, 1, 1, 1]])
         a = DistinguishTable(decision_system)
         system, decision = a._prepare_data_make_distinguish_table()[0], a._prepare_data_make_distinguish_table()[1]
-        self.assertEqual({}, a.make_table(system, decision))
+        self.assertEqual({}, next(a.make_table(system, decision)))
+
+    def test_distributed_distinguish_table_one_chunk_test(self):
+        pass
