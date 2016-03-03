@@ -13,6 +13,7 @@ Divide decision system into attribute chunks:
 As input we take numpy array which will be converted to list of tuples because spark rdd object doesn't support np.array
 """
 import numpy as np
+from collections import Counter
 from numpy.ma import transpose, copy
 
 from pyspark import SparkConf, SparkContext
@@ -47,17 +48,20 @@ class DistinguishTable:
     def _prepare_data_make_distinguish_table(self):
         """Preparing decision system"""
         # TODO make it cleaner
-        copyd = copy(self.decision_system)
-        decisions = self._get_decision_list(copyd)
-        copyd = self._remove_decision_column(copyd)
-        transopse_decision_system = self._transopse_matrix(copyd)
-        list_of_tuples = self._convert_to_list_of_tuples(transopse_decision_system)
+        decision_system_copy = copy(self.decision_system)
+        decisions = self._get_decision_list(decision_system_copy)
+        decision_system_copy = self._remove_decision_column(decision_system_copy)
+        transpose_decision_system = self._transopse_matrix(decision_system_copy)
+        list_of_tuples = self._convert_to_list_of_tuples(transpose_decision_system)
         return list_of_tuples, decisions
 
     @staticmethod
-    def join_dictionaries(x, y):
-        """Join two dictionaries into one"""
-        dicts = [x, y]
+    def join_dictionaries(dictionary_x, dictionary_y):
+        """Join two dictionaries into one
+        :param dictionary_x:
+        :param dictionary_y:
+        """
+        dicts = [dictionary_x, dictionary_y]
         super_dict = {}
         for d in dicts:
             for k, v in d.iteritems():
@@ -69,32 +73,37 @@ class DistinguishTable:
 
     @staticmethod
     def make_table(system, decisions=None):
-        """ Computing decision table"""
-        res = dict()
-        res.update()
+        """ Computing decision table
+        :param decisions:
+        :param system:
+        """
+        result_dictionary = dict()
         for i, attributes in enumerate(system):
             for j in range(len(attributes) - 1):
                 for k in range(j, len(attributes) - 1):
                     if j != k and attributes[j] != attributes[k] and decisions[j] != decisions[k]:
-                        if (j, k) not in res:
-                            res[(j, k)] = [attributes[-1]]
+                        if (j, k) not in result_dictionary:
+                            result_dictionary[(j, k)] = [attributes[-1]]
                         else:
-                            res[(j, k)].append(attributes[-1])
-        yield res
+                            result_dictionary[(j, k)].append(attributes[-1])
+        yield result_dictionary
 
     def spark_part(self, conf, number_of_chunks=2):
         system, decisions = self._prepare_data_make_distinguish_table()
         sc = SparkContext(conf=conf)
         system_rdd = sc.parallelize(system, number_of_chunks)
-        result = system_rdd.mapPartitions(lambda x: self.make_table(x, decisions)).reduce(self.join_dictionaries)
+        result = system_rdd.mapPartitions(lambda x: self.make_table(x, decisions)) \
+            .reduce(self.join_dictionaries)
         return result
 
+    @staticmethod
+    def frequency_of_attibutes(dictionary):
+        return Counter([values for element in dictionary.values() for values in element])
 
 
 if __name__ == "__main__":
-    decision_system = np.array([[1, 0, 2,1], [0, 1,2,0],[1,1,1,1],[3,3,3,1],[2,1,0,0]])
+    decision_system = np.array([[1, 0, 2, 1], [0, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
     conf = SparkConf().setAppName("aaaa")
     A = DistinguishTable(decision_system)
     result = A.spark_part(conf, number_of_chunks=1)
-    print result
-
+    print  A.frequency_of_attibutes(result)
