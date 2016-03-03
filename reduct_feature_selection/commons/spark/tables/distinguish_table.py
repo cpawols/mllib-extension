@@ -92,8 +92,8 @@ class DistinguishTable:
         system, decisions = self._prepare_data_make_distinguish_table()
         sc = SparkContext(conf=conf)
         system_rdd = sc.parallelize(system, number_of_chunks)
-        result = system_rdd.mapPartitions(lambda x: self.make_table(x, decisions)) \
-            .reduce(self.join_dictionaries)
+        result = (system_rdd.mapPartitions(lambda x: self.make_table(x, decisions))
+            .reduce(self.join_dictionaries))
         return result
 
     @staticmethod
