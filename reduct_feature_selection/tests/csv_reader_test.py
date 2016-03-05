@@ -2,9 +2,6 @@ from numpy.testing import assert_array_equal
 from unittest import TestCase
 from reduct_feature_selection.commons.cvs_reader import CSVReader
 import numpy as np
-# from settings import csv_file1
-# from settings import csv_file2
-# from settings import csv_file3
 from settings import Configuration
 
 
@@ -28,3 +25,4 @@ class TestCsvReaderTest(TestCase):
     def test_file_does_not_exist(self):
         with self.assertRaises(ValueError, mgs="File does not exist!"):
             CSVReader.read_csv(Configuration.csv_file3)
+

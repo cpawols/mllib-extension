@@ -6,7 +6,6 @@ from reduct_feature_selection.commons.implicants_rules import Implicants
 from reduct_feature_selection.commons.make_distinguish_table import DistinguishTable
 
 
-
 class TestComputeImplicants(TestCase):
 
     def test_one_object(self):

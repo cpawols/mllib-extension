@@ -2,19 +2,19 @@ import os
 import sys
 import yaml
 from settings import Configuration
-#from settings import spark_home, pythonpath
 __author__ = 'krzysztof'
 
-Configuration.assign()
-
 try:
-    paths = yaml.load(open("config.yaml", "r"))
+    paths = yaml.load(open("../../config.yaml", "r"))
     os.environ['SPARK_HOME'] = paths["spark_home"]
+    # os.environ["PYSPARK_GATEWAY_PORT"] = "7780"
     # Append to PYTHONPATH so that pyspark could be found
     sys.path.append(paths["pythonpath"])
-except OSError:
-    print "No config file"
+except Exception as e:
+    print ("No config file or wrong parameters", e)
     sys.exit(1)
+
+Configuration.assign()
 
 # Now we are ready to import Spark Modules
 
