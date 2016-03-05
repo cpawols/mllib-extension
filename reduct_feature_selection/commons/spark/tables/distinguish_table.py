@@ -72,8 +72,10 @@ class DistinguishTable:
         return super_dict
 
     @staticmethod
-    def make_table(system, decisions=None):
+    def make_table(system, decisions=None, bor_sc=None):
+        # TODO documentation
         """ Computing decision table
+        :param bor_sc:
         :param decisions:
         :param system:
         """
@@ -86,18 +88,60 @@ class DistinguishTable:
                             result_dictionary[(j, k)] = [attributes[-1]]
                         else:
                             result_dictionary[(j, k)].append(attributes[-1])
-        yield result_dictionary
+        return result_dictionary
+
+    def _check_containing(self, list_for_object, dictionary_for_implicant):
+        # TODO Better documentation
+        """
+        This method checked if implicant for object contains element
+        :param list_for_object:
+        :param dictionary_for_implicant:
+        :return:
+        """
+        for element in list_for_object:
+            if element in dictionary_for_implicant:
+                return True
+        return False
+
+    def _compute_implicants(self, x, bor_sc=None):
+        # TODO Documentation and implement this method in clean way
+        y = copy(x)
+        feequency_of_attributes = self.frequency_of_attibutes(x)
+        implicants = {}
+        for objectss, attributes in x.items():
+            if objectss[0] in implicants:
+                if not self._check_containing(attributes, implicants[objectss[0]]):
+                    # Heuristics method
+                    # implicants[objectss[0]] =
+                    # if objecss[1] in implicants:
+                    pass
+        yield y
 
     def spark_part(self, conf, number_of_chunks=2):
+        # TODO documentation - cleaning method
+        """
+
+        :param conf:
+        :param number_of_chunks:
+        :return:
+        """
         system, decisions = self._prepare_data_make_distinguish_table()
         sc = SparkContext(conf=conf)
+        bor_sc = sc.broadcast(self.decision_system)
         system_rdd = sc.parallelize(system, number_of_chunks)
-        result = (system_rdd.mapPartitions(lambda x: self.make_table(x, decisions))
-            .reduce(self.join_dictionaries))
+        result = (system_rdd.mapPartitions(lambda x: self.make_table(x, decisions)).mapPartitions(
+            lambda x: self._compute_implicants(x, bor_sc=bor_sc))
+                  .reduce(self.join_dictionaries))
         return result
 
     @staticmethod
     def frequency_of_attibutes(dictionary):
+        # TODO documentation
+        """
+
+        :param dictionary:
+        :return:
+        """
         return Counter([values for element in dictionary.values() for values in element])
 
 
@@ -105,5 +149,5 @@ if __name__ == "__main__":
     decision_system = np.array([[1, 0, 2, 1], [0, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
     conf = SparkConf().setAppName("aaaa")
     A = DistinguishTable(decision_system)
-    result = A.spark_part(conf, number_of_chunks=1)
-    print  A.frequency_of_attibutes(result)
+    result = A.spark_part(conf, number_of_chunks=3)
+    print result
