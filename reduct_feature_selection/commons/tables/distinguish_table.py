@@ -15,6 +15,7 @@ As input we take numpy array which will be converted to list of tuples because s
 import numpy as np
 from collections import Counter
 from numpy.ma import transpose, copy
+# from __future__ import print_function
 
 from settings import Configuration
 
@@ -146,8 +147,56 @@ class DistinguishTable:
                         break
         # Klucz - obiekt, wartosc, numery atrybutow pozwalajace go rozrozniac
 
-        yield implicants
+        return implicants
         # yield y it's work
+
+    def validate_rules(self, rules, original_decision_system=None, treshold=0.8):
+        for attr_numbers, attr_values in rules.items():
+            for object in original_decision_system:
+                rule_istrue = True
+                for attr_number, attr_value in zip(attr_numbers[:-1], attr_values[:-1]):
+                    if 
+
+        pass
+
+    def generate_rules_from_implicants(self, implicants, original_decision_system=None):
+        # TODO
+        """
+
+        :param implicants:
+        :return:
+        """
+        rules = {}
+        for object_number, attributes in implicants.items():
+            for attribute in attributes:
+                rules[tuple(attributes) + (object_number,)] = [ value_of_attribute for i, value_of_attribute in enumerate(original_decision_system[object_number]) if i in attributes ]
+                rules[tuple(attributes) + (object_number,)].append(original_decision_system[object_number][-1])
+        return rules
+
+    def print_rules(self, rules):
+
+        for attributes, values in rules.items():
+            rule = ' '
+            for i,  (attribute, value) in enumerate(zip(attributes[:-1], values[:-1])):
+                if i != 0:
+                    rule += ' && ' + 'attr(' + str(attribute)+ ')' + " = " + str(value)
+                else:
+                    rule +=  'attr(' + str(attribute)+ ')' + " = " + str(value)
+                #print attribute, '=', value
+            rule += '  --> dec = ' + str(values[-1])
+            print rule
+
+    def get_attribute_rank_from_rules(self, rules, treshold=None):
+        # TODO
+        """
+        First element it's a attribut number, the secon frequency of those attribute
+        :param rules:
+        :return:
+        """
+        if treshold is None:
+            return Counter( attribute for attributes in rules.keys() for attribute in attributes[:-1] ).most_common()
+        else:
+            return Counter( attribute for attributes in rules.keys() for attribute in attributes[:-1] ).most_common(treshold)
 
     def first_heuristic_method(self, feequency_of_attributes, implicants, objekt):
         """
@@ -175,7 +224,7 @@ class DistinguishTable:
         system, decisions = self._prepare_data_make_distinguish_table()
         system_rdd = Configuration.sc.parallelize(system, number_of_chunks)
         result = (system_rdd.mapPartitions(lambda x: self.make_table(x, decisions)).mapPartitions(
-            lambda x: self._compute_implicants(x)).collect())
+            lambda x: self._compute_implicants(x)).mapPartitions(lambda x: self.generate_rules_from_implicants(x)))
                   #.reduce(self.join_dictionaries))
         return result
 
@@ -192,8 +241,15 @@ class DistinguishTable:
 
 if __name__ == "__main__":
     decision_system = np.array([[1, 0, 2, 1], [1, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
+    implicants ={0: [1], 1: [1, 2], 2: [2], 3: [2], 4: [2]}
     # conf = SparkConf().setAppName("aaaa")
+    rules = {(1, 2, 1): [1, 2, 0], (1, 0): [0, 1], (2, 3): [3, 1], (2, 4): [0, 0], (2, 2): [1, 1]}
+
     A = DistinguishTable(decision_system)
-    result = A.spark_part(number_of_chunks=1)
-    print result
+    A.spark_part(decision_system)
+    A.print_rules(rules)
+    #print A.get_attribute_rank_from_rules(rules)
+    A.generate_rules_from_implicants(implicants, original_decision_system=decision_system)
+    #result = A.spark_part(number_of_chunks=1)
+    # print result
     pass
