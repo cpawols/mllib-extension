@@ -21,7 +21,7 @@ class Configuration(object):
         cls.sc = SparkContext(conf=cls.conf)
         # configure the environmental variables
         try:
-            paths = yaml.load(open("../../config.yaml", "r"))
+            paths = yaml.load(open("config.yaml", "r"))
             cls.spark_home = paths['spark_home']
             cls.pythonpath = paths["pythonpath"]
         except Exception as e:

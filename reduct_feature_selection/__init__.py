@@ -4,8 +4,10 @@ import yaml
 from settings import Configuration
 __author__ = 'krzysztof'
 
+print "parufka"
+
 try:
-    paths = yaml.load(open("../../config.yaml", "r"))
+    paths = yaml.load(open("config.yaml", "r"))
     os.environ['SPARK_HOME'] = paths["spark_home"]
     # os.environ["PYSPARK_GATEWAY_PORT"] = "7780"
     # Append to PYTHONPATH so that pyspark could be found

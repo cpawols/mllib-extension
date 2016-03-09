@@ -4,7 +4,7 @@ Test for EavConverter class
 import numpy as np
 from unittest import TestCase
 
-from commons.tables.eav import Eav
+from reduct_feature_selection.commons.tables.eav import Eav
 
 __author__ = 'krzysztof'
 
