@@ -106,18 +106,63 @@ class DistinguishTable:
         return False
 
     def _compute_implicants(self, x, bor_sc=None):
-        # TODO Documentation and implement this method in clean way
+        # TODO in english
+        """
+        This method compute implicants and saved it into dictionary in which key is a tuple containing attributes number
+        and a value is a list of values of those attributes, the last element in this list is a decision.
+        :param x:TODO
+        :param bor_sc: TODO
+        :return: dictionary with rules.
+        """
         y = copy(x)
-        # feequency_of_attributes = self.frequency_of_attibutes(x)
+        feequency_of_attributes = self.frequency_of_attibutes(x)
         implicants = {}
-        for objectss, attributes in x.items():
-            if objectss[0] in implicants:
-                if not self._check_containing(attributes, implicants[objectss[0]]):
-                    # Heuristics method
-                    # implicants[objectss[0]] =
-                    # if objecss[1] in implicants:
-                    pass
-        yield y
+        print feequency_of_attributes
+        print y
+        for objekt, attributes in x.items():
+            if objekt[0] in implicants:
+                # Jesli obiekt jest to nalezy sprawdzic czy potrzebujemy dokladac nowy atrybut jesli tak, to to robimy
+                # W sposob heurystyczny
+                # print 'obiekt', objekt
+                if not self._check_containing(attributes, implicants[objekt[0]]):
+                    # Frequency of attributes it's a list of tuples - first element - attribute number,
+                    #  second - frequency
+                    self.first_heuristic_method(feequency_of_attributes, implicants, objekt[0])
+            else:
+                for attr in feequency_of_attributes:
+                    if attr[0] in attributes:
+                        implicants[objekt[0]] =[attr[0]]
+                        break
+
+            if objekt[1] in implicants:
+                if not self._check_containing(attributes, implicants[objekt[1]]):
+                    # Frequency of attributes it's a list of tuples - first element - attribute number,
+                    #  second - frequency
+                    self.first_heuristic_method(feequency_of_attributes, implicants, objekt[1])
+            else:
+                for attr in feequency_of_attributes:
+                    if attr[0] in attributes:
+                        implicants[objekt[1]] = [attr[0]]
+                        break
+        # Klucz - obiekt, wartosc, numery atrybutow pozwalajace go rozrozniac
+
+        yield implicants
+        # yield y it's work
+
+    def first_heuristic_method(self, feequency_of_attributes, implicants, objekt):
+        """
+        TODO
+        :param feequency_of_attributes:
+        :param implicants:
+        :param objekt:
+        :return:
+        """
+        #print 'imp', implicants
+        for attribute in feequency_of_attributes:
+            if attribute[0] not in implicants[objekt]:
+                implicants[objekt].append(attribute[0])
+                break
+                # Heuristic
 
     def spark_part(self, conf=None, number_of_chunks=2):
         # TODO documentation - cleaning method
@@ -130,8 +175,8 @@ class DistinguishTable:
         system, decisions = self._prepare_data_make_distinguish_table()
         system_rdd = Configuration.sc.parallelize(system, number_of_chunks)
         result = (system_rdd.mapPartitions(lambda x: self.make_table(x, decisions)).mapPartitions(
-            lambda x: self._compute_implicants(x))
-                  .reduce(self.join_dictionaries))
+            lambda x: self._compute_implicants(x)).collect())
+                  #.reduce(self.join_dictionaries))
         return result
 
     @staticmethod
@@ -142,13 +187,13 @@ class DistinguishTable:
         :param dictionary:
         :return:
         """
-        return Counter([values for element in dictionary.values() for values in element])
+        return Counter([values for element in dictionary.values() for values in element]).most_common()
 
 
 if __name__ == "__main__":
-    decision_system = np.array([[1, 0, 2, 1], [0, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
+    decision_system = np.array([[1, 0, 2, 1], [1, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
     # conf = SparkConf().setAppName("aaaa")
     A = DistinguishTable(decision_system)
-    result = A.spark_part(number_of_chunks=3)
+    result = A.spark_part(number_of_chunks=1)
     print result
     pass
