@@ -1,5 +1,5 @@
 import numpy as np
-from settings import sc
+from settings import Configuration
 
 
 class DistinguishTable:
@@ -13,11 +13,10 @@ class DistinguishTable:
         decision_number = col_number - 1
         decision_system = np.transpose(decision_system)
         dec_list = list(tuple(row) for row in decision_system)
-        dec_par = sc.parallelize(dec_list, subtable_num)
+        dec_par = Configuration.sc.parallelize(dec_list, subtable_num)
         par = dec_par.map(lambda x : (x,1)).reduceByKey(lambda x,y : x+y).sortByKey().collect()
         print(par)
         print(dec_list)
-
 
 
 if __name__ == "__main__":

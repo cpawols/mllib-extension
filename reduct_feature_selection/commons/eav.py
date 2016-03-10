@@ -3,7 +3,6 @@ A class for converting numpy array to EAV format
 """
 import operator
 import numpy as np
-#from settings import sc
 from settings import Configuration
 
 __author__ = 'krzysztof'
@@ -28,6 +27,12 @@ class Eav:
     def dec(self, value):
         self.dec = value
 
+    # TODO: convert to format with dtype.names
+
+    @staticmethod
+    def _convert_to_proper_format(array):
+        return array
+
     @staticmethod
     def convert_to_eav(array):
         """
@@ -36,6 +41,7 @@ class Eav:
         :return: list of eav tuples
         """
         if array.size:
+            array = Eav._convert_to_proper_format(array)
             rows = range(array.shape[0])
             colnames = array.dtype.names
             list_of_eav = ([(r, c, array[c][r]) for c in colnames] for r in rows)
@@ -52,7 +58,7 @@ class Eav:
             rows_size = max([x[0] for x in self.eav])
             cols_size = len(self.eav) / (rows_size + 1)
             formats = list(set([(x[1], float) for x in self.eav]))
-            array = np.array([tuple([0] * (rows_size + 1))] * cols_size, dtype=formats)
+            array = np.array([tuple([0] * cols_size)] * (rows_size + 1), dtype=formats)
             for t in self.eav:
                 array[t[0]][t[1]] = t[2]
             return array
