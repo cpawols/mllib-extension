@@ -31,19 +31,53 @@ class TestDistinguishTable(TestCase):
         expected_result = {(0, 1): [0, 1], (1, 2): [0, 2, 4], (1, 3): [1, 3],
                            (0, 4): [0, 1], (3, 4): [1, 3], (2, 4): [0, 2, 4]}
         system, decision = a._prepare_data_make_distinguish_table()[0], a._prepare_data_make_distinguish_table()[1]
-        self.assertEqual(expected_result, next(a.make_table(system, decision)))
+        self.assertEqual(expected_result, (a.make_table(system, decision)))
 
     def test_all_object_the_same_decision(self):
         decision_system = np.array([[0, 0, 1, 1], [1, 1, 1, 1]])
         a = DistinguishTable(decision_system)
         system, decision = a._prepare_data_make_distinguish_table()[0], a._prepare_data_make_distinguish_table()[1]
-        self.assertEqual({}, next(a.make_table(system, decision)))
+        self.assertEqual({}, (a.make_table(system, decision)))
 
     def test_distributed_distinguish_table_one_chunk_test(self):
         decision_system = np.array([[1, 0, 2, 1], [0, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
         A = DistinguishTable(decision_system)
-        result = A.spark_part(number_of_chunks=2)
+        x, dec = A._prepare_data_make_distinguish_table()
+        result = A.make_table(x, decisions=dec)
         expected_result = {(0, 1): [0, 1], (1, 2): [0, 2], (1, 3): [0, 1, 2], (0, 4): [0, 1, 2], (3, 4): [0, 1, 2],
                            (2, 4): [0, 2]}
         self.assertEqual(result, expected_result)
-        pass
+
+    def test_compute_implicant_test(self):
+        decision_system = np.array([[1, 0, 2, 1], [1, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
+        A = DistinguishTable(decision_system)
+        dist_table = {(0, 1): [1], (1, 2): [2], (1, 3): [0, 1, 2], (0, 4): [0, 1, 2], (3, 4): [0, 1, 2], (2, 4): [0, 2]}
+        expected_result = {0: [1], 1: [1, 2], 2: [2], 3: [2], 4: [2]}
+        self.assertEqual(expected_result, (A._compute_implicants(dist_table, A.first_heuristic_method)))
+
+    def test_stages_test(self):
+        decision_system = np.array([[0, 1, 1, 1], [1, 1, 0, 1], [0, 1, 0, 0]])
+        A = DistinguishTable(decision_system)
+        system, decision = A._prepare_data_make_distinguish_table()
+
+        real_distinguish_table = A.make_table(system, decision)
+        expected_distigusih_table = {(0, 2): [2], (1, 2): [0]}
+        self.assertEqual(real_distinguish_table, expected_distigusih_table)
+
+        # TODO first heuristic method test
+
+        real_implicants = A._compute_implicants(real_distinguish_table, A.first_heuristic_method)
+        expected_implicants = {0: [2], 1: [0], 2: [0, 2]}
+        self.assertEqual(real_implicants, expected_implicants)
+
+        real_rules = A.generate_rules_from_implicants(real_implicants, A.decision_system)
+        expected_rules = {(2, 0): [1, 1], (0, 1): [1, 1], (0, 2, 2): [0, 0, 0]}
+        self.assertEqual(real_rules, expected_rules)
+
+        accepted_rules = A.validate_rules(rules=real_rules, validation_function=A.first_validation_function_to_rename,
+                                          original_decision_system=A.decision_system)
+        self.assertEqual(real_rules, accepted_rules)
+
+
+if __name__ == "__main__":
+    unittest.main()
