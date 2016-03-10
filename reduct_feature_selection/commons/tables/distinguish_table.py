@@ -17,7 +17,10 @@ import random
 from collections import Counter
 from numpy.ma import transpose, copy
 
+from sklearn.cross_validation import train_test_split
 import reduct_feature_selection
+
+from sklearn import tree
 from settings import Configuration
 
 
@@ -51,7 +54,11 @@ class DistinguishTable:
         """
         Convert (numpy array) decision system into list of tuples in which the tuple represent object from original
          decision system. Converted decision system doesn't contain a decisions, decisions are returned as a second list
-         Example
+        Example
+
+        np.array[[1,0,1],[1,0,0]] Will be converted to the following list of tuples
+        [(1,0), (1,0)]
+        The second argument which will be returned is the following list [1,0]
 
         :return: list of tuples, each tuple represent one object
         :return: list of decisions
@@ -66,6 +73,7 @@ class DistinguishTable:
 
     @staticmethod
     def join_dictionaries(dictionary_x, dictionary_y):
+        # TODO Temporaty and test function only - rebasing
         """Join two dictionaries into one
         :param dictionary_x:
         :param dictionary_y:
@@ -81,12 +89,26 @@ class DistinguishTable:
         return super_dict
 
     @staticmethod
-    def make_table(system, decisions=None, bor_sc=None):
-        # TODO documentation
-        """ Computing decision table
-        :param bor_sc:
-        :param decisions:
-        :param system:
+    def make_table(system, decisions, bor_sc=None):
+        """
+        This function take a list of tuples in which each tuple represent one object from decision system (without
+        decision column) and returns a dictionary which represents a distinguish table.
+        As a keys in this dictionary are a tuples of two integers which represents number of two object.
+        As a values this dictionary contains a list with numbers of attributes which allow to distinct those two objects
+
+        Example If we have the following decision table:
+
+             a_0  a_1  a_2  a_3  dec
+        X_0   0    1    1    0    +
+        X_1   1    1    0    1    -
+
+        Returned dictionary will be the following:
+
+        {(0,1):[0,2,3]}
+
+        :param system: list of tuples
+        :param decisions: list with decisions
+        :param bor_sc:  # TODO
         """
         result_dictionary = dict()
         for i, attributes in enumerate(system):
@@ -99,146 +121,134 @@ class DistinguishTable:
                             result_dictionary[(j, k)].append(attributes[-1])
         return result_dictionary
 
-    def _check_containing(self, list_for_object, dictionary_for_implicant):
-        # TODO Better documentation
+    def _check_containing(self, list_for_object, implicant):
         """
-        This method checked if implicant for object contains element
-        :param list_for_object:
-        :param dictionary_for_implicant:
-        :return:
+        This method check if it's necessary to add new attribute to implicant.
+        If implicant for th
+
+        :param list_for_object: List of attribute's numbers which allow to distinct this object
+        :param implicant: List of attributes which are in implicant for object
+        (We know for which object containing is checking)
+        :return: Boolean - True in case when it's necessary to add new attribute, else False
         """
         for element in list_for_object:
-            if element in dictionary_for_implicant:
+            if element in implicant:
                 return True
         return False
 
     def _compute_implicants(self, distinguish_table, heuristic_type, bor_sc=None):
         # TODO in english
         """
-        This method compute implicants and saved it into dictionary in which key is a tuple containing attributes number
-        and a value is a list of values of those attributes, the last element in this list is a decision.
+        This method compute one implicant for each object. As a key is a integer which refer to
+        object number, as a value is a list of attributes number
+
+        Example implicant:
+
+        {0:[1,4,5]} It's means that to distinct object number 0 we have to use attributes 1,4,5
+
         :param distinguish_table:TODO
         :param bor_sc: TODO
         :return: dictionary with rules.
         """
-        # heuristic_type = self.first_heuristic_method
-        # y = copy(x)
-        attributes_frequency = self.frequency_of_attibutes(distinguish_table)
+        attributes_frequency = self.frequency_of_attributes(distinguish_table)
         implicants = dict()
 
         for object, attributes in distinguish_table.items():
             if object[0] in implicants:
-                # Jesli obiekt jest to nalezy sprawdzic czy potrzebujemy dokladac nowy atrybut jesli tak, to to robimy
-                # W sposob heurystyczny
-                # print 'obiekt', objekt
+                # If object is added to implicats we check if it's necessary to adding nex attribute
                 if not self._check_containing(attributes, implicants[object[0]]):
-                    # Frequency of attributes it's a list of tuples - first element - attribute number,
-                    #  second - frequency
-                    # self.first_heuristic_method(attributes_frequency, implicants, objekt[0])
+                    # If it's necessary we add new attribute using one of heuristic
                     heuristic_type(attributes_frequency, implicants, object[0])
             else:
+                # Add object to implicant set
                 for attr in attributes_frequency:
                     if attr[0] in attributes:
                         implicants[object[0]] = [attr[0]]
                         break
-
             if object[1] in implicants:
+                # If object is added to implicats we check if it's necessary to adding nex attribute
                 if not self._check_containing(attributes, implicants[object[1]]):
-                    # Frequency of attributes it's a list of tuples - first element - attribute number,
-                    #  second - frequency
-                    # self.first_heuristic_method(attributes_frequency, implicants, objekt[1])
+                    # If it's necessary we add new attribute using one of heuristic
                     heuristic_type(attributes_frequency, implicants, object[1])
             else:
+                # Add object to implicant set
                 for attr in attributes_frequency:
                     if attr[0] in attributes:
                         implicants[object[1]] = [attr[0]]
                         break
-        # Klucz - obiekt, wartosc, numery atrybutow pozwalajace go rozrozniac
-        # print 'Impli',  implicants
-        print 'Implicants', len(implicants)
         return implicants
-        # yield y it's work
 
-    def validate_rules(self, rules, validation_function, original_decision_system=None, treshold=0.05):
-        # Gets a rules from each part and return this rules which
-        # have a good answer in more than 'treshold' cases.
-        # Maybe we have to accept the rules which have a contradict value??
-        # Example of this types
-        # a1 = 0 && a2 =1 -> dec = 1
-        # a1 = 0 && a2 =1 -> dec = 0
-        # It makes sense
-        # TODO Rewrite into better way, cleaning code, implement new heuristic
+    def validate_rules(self, rules, validation_function, original_decision_system=None, treshold=0.5):
         """
-        :param rules:
-        :param original_decision_system:
-        :param treshold:
+        Gets a rules from each part and return this rules which have a good answer in more than 'treshold' cases.
+
+        :param rules: dictionary with rules
+        :param original_decision_system: original decision system
+        :param treshold: treshold which is pass on to validation function
         :return:
         """
+        print 'Len of rules', len(rules)
         accepted_rules = dict()
         numbers_of_all_objects = len(original_decision_system)
         for attr_numbers, attr_values in rules.items():
             rules_accepts = 0
-            bad_rules = 0
+            rejected_rules = 0
             for object in original_decision_system:
-                rule_istrue = True
+                rule_is_true = True
                 for attr_number, attr_value in zip(attr_numbers[:-1], attr_values[:-1]):
                     if object[attr_number] != attr_value:
-                        rule_istrue = False
+                        rule_is_true = False
                         break
-                if rule_istrue is True and attr_values[-1] == object[-1]:
+                if rule_is_true is True and attr_values[-1] == object[-1]:
                     rules_accepts += 1
-                    # print 'Doskonala regula', attr_numbers[:-1], attr_values
-                elif rule_istrue is True and attr_values[-1] != object[-1]:
-                    bad_rules += 1
-                    # print 'Zla regula!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+                elif rule_is_true is True and attr_values[-1] != object[-1]:
+                    rejected_rules += 1
 
-            # print numbers_of_all_objects, bad_rules, rules_accepts
-            # if numbers_of_all_objects - bad_rules >= treshold * numbers_of_all_objects:
-            self.first_validation_function_to_rename(accepted_rules, attr_numbers, attr_values, bad_rules,
-                                                     numbers_of_all_objects, treshold)
+            validation_function(accepted_rules, attr_numbers, attr_values, rejected_rules,
+                                numbers_of_all_objects, treshold)
+        print 'Len of accepted rules', len(accepted_rules)
+        yield accepted_rules
 
-        print 'Accepted rules', len(accepted_rules)
-        return accepted_rules
-
-    def first_validation_function_to_rename(self, accepted_rules, attr_numbers, attr_values, bad_rules,
-                                            numbers_of_all_objects, treshold):
+    def validation_function_f1(self, accepted_rules, attr_numbers, attr_values, rejected_rules,
+                               numbers_of_all_objects, treshold):
         # TODO
         """
-
-        :param accepted_rules:
+        This function update a rules which passed test
+        :param accepted_rules: dictionary with rules
         :param attr_numbers:
         :param attr_values:
-        :param bad_rules:
+        :param rejected_rules:
         :param numbers_of_all_objects:
         :param treshold:
         :return:
         """
-        if bad_rules <= treshold * numbers_of_all_objects:
+        if rejected_rules <= treshold * numbers_of_all_objects:
             accepted_rules[attr_numbers] = attr_values
 
     def generate_rules_from_implicants(self, implicants, original_decision_system=None):
-        # TODO
         """
+        This function generate rules from Implicants and saved to the dictionary
+        The last values in key and value are number of object and decision respectively
+        Example rule {(0,1,1):[1,1,0]} has the following form atr(0)=1 && attr(1) = 1 -> dec=0
 
-        :param implicants:
-        :return:
+        :param implicants: dictionary with implicants
+        :return: dictionary with rules
         """
         rules = dict()
 
         for object_number, attributes in implicants.items():
-            for attribute in attributes:
+            for _ in attributes:
                 rules[tuple(attributes) + (object_number,)] = \
                     [value_of_attribute for i, value_of_attribute in enumerate(original_decision_system[object_number])
                      if i in attributes]
                 rules[tuple(attributes) + (object_number,)].append(original_decision_system[object_number][-1])
-        print ''
         return rules
 
     def print_rules(self, rules):
         """
-        TODO
-        :param rules:
-        :return:
+        Pretty Print rules
+        :param rules: dictionary with rules
+        :return: Nothing
         """
         for attributes, values in rules.items():
             rule = ' '
@@ -251,12 +261,12 @@ class DistinguishTable:
             rule += '  --> dec = ' + str(values[-1])
             print rule
 
+    @staticmethod
     def get_attribute_rank_from_rules(self, rules, treshold=None):
-        # TODO
         """
-        First element it's a attribut number, the secon frequency of those attribute
-        :param rules:
-        :return:
+        First element it's a attribute number, the second frequency of those attribute
+        :param rules: dictionary with rules
+        :return: List of tuples
         """
         if treshold is None:
             return Counter(attribute for attributes in rules.keys() for attribute in attributes[:-1]).most_common()
@@ -264,7 +274,6 @@ class DistinguishTable:
             return Counter(
                 attribute for attributes in rules.keys() for attribute in attributes[:-1]).most_common(treshold)
 
-    # @staticmethod
     def first_heuristic_method(self, attributes_frequency, implicants, object):
         """
         Heuristic method of coverage object by this attributes which are the most frequent
@@ -278,10 +287,9 @@ class DistinguishTable:
                 implicants[object].append(attribute[0])
                 break
 
-    def spark_part(self, conf=None, number_of_chunks=2):
-        # TODO documentation - cleaning method
+    def engine(self, conf=None, number_of_chunks=2):
         """
-
+        Engine of all perations
         :param conf:
         :param number_of_chunks:
         :return:
@@ -293,45 +301,55 @@ class DistinguishTable:
             lambda x: self._compute_implicants(x, self.first_heuristic_method)).mapPartitions(
             lambda x: self.generate_rules_from_implicants(x,
                                                           original_decision_system=self.decision_system)).mapPartitions(
-            lambda x: self.validate_rules(x, validation_function=self.first_validation_function_to_rename,
-                                          original_decision_system=self.decision_system)).collect())
-        # .reduce(self.join_dictionaries)),
+            lambda x: self.validate_rules(x, validation_function=self.validation_function_f1,
+                                          original_decision_system=self.decision_system)).
+                  reduce(lambda x, y: self.join_dictionaries(x, y)))
         print result
-        return result
+        s = (Counter(attribute for attributes in result.keys() for attribute in attributes[:-1]))
+        #print 'Attr freq ', s
+        #print 'Attr len', len(s)
+        return s
 
     @staticmethod
-    def frequency_of_attibutes(dictionary):
-        # TODO documentation
+    def frequency_of_attributes(distinguish_table):
         """
-
-        :param dictionary:
+        Returns sorted list of tuples containing attributes ant frequences
+        :param distinguish_table:
         :return:
         """
-        return Counter([values for element in dictionary.values() for values in element]).most_common()
+        return Counter([values for element in distinguish_table.values() for values in element]).most_common()
 
 
 if __name__ == "__main__":
-    decision_system = np.array([[1, 0, 2, 1], [1, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
-    implicants = {0: [1], 1: [1, 2], 2: [2], 3: [2], 4: [2]}
-    # conf = SparkConf().setAppName("aaaa")
-    rules = {(1, 2, 1): [1, 2, 0], (1, 0): [0, 1], (2, 3): [3, 1], (2, 4): [0, 0], (2, 2): [1, 1]}
 
-    d = np.array([[random.randint(0, 4) for _ in range(10)] for __ in range(10)])
-    A = DistinguishTable(d)
-    A.spark_part(decision_system, number_of_chunks=4)
+    random.seed(1)
+    # decision_system = np.array([[1, 0, 2, 1], [1, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
+    decision_system = np.array([[random.randint(0, 4) for _ in range(5000)] for __ in range(700)])
+    decision_system = np.append(decision_system, np.array([[random.randint(0,1)] for _ in range(700)]),1)
+    X_train, X_test, y_train, y_test = train_test_split(decision_system, decision_system[:,-1],
+                                                      test_size=0.33, random_state=42)
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X_train, y_train)
+    result = clf.predict(X_test)
+    print 'Accuracy of clear decision tree', 1.0*sum(1 for x, y in zip(y_test, result) if x==y)/len(result)
+
+    A = DistinguishTable(decision_system)
+    freq = A.engine(decision_system, number_of_chunks=4)
+
+    select_attr = [attr for attr in freq.keys() ]
+    print select_attr
+
+    X_train = X_train[:, select_attr]
+    #print X_train
+    clf2 = tree.DecisionTreeClassifier()
+    clf2.fit(X_train, y_train)
+    result2 = clf2.predict(X_test[:,select_attr])
+    print 'Accuracy of selected tree', 1.0*sum(1 for x, y in zip(y_test, result2) if x==y)/len(result2)
     # A.print_rules(rules)
     # print A.get_attribute_rank_from_rules(rules)
     # A.generate_rules_from_implicants(implicants, original_decision_system=decision_system)
     # result = A.spark_part(number_of_chunks=1)
     # print result
     pass
-
-    # TODO Tests
-    # TODO Generate Rules from implicants
-    # TODO First heuristic method
-    # TODO Validate Rules
-    # TODO Compute implicants
-    # TODO
-
     # TODO merge rules by keys
     # TODO Take a negation of the rules

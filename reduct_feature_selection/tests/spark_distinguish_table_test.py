@@ -74,9 +74,17 @@ class TestDistinguishTable(TestCase):
         expected_rules = {(2, 0): [1, 1], (0, 1): [1, 1], (0, 2, 2): [0, 0, 0]}
         self.assertEqual(real_rules, expected_rules)
 
-        accepted_rules = A.validate_rules(rules=real_rules, validation_function=A.first_validation_function_to_rename,
+        accepted_rules = A.validate_rules(rules=real_rules, validation_function=A.validation_function_f1,
                                           original_decision_system=A.decision_system)
         self.assertEqual(real_rules, accepted_rules)
+
+    def test_1(self):
+        dec = np.array([[0,1,1,0,1],[1,1,0,1,0]])
+        A = DistinguishTable(dec)
+        system, decision = A._prepare_data_make_distinguish_table()
+
+        real_distinguish_table = A.make_table(system, decision)
+        print real_distinguish_table
 
 
 if __name__ == "__main__":
