@@ -4,7 +4,6 @@ import yaml
 from settings import Configuration
 __author__ = 'krzysztof'
 
-print "parufka"
 
 try:
     paths = yaml.load(open("config.yaml", "r"))
