@@ -1,4 +1,4 @@
-from reduct_feature_selection.discretize.simple_discretizer import SimpleDiscretizer
+from simple_discretizer import SimpleDiscretizer
 from collections import Counter
 
 import numpy as np

@@ -1,7 +1,8 @@
-from reduct_feature_selection.discretize.simple_discretizer import SimpleDiscretizer
+from simple_discretizer import SimpleDiscretizer
 from collections import Counter
 
 import math
+
 import numpy as np
 
 
@@ -16,6 +17,11 @@ class EntropyDiscretizer(SimpleDiscretizer):
         for elem in U:
             dec_fqs[self.dec[elem[0]]] += 1
         probs = [x / float(len(U)) for x in dec_fqs.values()]
+        entropy = sum(map(lambda x: -x * math.log(x, 2), probs))
+        return entropy
+
+    def entropy_from_distribution(self, n, dec_fqs):
+        probs = [x / float(n) for x in dec_fqs.values()]
         entropy = sum(map(lambda x: -x * math.log(x, 2), probs))
         return entropy
 
@@ -43,7 +49,47 @@ class EntropyDiscretizer(SimpleDiscretizer):
                (math.log(math.pow(3, r) - 2, 2) - (r * ent_U - r1 * ent_U1 - r2 * ent_U2)) / float(n)
         return info_gain < stop
 
-    def find_cut(self, begin, U):
+    def find_cut_lin(self, begin, U):
+        n = len(U)
+        if n > 1:
+            min_cut_ent = self.MAX_ENT
+            min_cut = 1
+            cut = 1
+            dec_fqs = Counter()
+            for elem in U:
+                dec_fqs[self.dec[elem[0]]] += 1
+            dec_fqs_disc = {k: (0, v) for k, v in dec_fqs.iteritems()}
+            all_entropy = self.entropy_from_distribution(len(U), dec_fqs)
+            ent_2 = all_entropy
+            ent_1 = 0
+            for elem in U[:-1]:
+                dec = self.dec[elem[0]]
+                f_1, f_2 = dec_fqs_disc[dec]
+                p_1 = f_1 / float(n) if f_1 > 0 else 1
+                p_2 = f_2 / float(n) if f_2 > 0 else 1
+                ent_1_old = - p_1 * math.log(p_1, 2)
+                ent_2_old = - p_2 * math.log(p_2, 2)
+                dec_fqs_disc[dec] = (f_1 + 1, f_2 - 1)
+                p_1 = (f_1 + 1) / float(n) if f_1 + 1 > 0 else 1
+                p_2 = (f_2 - 1) / float(n) if f_2 - 1 > 0 else 1
+                ent_1_new = - p_1 * math.log(p_1, 2)
+                ent_2_new = - p_2 * math.log(p_2, 2)
+                ent_1 += (ent_1_new - ent_1_old)
+                ent_2 += (ent_2_new - ent_2_old)
+                cut_ent = cut / float(n) * ent_1 + (n - cut) / float(n) * ent_2
+                if cut_ent < min_cut_ent:
+                    min_cut_ent = cut_ent
+                    min_cut = cut
+                cut += 1
+            if not self.stop_criterion(U, min_cut):
+                yield begin + min_cut
+
+                for cut in self.find_cut_lin(begin, U[:min_cut]):
+                    yield cut
+                for cut in self.find_cut_lin(begin + min_cut, U[min_cut:]):
+                    yield cut
+
+    def find_cut_quadr(self, begin, U):
         n = len(U)
         if n > 1:
             cuts = range(1, n)
@@ -58,15 +104,16 @@ class EntropyDiscretizer(SimpleDiscretizer):
             if not self.stop_criterion(U, min_cut):
                 yield begin + min_cut
 
-                for cut in self.find_cut(begin, U[:min_cut]):
+                for cut in self.find_cut_quadr(begin, U[:min_cut]):
                     yield cut
-                for cut in self.find_cut(begin + min_cut, U[min_cut:]):
+                for cut in self.find_cut_quadr(begin + min_cut, U[min_cut:]):
                     yield cut
 
-    def discretize_column(self, column):
+    def discretize_column(self, column, lin=True):
         column = list(column)
         dis = 0
-        cuts_set = sorted(list(self.find_cut(0, column)))
+        cuts_set = sorted(list(self.find_cut_lin(0, column))) if lin else \
+            sorted(list(self.find_cut_quadr(0, column)))
         cur_cut = cuts_set[0]
 
         for i, elem in enumerate(column):
@@ -94,6 +141,6 @@ if __name__ == "__main__":
     discretizer_1 = EntropyDiscretizer(dec_1, 2)
     discretizer_2 = EntropyDiscretizer(dec_2, 2)
     #print discretizer.discretize(table, attrs_list, par=True)
-    print discretizer_1.discretize(table, attrs_list, par=False)
-    print discretizer_2.discretize(table, attrs_list, par=False)
+    print discretizer_1.discretize(table, attrs_list, par=True)
+    print discretizer_2.discretize(table, attrs_list, par=True)
 
