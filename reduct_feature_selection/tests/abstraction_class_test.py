@@ -17,7 +17,7 @@ class AbstractionClassTest(TestCase):
              [0, 1, 1, 1],
              [0, 0, 2, 0]])
         real_result = AbstractionClass(table)
-        real_result = real_result.check_consistent(3, [0, 1])
+        real_result = real_result.get_abstraction_class(3, [0, 1])
         expected_result = [[0, 1, 2], [3, 5, 6], [4, 7]]
         self.assertEqual(expected_result, real_result)
 
@@ -37,12 +37,12 @@ class AbstractionClassTest(TestCase):
             [2, 2, 0, 1, 1],
         ])
         real_result = AbstractionClass(table)
-        real_result = real_result.check_consistent(3, [0, 1])
+        real_result = real_result.get_abstraction_class(3, [0, 1])
         expected_result = [[7, 10], [6], [8], [3, 9], [0, 1], [4, 5], [2], [11]]
         self.assertEqual(expected_result, real_result)
 
     def test_one_class(self):
         table = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
         real_result = AbstractionClass(table)
-        real_result = real_result.check_consistent(2, [0, 1])
+        real_result = real_result.get_abstraction_class(2, [0, 1])
         self.assertEqual(real_result, [[0, 1, 2]])
