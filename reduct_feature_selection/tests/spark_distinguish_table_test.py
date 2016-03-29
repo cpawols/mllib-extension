@@ -76,7 +76,7 @@ class TestDistinguishTable(TestCase):
 
         accepted_rules = A.validate_rules(rules=real_rules, validation_function=A.validation_function_f1,
                                           original_decision_system=A.decision_system)
-        self.assertEqual(real_rules, accepted_rules)
+        self.assertEqual(real_rules, next(accepted_rules))
 
     def test_1(self):
         dec = np.array([[0,1,1,0,1],[1,1,0,1,0]])
