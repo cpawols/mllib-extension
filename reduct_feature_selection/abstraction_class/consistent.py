@@ -34,7 +34,7 @@ class Consistent:
         else:
             return self.CONTRADICTION
 
-    def check_consistent(self, chunk_number):
+    def check_consistent(self, chunk_number=10):
         """
         TODO
         :param chunk_number:
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     ])
 
     is_consistent = Consistent(table)
-    print is_consistent.check_consistent(10)
+    print is_consistent.check_consistent()
 
 
 

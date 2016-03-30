@@ -69,7 +69,7 @@ class SetAbstractionClass:
         card_decision = self.compute_card_decision(decision_distribution, decision_subset)
         return 1.0 * card_upper / card_decision
 
-    def compute_approximation(self, decision_subset, broadcast_abstraction_class, broadcast_decision_system):
+    def compute_approximation(self, decision_subset, broadcast_abstraction_class, broadcast_decision_system, approximation_list=False):
         """
         Compute
         :param broadcast_decision_system:
@@ -89,7 +89,10 @@ class SetAbstractionClass:
         belief = self._compute_belief(lower_approximation, decision_distribution, decision_subset)
         pl = self._compute_pl(upper_approximation, decision_distribution, decision_subset)
 
-        return [belief, pl, decision_subset, lower_approximation, upper_approximation]
+        if approximation_list:
+            return [belief, pl, decision_subset, lower_approximation, upper_approximation]
+        else:
+            return [belief, pl, decision_subset]
 
     @staticmethod
     def _compute_upper_approximation(decision_subset, broadcast_abstraction_class, broadcast_decision_system):
@@ -130,7 +133,7 @@ class SetAbstractionClass:
                 lower_approximation.append(abstraction_class)
         return lower_approximation
 
-    def engine(self, subsets_cardinality=2):
+    def engine(self, subsets_cardinality=2, approximation_list=False):
         """
         TODO
         :return:
@@ -143,7 +146,7 @@ class SetAbstractionClass:
         rdd_decision_subset = Configuration.sc.parallelize(decision_subset)
 
         res = rdd_decision_subset.map(
-            lambda x: self.compute_approximation(x, broadcast_abstraction_class, broadcast_table))
+            lambda x: self.compute_approximation(x, broadcast_abstraction_class, broadcast_table, approximation_list))
         return res
 
     def _create_decision_subsets(self, range_of_subsets):
@@ -197,4 +200,4 @@ if __name__ == "__main__":
 
     table = np.append(table, np.array([[randint(1, 5)] for _ in range(500)]), axis=1)
     a = SetAbstractionClass(table)
-    print a.engine(4).collect()
+    print a.engine(4, approximation_list=False).collect()

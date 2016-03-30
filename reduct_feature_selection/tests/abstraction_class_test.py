@@ -2,7 +2,7 @@
 import numpy as np
 from unittest import TestCase
 
-from reduct_feature_selection.abstraction_class import AbstractionClass
+from reduct_feature_selection.abstraction_class.abstraction_class import AbstractionClass
 
 
 class AbstractionClassTest(TestCase):

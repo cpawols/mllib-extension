@@ -78,6 +78,7 @@ class DistinguishTable:
         :param dictionary_x:
         :param dictionary_y:
         """
+        # TODO Make it faster.
         dicts = [dictionary_x, dictionary_y]
         super_dict = {}
         for d in dicts:
@@ -176,9 +177,10 @@ class DistinguishTable:
                     if attr[0] in attributes:
                         implicants[object[1]] = [attr[0]]
                         break
+#        bor_sc.update(element for attributes in implicants.values() for element in attributes)
         return implicants
 
-    def validate_rules(self, rules, validation_function, original_decision_system=None, treshold=0.5):
+    def validate_rules(self, rules, validation_function, original_decision_system=None, treshold=0.0006):
         """
         Gets a rules from each part and return this rules which have a good answer in more than 'treshold' cases.
 
@@ -206,7 +208,6 @@ class DistinguishTable:
 
             validation_function(accepted_rules, attr_numbers, attr_values, rejected_rules,
                                 numbers_of_all_objects, treshold)
-        print 'Len of accepted rules', len(accepted_rules)
         yield accepted_rules
 
     def validation_function_f1(self, accepted_rules, attr_numbers, attr_values, rejected_rules,
@@ -296,9 +297,10 @@ class DistinguishTable:
         """
         system, decisions = self._prepare_data_make_distinguish_table()
         system_rdd = Configuration.sc.parallelize(system, number_of_chunks)
+        ss = set()
         result = (system_rdd.mapPartitions(
             lambda x: self.make_table(x, decisions)).mapPartitions(
-            lambda x: self._compute_implicants(x, self.first_heuristic_method)).mapPartitions(
+            lambda x: self._compute_implicants(x, self.first_heuristic_method,bor_sc=ss)).mapPartitions(
             lambda x: self.generate_rules_from_implicants(x,
                                                           original_decision_system=self.decision_system)).mapPartitions(
             lambda x: self.validate_rules(x, validation_function=self.validation_function_f1,
@@ -324,20 +326,23 @@ if __name__ == "__main__":
 
     random.seed(1)
     # decision_system = np.array([[1, 0, 2, 1], [1, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
-    decision_system = np.array([[random.randint(0, 4) for _ in range(5000)] for __ in range(700)])
-    decision_system = np.append(decision_system, np.array([[random.randint(0,1)] for _ in range(700)]),1)
+    decision_system = np.array([[random.randint(0, 200) for _ in range(20)] for __ in range(100)])
+    decision_system = np.append(decision_system, np.array([[random.randint(0,10)] for _ in range(100)]),1)
     X_train, X_test, y_train, y_test = train_test_split(decision_system, decision_system[:,-1],
-                                                      test_size=0.33, random_state=42)
+                                                      test_size=0.2, random_state=42)
     clf = tree.DecisionTreeClassifier()
     clf.fit(X_train, y_train)
-    result = clf.predict(X_test)
-    print 'Accuracy of clear decision tree', 1.0*sum(1 for x, y in zip(y_test, result) if x==y)/len(result)
+    # result = clf.predict(X_test)
+    print clf.score(X_test, y_test)
+#    print 'Accuracy of clear decision tree', 1.0*sum(1 for x, y in zip(y_test, result) if x==y)/len(result)
 
     A = DistinguishTable(decision_system)
-    freq = A.engine(decision_system, number_of_chunks=4)
+    # freq = A.engine(decision_system, number_of_chunks=4)
 
-    select_attr = [attr for attr in freq.keys() ]
-    print select_attr
+    # select_attr = [attr for attr in freq.keys() ]
+
+
+    print 'Select atttributes',  len(select_attr)
 
     X_train = X_train[:, select_attr]
     #print X_train
@@ -345,11 +350,11 @@ if __name__ == "__main__":
     clf2.fit(X_train, y_train)
     result2 = clf2.predict(X_test[:,select_attr])
     print 'Accuracy of selected tree', 1.0*sum(1 for x, y in zip(y_test, result2) if x==y)/len(result2)
-    # A.print_rules(rules)
-    # print A.get_attribute_rank_from_rules(rules)
-    # A.generate_rules_from_implicants(implicants, original_decision_system=decision_system)
-    # result = A.spark_part(number_of_chunks=1)
-    # print result
-    pass
+    # # A.print_rules(rules)
+    # # print A.get_attribute_rank_from_rules(rules)
+    # # A.generate_rules_from_implicants(implicants, original_decision_system=decision_system)
+    # # result = A.spark_part(number_of_chunks=1)
+    # # print result
+    # pass
     # TODO merge rules by keys
     # TODO Take a negation of the rules
