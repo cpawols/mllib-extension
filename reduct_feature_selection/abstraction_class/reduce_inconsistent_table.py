@@ -36,11 +36,11 @@ class ReduceInconsistentTable:
             decision = []
             for objects in abstraction:
                 decision.append(self.table[objects][-1])
-            reduced_table.append(tuple(self.table[objects][:-1]) + (tuple(tuple(decision)),))
+            reduced_table.append(tuple(self.table[objects][:-1]) + (tuple(tuple(set(decision))),))
         return reduced_table
 
 
 if __name__ == "__main__":
-    table_to_reduce = np.array([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 0, 1]])
+    table_to_reduce = np.array([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 0, 1], [1, 1, 0, 1], [2, 2, 1, 1]])
     a = ReduceInconsistentTable(table_to_reduce)
-    a.reduce_table()
+    print a.reduce_table()

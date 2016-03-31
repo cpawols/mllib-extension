@@ -69,7 +69,8 @@ class SetAbstractionClass:
         card_decision = self.compute_card_decision(decision_distribution, decision_subset)
         return 1.0 * card_upper / card_decision
 
-    def compute_approximation(self, decision_subset, broadcast_abstraction_class, broadcast_decision_system, approximation_list=False):
+    def compute_approximation(self, decision_subset, broadcast_abstraction_class, broadcast_decision_system,
+                              approximation_list=False):
         """
         Compute
         :param broadcast_decision_system:
@@ -92,7 +93,7 @@ class SetAbstractionClass:
         if approximation_list:
             return [belief, pl, decision_subset, lower_approximation, upper_approximation]
         else:
-            return [belief, pl, decision_subset]
+            return [abs(belief - pl), decision_subset]
 
     @staticmethod
     def _compute_upper_approximation(decision_subset, broadcast_abstraction_class, broadcast_decision_system):
@@ -103,7 +104,6 @@ class SetAbstractionClass:
         :param decision_system:
         :return:
         """
-
         upper_approximation = []
 
         for abstraction_class in broadcast_abstraction_class.value:
@@ -196,8 +196,10 @@ if __name__ == "__main__":
         ]
     )
 
-    table = np.array([[randint(0, 6) for _ in range(4)] for _ in range(500)])
+    # table = np.array([[randint(0, 6) for _ in range(5)] for _ in range(5000)])
 
-    table = np.append(table, np.array([[randint(1, 5)] for _ in range(500)]), axis=1)
+    # table = np.append(table, np.array([[randint(1, 50)] for _ in range(5000)]), axis=1)
     a = SetAbstractionClass(table)
-    print a.engine(4, approximation_list=False).collect()
+    res = a.engine(2, approximation_list=True).collect()
+    res = sorted(res)
+    print res

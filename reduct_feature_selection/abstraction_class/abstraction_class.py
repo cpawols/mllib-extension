@@ -51,7 +51,7 @@ class AbstractionClass:
         return res.values()
 
     def my_map(self, list_of_tuples):
-        print broadcastVar.value
+
         result = {}
         for tuple in list_of_tuples:
             if tuple[:-1] in result:

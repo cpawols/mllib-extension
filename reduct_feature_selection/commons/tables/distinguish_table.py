@@ -17,12 +17,8 @@ import random
 from collections import Counter
 from numpy.ma import transpose, copy
 
-from sklearn.cross_validation import train_test_split
-import reduct_feature_selection
-
-from sklearn import tree
 from settings import Configuration
-
+import reduct_feature_selection
 
 class DistinguishTable:
     def __init__(self, decision_system):
@@ -326,30 +322,31 @@ if __name__ == "__main__":
 
     random.seed(1)
     # decision_system = np.array([[1, 0, 2, 1], [1, 1, 2, 0], [1, 1, 1, 1], [3, 3, 3, 1], [2, 1, 0, 0]])
-    decision_system = np.array([[random.randint(0, 200) for _ in range(20)] for __ in range(100)])
-    decision_system = np.append(decision_system, np.array([[random.randint(0,10)] for _ in range(100)]),1)
-    X_train, X_test, y_train, y_test = train_test_split(decision_system, decision_system[:,-1],
-                                                      test_size=0.2, random_state=42)
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
+    #decision_system = np.array([[random.randint(0, 200) for _ in range(20)] for __ in range(100)])
+    #decision_system = np.append(decision_system, np.array([[random.randint(0,10)] for _ in range(100)]),1)
+    #X_train, X_test, y_train, y_test = train_test_split(decision_system, decision_system[:,-1],
+    #                                                  test_size=0.2, random_state=42)
+    # clf = tree.DecisionTreeClassifier()
+    # clf.fit(X_train, y_train)
     # result = clf.predict(X_test)
-    print clf.score(X_test, y_test)
+    # print clf.score(X_test, y_test)
 #    print 'Accuracy of clear decision tree', 1.0*sum(1 for x, y in zip(y_test, result) if x==y)/len(result)
 
+    decision_system = np.array([[0,1,1,2],[1,1,2,1],[1,1,1,2],[0,1,2,1]])
     A = DistinguishTable(decision_system)
-    # freq = A.engine(decision_system, number_of_chunks=4)
-
+    freq = A.engine(decision_system, number_of_chunks=4)
+    print  freq
     # select_attr = [attr for attr in freq.keys() ]
 
 
-    print 'Select atttributes',  len(select_attr)
+    # print 'Select atttributes',  len(select_attr)
 
-    X_train = X_train[:, select_attr]
+    # X_train = X_train[:, select_attr]
     #print X_train
-    clf2 = tree.DecisionTreeClassifier()
-    clf2.fit(X_train, y_train)
-    result2 = clf2.predict(X_test[:,select_attr])
-    print 'Accuracy of selected tree', 1.0*sum(1 for x, y in zip(y_test, result2) if x==y)/len(result2)
+    # clf2 = tree.DecisionTreeClassifier()
+    # clf2.fit(X_train, y_train)
+    # result2 = clf2.predict(X_test[:,select_attr])
+    # print 'Accuracy of selected tree', 1.0*sum(1 for x, y in zip(y_test, result2) if x==y)/len(result2)
     # # A.print_rules(rules)
     # # print A.get_attribute_rank_from_rules(rules)
     # # A.generate_rules_from_implicants(implicants, original_decision_system=decision_system)
