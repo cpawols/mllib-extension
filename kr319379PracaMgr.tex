@@ -1,0 +1,533 @@
+\documentclass[magisterska]{pracamgr}
+\usepackage[usenames,dvipsnames]{xcolor}
+
+\usepackage[MeX,plmath]{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{enumerate}
+\usepackage{color}
+\usepackage{amsfonts}
+\usepackage{fancyhdr}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{textcomp}
+\usepackage{tikz}
+
+\usepackage{t1enc}
+\usepackage{a4wide}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{enumerate}
+\usepackage{verbatim}
+\usepackage{geometry}
+\geometry{left=1in,right=1in,%
+bindingoffset=0mm, top=1in, bottom=1in}
+\usepackage{amssymb, latexsym}
+\usepackage{amsthm}
+\usepackage{palatino}
+\usepackage{array}
+\usepackage[]{algorithm2e}
+%\usepackage{pstricks}
+\usepackage{textcomp}
+\usepackage{listings}
+\usepackage[export]{adjustbox}
+\lstset{language=Python}
+
+
+
+\author{Krzysztof Rutkowski}
+
+\nralbumu{319379}
+
+\title{Wybrane metody dyskretyzacji i generowania nowych cech z zastosowaniem paradygmatu MapReduce}
+
+\tytulang{Discretization and feature extraction methods with application of MapReduce paradigm}
+
+\kierunek{Matematyka}
+
+
+\opiekun{prof.dr.hab Andrzej Skowron\\
+  Zakład Logiki Matematycznej\\
+  }
+
+\date{Czerwiec 2016}
+
+\dziedzina{ 
+11.1 Matematyka\\ 
+}
+
+%Klasyfikacja tematyczna wedlug AMS (matematyka) lub ACM (informatyka)
+\klasyfikacja{sztuczna inteligencja, systemy decyzyjne}
+
+\keywords{discretization, feature extraction, decision system, mapreduce}
+
+% Tu jest dobre miejsce na Twoje wżasne makra i~żrodowiska:
+\newtheorem{thm}{Thm}[chapter]
+\theoremstyle{plain}
+\newtheorem{twierdzenie}[thm]{Twierdzenie}
+\newtheorem{stwierdzenie}[thm]{Stwierdzenie}
+\newtheorem{wniosek}[thm]{Wniosek}
+\newtheorem{lemat}[thm]{Lemat}
+\newtheorem{przyklad}[thm]{Przykład}
+
+\theoremstyle{definition}
+\newtheorem{definicja}[thm]{Definicja}
+
+\theoremstyle{remark}
+\newtheorem{uwaga}[thm]{Uwaga}
+\newtheorem{zadanie}{Zadanie}
+
+\renewcommand{\Re}{\mathrm{Re}}
+\renewcommand{\Im}{\mathrm{Im}}
+\newcommand{\wek}{\begin{pmatrix} k \\
+		l \end{pmatrix}}
+
+\newcommand{\wekx}{\begin{pmatrix} x \\
+		y \end{pmatrix}}		
+
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+
+% koniec definicji
+
+\begin{document}
+
+%tu idzie streszczenie na strone poczatkowa
+\begin{abstract}
+TODO
+\end{abstract}
+
+\tableofcontents
+%\listoffigures
+%\listoftables
+
+
+%\chapter{Wprowadzenie}
+\chapter{Podstawowe informacje}\label{r:pojecia}
+
+\begin{definicja}
+Systemem decyzyjnym ($ang. \ Decision \ System$) nazwiemy następującą
+trójkę obiektów $\mathbb{S} = (U, A \cup d)$, gdzie
+\begin{itemize}
+ \item U jest skończonym zbiorem, którego elementami są obiekty:
+    \begin{align*}
+	    U = \{u_1, \ldots, u_n \}  
+    \end{align*}
+
+ \item A jest skończonym zbiorem atrybutów warunkowych (cech) takim, że dla każdego $ a \in A$ istnieje funkja
+    \begin{align*}
+	  a:U \rightarrow V^{a}
+    \end{align*}
+    gdzie przez $V^{a}$ oznaczamy zbiór wartości atrybutów,
+    
+ \item d jest skończonym zbiorem atrybutów, które nazywamy atrybutami decyzyjnymi.
+    \begin{align*}
+     d: U \rightarrow \{d_1, \ldots d_k\},
+    \end{align*}
+  gdzie zbiór $\{d_1, \ldots d_k\}$, jest to zbiór wszystkich możliwych decyzji.
+\end{itemize}
+
+\end{definicja}
+
+Jedną z możliwości reprezentacji systemu decyzyjnego  \ref{SystemDecyzyjny:1.1} jest dwuwymiarowa tabela.
+W poszczególnych wierszach tabeli znajdują się obiekty $\{u_1, \ldots, u_n \}$,
+natomiast w kolumnach znajdują się wartości atrybutów $\{a_{11}, \ldots, a_{nn} \}$.
+Dokładniej mówiąc w $i$-tym wierszu znajduje się wartość  $j$-tego atrybutu ($a_{i}$) dla obiektu $u_{i}$.
+W ostatniej kolumnie umieszczony jest atrybut decyzyjny $d_{i}$ dla obiektu $u_i$
+
+\begin{center}
+  \begin{tabular}{  l || l l l | r }
+  \label{SystemDecyzyjny:1.1}
+    $U$ & $a_1$ & $\ldots$ & $a_n$ & $dec$ \\ 
+    \hline
+  
+    $u_1$ & $a_{11}$ & $\ldots $ & $a_{1n} $ & $d_{1}$ \\
+    $u_2$ & $a_{21}$ & $\ldots $ & $a_{2n} $ & $d_{2}$ \\ 
+    \ \ $\vdots$ & \ \ $\vdots$ & \ \ $\vdots$ & \   $\vdots$ & $\vdots$ \\ 
+    $u_n$ & $a_{n1}$ & $\ldots $ & $a_{nn} $ & $d_{n}$ \\     
+  \end{tabular}\par
+  \bigskip 
+  \ref{SystemDecyzyjny:1.1} : System decyzyjny
+
+\end{center}
+
+Obiektami tablicy decyzyjnej mogą być takie rzeczy jak szeregi czasowe, ludzie,
+papiery wartościowe i inne. \newline Dla przykładu rozważmy tablicę decyzyjną,
+której obiektami są ludzie. Rozważmy pacjentów, którzy zostali przebadani pod kątem białaczki.
+Każdemu pacjentowi zbadano kilkanaście genów. Wynikiem tego padania jest kilkanaście 
+liczb rzeczywistych opisujących poszczególne geny. Na podstawie wyników badań lekarz diagnozował pacjentów.
+\newline
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $Pacjent$     & gen 1 & gen 2 & gen 3 & Chory \\ 
+  \hline
+  $pacjent_{1}$ & 0.02       & 0.12       & 1.2    & Tak \\
+  $pacjent_{2}$ & -0.45      & 4.56       & 2.3    & Nie \\
+  $pacjent_{3}$ & 1.32       & 2.3        & 0.01   & Tak \\
+  $pacjent_{4}$ & 1.23       & 1.2        & 2.12   & Nie \\
+ \end{tabular}
+\end{center}
+W powyższej sytuacji obiekt (pacjent) tablicy decyzyjnej zawiera ciąg liczb (każda traktowana jako
+jeden atrybut), które zostały uzyskane podczas przeprowadzonego badnia. Ostatnim elementem wiersza
+jest atrybut decyzyjny(decyzja), stwierdzająca czy pacjent jest chory.
+\newline
+Często zdarza się tak, że w tabeli występują wartości rzeczywiste, np w powyższych danych medycznych, gdzie 
+wyniki badań mają wartości z pewnego przedziału bądź gdy mamy podane pewne ciągłe wielkości fizyczne, np
+temperaturę. Z różnych względów, np wymagają tego niektóre klasyfikatory, chcieliśmy mieć tabelę z wartościami
+nominalnymi. I tak, np poniższą tabelę:
+
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temparatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Nie \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Tak \\
+  $u_{4}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+
+Moglibyśmy zastąpić tabelą:
+
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temparatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & niska      & mała      & słabe          & Nie \\
+  $u_{2}$ & średnia    & duża      & umiarkowane    & Nie \\
+  $u_{3}$ & wysoka     & mała      & słabe   	    & Tak \\
+  $u_{4}$ & średnia    & mała      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+
+\newpage
+Wprowadzę teraz wstępne pojęcia dotyczące dyskretyzacji atrybutów rzeczywistych.
+
+
+\begin{definicja}[Niesprzeczna tabela decyzyjna]
+Tabela  $\mathbb{S} =(U, A, \{d\} )$  jest niesprzeczna, jeśli dla dowolnych dwóch obiektów $u_{1}$ i $u_{2}$:
+  \begin{align*}
+     (a_{1}(u_{1}), a_{2}(u_{1}), ..., a_{k}(u_{1})) = (a_{1}(u_{2}), a_{2}(u_{2}), ..., a_{k}(u_{2})) \Rightarrow 
+     d(u_{1}) = d(u_{2})
+  \end{align*}.
+Tj jeśli mamy te same wartości na atrybutach musimy mieć te same decyzje.
+\end{definicja}
+
+\begin{definicja}[Podział atrubutu]
+Dla tabeli  $\mathbb{S} =(U, A, \{d\} )$  i zbioru cięć dla atrubutu $a$:
+\begin{align*}
+     c_{0}^{a} < c_{1}^{a} < ... < c_{k_{a}}^{a} < c_{k_{a} + 1}^{a}
+  \end{align*}
+definiujemy podział (dyskretyzacje) atrubutu $a$ jako:
+  \begin{align*}
+     P_{a} = {[c_{0}^{a}, c_{1}^{a}], ... , [c_{k_{a}}^{a}, c_{k_{a} + 1}^{a}]}
+  \end{align*}
+Zaś podział całego uniwersum jako:
+  \begin{align*}
+     P = \cup_{a \in A} P_{a}
+  \end{align*}
+\end{definicja}
+
+\begin{uwaga}
+Szukanie niesprzecznego zbioru cięć o najmniejszej mocy jest $NP$-zupełny.
+Dowód poprzez sprowadzenie do problemy $SET COVER$.
+\end{uwaga}
+
+
+\chapter{Skalowalność}
+
+Większość algorytmów została zaimplementowana w sposób skalowalny za pomocą frameworku 
+do obliczeń równoległych $Apache Spark$ bazującego na paradygmacie MapReduce.
+Na wstępie przytoczę kilka definicji przydatnych w dalszej części omawiania Sparka.
+
+\section{Wstępne definicje}
+\begin{definicja}[Programowanie funkcyjne]
+Filozofia i metodyka programowania będąca odmianą programowania deklaratywnego, 
+w której funkcje należą do wartości podstawowych, a nacisk kładzie się na wartościowanie 
+(często rekurencyjnych) funkcji, a nie na wykonywanie poleceń.
+W czystym programowaniu funkcyjnym, raz zdefiniowana funkcja zwraca zawsze 
+tę samą wartość dla danych wartości argumentów, tak jak funkcje matematyczne.
+W czystych językach funkcyjnych nie występują zmienne ani efekty uboczne, 
+a wartościowanie jest leniwe, tj wykonywanie obliczenia następuje tylko w momencie, gdy jest to potrzebne.
+\end{definicja}
+
+\begin{definicja}[Klaster]
+Grupa połączonych jednostek komputerowych, które współpracują ze sobą w celu udostępnienia zintegrowanego środowiska pracy.
+Komputery wchodzące w skład klastra (będące członkami klastra) nazywamy węzłami (ang. node).
+\end{definicja}
+
+\begin{definicja}[HDFS]
+Hadoop Distributed File System, rozproszony, skalowalny, spójny system plików używany przez framework Apache Spark.
+\end{definicja}
+
+\begin{definicja}[RDD]
+Resilent Distributed Dataset, podstawowa struktura danych w Sparku. RDD jest kolekcją elementów dystrybuowaną pomiędzy 
+węzły klastra, na których operacje mogą być wykonywane równolegle. Po zakończenie operacji na RDD można je dalej 
+przechowywać w pamięci RAM, co umożliwia szybsze dostęp do następnych obliczeń. 
+\end{definicja}
+
+
+\section{Paradygmat MapReduce}
+
+Paradygmat MapReduce został wprowadzony przez firmę $Google$ i służy do równoległego przetwarzania
+dużych danych przy użyciu klastra.
+Rozproszenie obliczeń pomaga w istotny sposób zmniejszyć czas wykonywanych zadań.
+Apache Spark jest niejako rozszerzeniem wprowadzonego paradygmatu. 
+Jak każdy framework do obliczeń na klastrze posiada pod sobą rozproszony system plików (HDFS), 
+a także oprogramowanie (dla workerów i mastera), które odpowiada za zarządzanie awariami, przydzielanie 
+zadań i organizację. 
+\newpage
+
+\begin{figure}
+ \caption{architektura Sparka}
+ \includegraphics[scale=0.8]{spark-architecture.png}
+\end{figure}
+
+Spark jest dedykowany dla języka funkcyjnego - Scali, algorytmy zostały jednak napisane w pythonie, który 
+mimo, iż językiem funkcyjnym nie jest, posiada jednak cechy języków funkcyjnych. 
+
+Typowy potok obliczeń w Sparku polega na:
+\begin{itemize}
+ \item Stworzeniu RDD bazującego na kolekcji utrzymywanej w programie
+ \item Wykonaniu transformacji na RDD
+ \item Wykonanie akcji
+\end{itemize}
+
+Funkcje w Sparku dzielą się na transformacje i akcje. 
+\begin{itemize}
+ \item \textbf{Transformacja} jest funkcją działającą na RDD i zwracającą RDD
+ \item \textbf{Akcja} jest funkcją działającą na RDD i zwracającą kolekcję do programu po zakończeniu obliczeń
+\end{itemize}
+Zarówno akcje, jak i transformacje wykonywane są leniwie. Przykłady transformacji:
+\begin{itemize}
+ \item \textbf{map(f)} - zwraca nowy RDD aplikując funkcję $f$ do każdego elementu RDD
+ \item \textbf{filter(f)} - zwraca nowy RDD składający się tylko z tych elementów, dla których funkcja $f$ zwróci True
+ \item \textbf{reduceByKey(f)} - dla RDD postaci (klucz, wartość), grupuje według kluczy i zwraca RDD z agregacją wartości 
+ za pomocą funkcji $f$ dla zgrupowanych kluczy
+\end{itemize}
+
+Przykłady akcji:
+\begin{itemize}
+ \item \textbf{reduce(f)} - zwraca kolekcję będą agregacją RDD za pomocą funkcji $f$, która przyjmuje dwa 
+ argumenty i zwraca jeden
+ \item \textbf{collect()} - zwraca kolekcję elementów do programu
+\end{itemize}
+
+W powyższych przykładach zamiast funkcji $f$ można użyć wyrażeń lambda (funkcji anonimowych).
+
+Przykład, zliczanie słów w języku python:
+\begin{lstlisting}[frame=single] 
+words = ["ala", "ma", "ala", "kota", "ma"]
+#tworzenie rdd na podstawie listy
+words_rdd = sc.paralellize(words)          
+words_counts =  words_rdd.
+		map(lambda x: (x, 1)).
+		reduceByKey(lambda x, y: x+y)
+\end{lstlisting}
+
+Obliczenia wykonywane w Sparku są nie tylko skalowalne, ale również szybkie ze względu na:
+\begin{itemize}
+ \item leniwość wykonywanych operacji, obliczenia wykonywane są tylko wtedy gdy są potrzebne (ważna cecha
+ języków funkcyjnych)
+ \item możliwość przechowywania rozproszonych struktur danych (RDD) w pamięci RAM, co powoduje szybszy dostęp do danych
+ podczas ponownego przetwarzania (np w Hadoop MapReduce musieliśmy dane wczytywać z HDFS)
+\end{itemize}
+
+\newpage
+
+\begin{figure}
+ \caption{porównanie szybkości działania Hadoop MapReduce i Spark na przykładzie regresji logistycznej}
+ \includegraphics[scale=0.8]{spark-hadoop.png}
+\end{figure}
+
+
+\chapter{Skalowalne algorytmy dyskretyzacji}
+
+W tym rozdziale omówię zaimplementowane algorytmy dyskretyzacji, jak i przedstawię wyniki eksperymentów i obliczeń.
+Algorytmy dyskretyzacji dzielimy na globalne i lokalne. Lokalne szukają cięć dla każdego atrybutu niezależnie, przez 
+co w naturalny sposób łatwo je zrównoleglić, zgodnie ze schematem:
+\begin{lstlisting}[frame=single] 
+columns_rdd = sc.paralellize(table, numer_of_columns)          
+discretized_columns = columns_rdd.
+		      mapPartitions(discretizeColumn).
+		      collect()
+\end{lstlisting}
+Gdzie funkcja discretizeColumn przyjmuje kolumnę liczb rzeczywistych tabeli decyzyjnej i zwraca
+jej dyskretyzację.
+Metody globalne szukają zbioru cięć dla całej tabeli, przez co trudniej je zrównoleglić.
+Niżej przedstawię 3 algorytmy lokalne i jeden globalny.
+
+\section{Sprawdzanie spójności tabeli}
+By dyskretyzacja miała sens, potrzebujemy sprawdzić czy tabela jest spójna, w Sparku możemy 
+to w prosty sposób zrobić za pomocą poniższego algorytmu:
+\begin{lstlisting}[frame=single] 
+def get_unique_dec(x, y):
+  return tuple(set(x + y))
+# rows_rdd = (row, (dec,))
+rows_rdd = sc.paralellize(table, numer_of_rows)
+one_dec = rows_rdd.
+	  reduceByKey(get_unique_dec).
+	  map(lambda k, v: len(v) == 1).
+	  collect()
+is_consistent = all(one_dec)
+\end{lstlisting}
+\section{Opis algorytmów}
+\subsection{Algorytmy lokalne}
+Wszystkie z poniższych algorytmów są zrównoleglane ze względu na kolumnę, tak 
+jak było to napisane we wstępie. Różnią się metodą discretizeColumn.
+\subsubsection{Sortowanie}
+Wszystkie niżej wymienione algorytmy operują na posortowanych kolumnach. By posortować całą tabelę najpierw
+sprowadzam ją do postaci EAV, tj listy trójek (Obiekt, Atrybut, Wartość), a następnie sortuję tę listę 
+najpierw względem wartości, potem obiektów, a następnie atrybutów, otrzymujemy listę posortowanych wartości
+zgrupowanych względem atrybutów. W Sparku wykonujemy sortowanie równoległe, dzieląc listę na kawałki, 
+sortując równolegle każdy kawałek, a następnie scalając wszystkie części, kod algorytmu:
+\begin{lstlisting}[frame=single]
+def compare(iterator):
+  yield sorted(iterator, key=lambda x: (x[1], x[2], x[0]))
+
+def merge_sort():
+  num_chunks = 10
+  eav_rdd_part = Configuration.sc.parallelize(eav, num_chunks)
+  self.eav =  eav_rdd_part.
+	      mapPartitions(compare).
+	      reduce(lambda x, y: 
+	      sorted(x+y, key=lambda x: (x[1], x[2], x[0])))
+\end{lstlisting}
+
+\subsubsection{Algorytm bazowy}
+Jest to prosty algorytm polegający na wykonywania cięć w równych odstępach, co $m$ obiektów, gdzie
+$m$ jest parametrem. Przy czym kolumna 
+Jego zaletą jest prostota, jednak wogóle nie patrzymy na decyzję.
+Kod algorytmu:
+\begin{lstlisting}[frame=single] 
+def discretizeColumn(column, m):
+  for ind, row in enumerate(column):
+    yield (row[0], row[1], ind / m)
+\end{lstlisting}
+
+\begin{przyklad}[Przykładowa dyskretyzacja]
+Dla tabeli:
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Nie \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Tak \\
+  $u_{4}$ & 15     & 50      & deszcz         & Nie \\
+  $u_{5}$ & 15     & 30      & deszcz         & Nie \\
+  $u_{6}$ & 30     & 70      & deszcz         & Nie \\
+  $u_{7}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+Oraz $m$ = 3, mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgotność):
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0     & 0      & słabe          & Nie \\
+  $u_{2}$ & 0     & 2      & umiarkowane    & Nie \\
+  $u_{3}$ & 1     & 0      & słabe   	    & Tak \\
+  $u_{4}$ & 0     & 1      & deszcz         & Nie \\
+  $u_{5}$ & 1     & 0      & deszcz         & Nie \\
+  $u_{6}$ & 2     & 1      & deszcz         & Nie \\
+  $u_{7}$ & 1     & 1      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+\end{przyklad}
+\subsubsection{OneR Discretizer}
+W tym algorytmie wykonujemy cięcia w miejscach, w których 
+jednej z decyzji jest więcej niż innych, przy czym dany przedział musi zawierać więcej niżej
+$m$ elementów, gdzie $m$ jest ustalonym parametrem.
+Algorytm:
+\begin{lstlisting}[frame=single]
+def discretize_column(column, m):
+        new_dec = 0
+        block_elements = 0
+        dec_histogram_block = Counter()
+        for elem in column:
+
+            if block_elements > m and
+	       most_common(dec_histogram_block) > block_elements / 2:
+                block_elements = 0
+                new_dec += 1
+                dec_histogram_block = Counter()
+            dec_histogram_block[decision(elem)] += 1
+            block_elements += 1
+
+            yield (elem[0], elem[1], new_dec)
+\end{lstlisting}
+\begin{przyklad}[Przykładowa dyskretyzacja]
+Dla tabeli:
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Nie \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Tak \\
+  $u_{4}$ & 15     & 50      & deszcz         & Nie \\
+  $u_{5}$ & 15     & 30      & deszcz         & Nie \\
+  $u_{6}$ & 30     & 70      & deszcz         & Nie \\
+  $u_{7}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+Oraz $m$ = 4, mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgotność):
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0     & 0      & słabe          & Nie \\
+  $u_{2}$ & 0     & 1      & umiarkowane    & Nie \\
+  $u_{3}$ & 1     & 0      & słabe   	    & Tak \\
+  $u_{4}$ & 0     & 0      & deszcz         & Nie \\
+  $u_{5}$ & 0     & 0      & deszcz         & Tak \\
+  $u_{6}$ & 1     & 1      & deszcz         & Nie \\
+  $u_{7}$ & 1     & 0      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+\end{przyklad}
+\subsubsection{Dyskretyzacja za pomocą entropii}
+\subsection{Algorytmy globalne}
+\subsubsection{Algorytm oparty o heurystykę zachłanną i algorytmy genetyczne}
+\section{Wyniki eksperymentów}
+
+
+\chapter{Generowanie nowych cech na podstawie algorytmów genetycznych}
+
+W tym rozdziale omówię uogólnienie pojęcia dyskretyzacji jako generowanie nowych cech i omówię
+znajdowanie nowych cech za pomocą hiperpłaszczyzn i algorytmu genetycznego.
+
+\section{Dyskretyzacja jako generowanie nowych cech}
+\section{Generowanie nowych cech przez hiperpłaszczyzny}
+\section{Algorytmy ewolucyjne}
+\section{Rozszerzenie na krzywe wyższych rzędów}
+\section{Wyniki eksperymentów}
+
+\begin{thebibliography}{9}
+
+\bibitem{Discretization}
+  Hun Son Nguyen,
+  \emph{Approximate Boolean Reasoning: Foundations and Applications in Data Mining}.
+  Institute of Mathematics, Warsaw University,
+  1998.
+\bibitem{Hyperplanes}
+  Hun Son Nguyen,
+  \emph{From Optimal Hyperplanes to Optimal Decision Trees}.
+  Institute of Mathematics, Warsaw University,
+  1998.
+\bibitem{BooleanGenetic}
+  Srilatha Chebrolu, Sriram G Sanjeevi,
+  \emph{Rough set theory for discretization based on boolean reasoning and 
+  genetic algorithm}.
+  Department of Computer Science and Engineering, NIT Warangal, India,
+  2012.
+\bibitem{SparkDocumentation}
+ Spark Documentation,
+ \emph{http://spark.apache.org/docs/latest/programming-guide.html}
+
+\end{thebibliography}
+ 
+\end{document}
