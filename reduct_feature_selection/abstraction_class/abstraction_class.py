@@ -68,7 +68,7 @@ class AbstractionClass:
                 y[key] = value
         return y
 
-    def standalone_abstraction_class(self, ):
+    def standalone_abstraction_class(self):
         d = {}
         for i, row in enumerate(self.table):
             if tuple(row[:-1]) in d:

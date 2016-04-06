@@ -17,11 +17,11 @@ class ReduceInconsistentTable:
 
         :return:
         """
-        consistent = Consistent(self.table)
-        if consistent.check_consistent():
-            return self.table
-        else:
-            return self._reduce()
+        #consistent = Consistent(self.table)
+        #if consistent.check_consistent():
+        #    return self.table
+        #else:
+        return self._reduce()
 
     def _reduce(self):
         """
