@@ -2,28 +2,27 @@
 TODO
 """
 
+import itertools
 import numpy as np
 from collections import Counter
-
-import itertools
 from operator import add
 
 
 class GenerateRules:
     @staticmethod
-    def generate_all_rules(br_decision_table):
+    def generate_all_rules(br_decision_table, cut_rules=False, treshold=0.9):
         """TODO"""
         objects_number = br_decision_table.shape[0]
         rules = []
         for i in range(objects_number):
-            rules.append(GenerateRules.engine(i, br_decision_table))
-        return reduce(add,rules)
+            rules.append(GenerateRules.engine(i, br_decision_table, cut_rules, treshold))
+        return reduce(add, rules)
 
     @staticmethod
-    def engine(row_number, br_table=None):
+    def engine(row_number, br_table=None, cut_rules=False, treshold=0.9):
         dis = GenerateRules.generate_distinguish_row(row_number, br_table)
         implicants = GenerateRules.build_implicant(dis, br_table)
-        return GenerateRules.build_rules(implicants, row_number, br_table)
+        return GenerateRules.build_rules(implicants, row_number, br_table, cut_rules, treshold)
 
     @staticmethod
     def generate_distinguish_row(object_number, br_decision_table):
@@ -81,11 +80,17 @@ class GenerateRules:
         return Counter(attribute for element in distinguish_row for attribute in element)
 
     @staticmethod
-    def build_rules(implicants, object_number, br_decision_table=None):
+    def build_rules(implicants, object_number, br_decision_table=None, cut_rules=False, treshold=0.9):
         """TODO"""
         rules = []
         for implicant in implicants:
             rules.append(GenerateRules.build_rule(implicant, object_number, br_decision_table))
+        if cut_rules is True:
+            cuted_rules = []
+            for rule in rules:
+                cuted_rules.append(GenerateRules.cut_rule(rule, treshold=treshold, br_decision_table=br_decision_table))
+            for i in filter(lambda x: len(x) > 0, cuted_rules):
+                rules.extend(i)
         return rules
 
     @staticmethod
@@ -98,19 +103,31 @@ class GenerateRules:
         return {key: attributes_values}
 
     @staticmethod
-    def cut_rule(rule):
+    def cut_rule(rule, treshold=0.9, br_decision_table=None):
         """TODO"""
         attributes = set()
-        #rule_size =
-        print rule
-        # for key in rule.keys():
-        #     for attribute in key:
-        #         attributes.add(attribute)
+        accepted_rules = []
+        rule_size = len(reduce(add, rule.values())) - 1
+        if rule_size > 1:
+            for key in rule.keys():
+                for attribute in key:
+                    attributes.add(attribute)
 
-        # combinations = [ set(itertools.combinations(attributes, i)) for i in range(1,rule_size)]
-        # print combinations
+            combinations = reduce(add,
+                                  list(list(itertools.combinations(list(attributes), i)) for i in range(1, rule_size)))
 
+            for combination in combinations:
+                new_attributes = tuple([e for e in rule.keys()[0] if e not in combination])
 
+                to_remove = [i for i, e in enumerate(rule.keys()[0]) if e in combination]
+                new_values = [e for i, e in enumerate(rule.values()[0]) if i not in to_remove]
+                new_rule = {new_attributes: new_values}
+                accuracy = GenerateRules.compute_accuracy(new_rule, br_decision_table)
+                if accuracy > treshold:
+                    accepted_rules.append(new_rule)
+                else:
+                    print 'rejected rule', new_rule, ' with accuracy', accuracy
+        return accepted_rules
 
     @staticmethod
     def compute_coverage(rule, br_decision_table):
@@ -130,8 +147,18 @@ class GenerateRules:
     @staticmethod
     def compute_accuracy(rule, br_decision_table):
         """TODO"""
-        pass
-
+        coverage = 0
+        correct_decision = 0
+        for i, row in enumerate(br_decision_table):
+            cover = True
+            for attribute, value in zip(rule.keys()[0], rule.values()[0][:-1]):
+                if row[attribute] != value:
+                    cover = False
+            if cover is True:
+                coverage += 1
+                if br_decision_table[i][-1] == rule.values()[0][-1]:
+                    correct_decision += 1
+        return correct_decision / (coverage * 1.0)
 
 
 if __name__ == "__main__":
@@ -145,7 +172,7 @@ if __name__ == "__main__":
                       [1, 1, 1, 0, 1],
                       [1, 0, 0, 1, 0]])
 
-    x = GenerateRules.generate_all_rules(table)
+    x = GenerateRules.generate_all_rules(table, cut_rules=False, treshold=1)
+    print len(x)
     print x
 
-    GenerateRules.cut_rule(x[1])
