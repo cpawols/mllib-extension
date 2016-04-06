@@ -21,7 +21,7 @@ class GenerateRules:
     @staticmethod
     def engine(row_number, br_table=None, cut_rules=False, treshold=0.9):
         dis = GenerateRules.generate_distinguish_row(row_number, br_table)
-        implicants = GenerateRules.build_implicant(dis, br_table)
+        implicants = GenerateRules.build_implicant(dis)
         return GenerateRules.build_rules(implicants, row_number, br_table, cut_rules, treshold)
 
     @staticmethod
@@ -56,23 +56,27 @@ class GenerateRules:
         return False
 
     @staticmethod
-    def build_implicant(distiguish_row, object_number):
+    def build_implicant(distiguish_row):
         attribute_frequency = GenerateRules._get_frequency_distinguish_row(distiguish_row).most_common()
         distiguish_row_copy = distiguish_row[:]
         implicants = []
         while GenerateRules._check_length_of_distinguish_filed(distiguish_row_copy) is not True:
             implicant = []
             to_coverage = len(distiguish_row_copy)
+            coveraged = []
             for attribute_info in attribute_frequency:
                 if to_coverage != 0:
                     for i, field in enumerate(distiguish_row_copy):
-                        if attribute_info[0] in field:
+                        if attribute_info[0] in field and i not in coveraged:
                             if len(distiguish_row_copy[i]) != 1:
                                 distiguish_row_copy[i].remove(attribute_info[0])
-                            implicant.append(attribute_info[0])
+                            if attribute_info not in implicant:
+                                implicant.append(attribute_info[0])
+                            coveraged.append(i)
+                            #if i not in coveraged:
                             to_coverage -= 1
             implicants.append(list(set(implicant)))
-        implicants.append([e[0] for e in distiguish_row_copy])
+        implicants.append(list(set([e[0] for e in distiguish_row_copy])))
         return implicants
 
     @staticmethod
@@ -108,14 +112,14 @@ class GenerateRules:
         attributes = set()
         accepted_rules = []
         rule_size = len(reduce(add, rule.values())) - 1
-        if rule_size > 1:
+
+        if 1 < rule_size < 6:
             for key in rule.keys():
                 for attribute in key:
                     attributes.add(attribute)
 
             combinations = reduce(add,
                                   list(list(itertools.combinations(list(attributes), i)) for i in range(1, rule_size)))
-
             for combination in combinations:
                 new_attributes = tuple([e for e in rule.keys()[0] if e not in combination])
 
@@ -124,9 +128,11 @@ class GenerateRules:
                 new_rule = {new_attributes: new_values}
                 accuracy = GenerateRules.compute_accuracy(new_rule, br_decision_table)
                 if accuracy > treshold:
-                    accepted_rules.append(new_rule)
-                else:
-                    print 'rejected rule', new_rule, ' with accuracy', accuracy
+                    if len(new_values) > 1:
+                        accepted_rules.append(new_rule)
+                        # print 'accepted with accuracy', accuracy, rule_size, len(new_values)-1
+                        # else:
+                        #     print 'rejected rule', new_rule, ' with accuracy', accuracy
         return accepted_rules
 
     @staticmethod
@@ -162,17 +168,29 @@ class GenerateRules:
 
 
 if __name__ == "__main__":
-    table = np.array([[1, 0, 1, 1, 0, 1],
-                      [0, 0, 1, 1, 1, 0],
-                      [0, 1, 1, 0, 1, 0]
+    table = np.array([[1, 1, 1, 1, 0],
+                      [1, 0, 0, 1, 1]
                       ])
 
-    table = np.array([[1, 1, 0, 1, 1],
-                      [0, 1, 0, 1, 0],
-                      [1, 1, 1, 0, 1],
-                      [1, 0, 0, 1, 0]])
+    table = np.array([[ 1,  1 , 1,  1 , 0],
+                     [ 1,  1 , 0 , 0, -1],
+                     [ 0 , 1 , 1 , 0 , 1],
+                     [ 1 , 0,  0 , 1 , 1],
+                     [ 0 , 0 , 1 , 1 , 1],
+                     [ 1  ,1,  1 , 0 , 1]])
+    # table = np.array([[1, 1, 0, 0, 1],
+    #                   [1, 1, 0, 0, 1],
+    #                   [0, 0, 1, 1, 1],
+    #                   [0, 1, 1, 0, 1],
+    #                   [1, 0, 0, 1, 1],
+    #                   [1, 0, 0, 1, 1],
+    #                   [1, 1, 1, 0, 0],
+    #                   [1, 1, 1, 0, 0],
+    #                   [1, 1, 1, 0, 0],
+    #                   [1, 1, 1, 0, 0]])
+    # table = np.array([[randint(0, 1) for _ in range(5)] for _ in range(10)])
 
-    x = GenerateRules.generate_all_rules(table, cut_rules=False, treshold=1)
-    print len(x)
-    print x
-
+    # np.savetxt("example_table.csv", table, delimiter=",")
+    # table = np.genfromtxt('example_table.csv', delimiter=',')
+    x = GenerateRules.generate_all_rules(table, cut_rules=False, treshold=0.9)
+    print (x)
