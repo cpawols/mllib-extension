@@ -45,3 +45,16 @@ class TestDistinguishTable(TestCase):
         self.assertEqual(a.build_implicant(dis_2), [[2], [3], [0, 1]])
         self.assertEqual(a.build_implicant(dis_1), [[0], [0, 2], [0, 3]])
         self.assertEqual(a.build_implicant(dis_0), [[0, 1]])
+
+    def test_generate_rules(self):
+        table = np.array([[1, 1, 0],
+                          [0, 1, 1],
+                          [0, 0, 1],
+                          [1, 0, 0]
+                          ])
+        rules_generator = GenerateRules()
+        expected_rules = [{(0,): [1, 0]}, {(0, 1): [1, 1, 0]}, {(0,): [0, 1]}, {(0, 1): [0, 1, 1]}, {(0,): [0, 1]},
+                          {(0, 1): [0, 0, 1]}, {(0,): [1, 0]}, {(0, 1): [1, 0, 0]}]
+        self.assertEqual(expected_rules, rules_generator.generate_all_rules(table))
+        len_of_cuted_rules = len(rules_generator.generate_all_rules(table, cut_rules=True, treshold=0.0))
+        self.assertEqual(16, len_of_cuted_rules)

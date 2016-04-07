@@ -8,6 +8,8 @@ import operator
 from collections import Counter
 from random import randint
 
+import time
+
 from reduct_feature_selection.abstraction_class.abstraction_class import AbstractionClass
 from reduct_feature_selection.abstraction_class.generate_rules import GenerateRules
 from reduct_feature_selection.abstraction_class.reduce_inconsistent_table import ReduceInconsistentTable
@@ -15,6 +17,8 @@ from settings import Configuration
 
 
 class SetAbstractionClass:
+    INFINITY = 10000000
+
     def __init__(self, table):
         """
         TODO
@@ -48,7 +52,11 @@ class SetAbstractionClass:
         """
         card_lower = sum(len(e) for e in lower_approximation)
         card_decision = self.compute_card_decision(decision_distribution, decision_subset)
-        return 1.0 * card_lower / card_decision
+
+        if card_decision!= 0:
+            return 1.0 * card_lower / card_decision
+        else:
+            return 10000000
 
     @staticmethod
     def compute_card_decision(decision_distribution, decision_subset):
@@ -69,7 +77,10 @@ class SetAbstractionClass:
         """
         card_upper = sum(len(e) for e in upper_approximation)
         card_decision = self.compute_card_decision(decision_distribution, decision_subset)
-        return 1.0 * card_upper / card_decision
+        if card_decision != 0:
+            return 1.0 * card_upper / card_decision
+        else:
+            return 10000000
 
     def compute_approximation(self, decision_subset, broadcast_abstraction_class, broadcast_decision_system,
                               approximation_list=False):
@@ -216,7 +227,7 @@ class SetAbstractionClass:
             lambda x: (1, self.run_pipeline(x, cut_rules=cut_rules, treshold=treshold))).reduceByKey(lambda x, y: x + y)
         return result.collect()
 
-    def run_pipeline(self, subset_col_nums, subset_cardinality=2, take=1, cut_rules=False, treshold=0.9):
+    def run_pipeline(self, subset_col_nums, subset_cardinality=2, take=4, cut_rules=False, treshold=0.9):
         """
         TODO - zmienic nazwe
         :param subset_col_nums:
@@ -246,8 +257,6 @@ class SetAbstractionClass:
             table_tmp = SetAbstractionClass.rewrite_matrix(table, r[1])
             rules_for_approximation = GenerateRules.generate_all_rules(table_tmp, cut_rules=cut_rules,
                                                                        treshold=treshold)
-            print table_tmp
-            print rules_for_approximation
             counter.update(subset_col_nums[e] for dictionary in rules_for_approximation for e in dictionary.keys()[0])
         return counter
 
@@ -309,9 +318,12 @@ if __name__ == "__main__":
 
         ]
     )
-
+    table = np.array([[randint(0, 50) for _ in range(50)] for _ in range(500)])
     a = SetAbstractionClass(table)
-    print a.engine_spark(1, 4, 4, cut_rules=True, treshold=0.1)
+    start = time.time()
+    print("hello")
+    res = a.engine_spark(10, 5, 10, cut_rules=True, treshold=0.7)
+    print (res[0][1].most_common())
+    end = time.time()
+    print(end - start)
     # x = a.aaa([0, 1, 2, 3], take=2)
-
-    # table = a.rewrittable(x[0][1])

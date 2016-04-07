@@ -107,7 +107,7 @@ class GenerateRules:
         return {key: attributes_values}
 
     @staticmethod
-    def cut_rule(rule, treshold=0.9, br_decision_table=None):
+    def cut_rule(rule, treshold=0.9, br_decision_table=None, max_length_of_cut=6):
         """TODO"""
         attributes = set()
         accepted_rules = []
