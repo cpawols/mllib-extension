@@ -139,9 +139,11 @@ class GeneticSearch(object):
     # TODO: add stop criterion
     def genetic_search(self, par=False):
 
+        print "--------------------init population-------------------------------------------"
         population = self.init_generation()
 
         for i in range(self.max_iter):
+            print "-----------------------------performing " + str(i) + " generation---------------"
             if par:
                 rdd_population = Configuration.sc.parallelize(population, self.population_size * 10)
                 awards = rdd_population.mapPartitions(self.count_award_for_chunk).collect()
@@ -197,10 +199,15 @@ class HyperplaneExtractor(SimpleExtractor):
             return new_column
 
         extracted_table = []
+        i = 0
         while True:
             best_hyperplane = (0, [0, 0, 0])
             unconsistent_reg = get_unconsistent_reg(extracted_table, self.dec)
 
+            print "--------------------unconsistent regs-----------------------------"
+            print unconsistent_reg
+            print "-------------------performing " + str(i) + " iteration-----------------------"
+            i += 1
             for attr in attrs_list:
                 axis_table = table[attr]
                 other_attrs = [x for x in attrs_list if not x == attr]
@@ -220,4 +227,12 @@ class HyperplaneExtractor(SimpleExtractor):
         return np.array(extracted_table)
 
 if __name__ == "__main__":
+    table = np.array([(0, 1, 7), (4, 5, 8), (1, 2, 3), (3, 8, 9),
+                      (0, 1, 7), (4, 5, 8), (1, 2, 3), (3, 8, 9)],
+                     dtype=[('x', int), ('y', float), ('z', float)])
+    dec = [0, 1, 0, 1, 0, 1, 0, 1]
+    attrs_list = ['x', 'y', 'z']
+    discretizer = HyperplaneExtractor(dec, 0.1)
+    table = discretizer.extract(table, attrs_list)
+    print table
 

@@ -1,4 +1,4 @@
-from simple_discretizer import SimpleDiscretizer
+from reduct_feature_selection.commons.simple_discretizer import SimpleDiscretizer
 from collections import Counter
 
 import math
