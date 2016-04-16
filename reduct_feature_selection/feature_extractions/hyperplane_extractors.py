@@ -25,7 +25,7 @@ class GeneticSearch(object):
                  stop_treshold=5):
         self.b = b
         self.k = k
-        self.stop_treshold = 5
+        self.stop_treshold = stop_treshold
         self.first_generation_size = first_generation_size
         self.population_size = population_size
         self.max_iter = max_iter
@@ -193,10 +193,10 @@ class GeneticSearch(object):
 
 class HyperplaneExtractor(SimpleExtractor):
 
-    def _get_unconsistent_reg(self, extracted_table, dec):
+    def _get_unconsistent_reg(self, extracted_table):
             if extracted_table:
                 table_list = []
-                for i, decision in enumerate(dec):
+                for i, decision in enumerate(self.dec):
                     row = tuple(map(lambda x: x[i], extracted_table))
                     table_list.append((row, (i, decision)))
 
@@ -210,22 +210,22 @@ class HyperplaneExtractor(SimpleExtractor):
                         reg_objects = [reg[1][i] for i in range(0, len(reg[1]), 2)]
                         regs.append(reg_objects)
                 return regs
-            return [range(len(dec))]
+            return [range(len(self.dec))]
 
-    def _check_distances(self, table, regions, min_dist):
-        for region in regions:
-            points = [list(table[obj, ]) for obj in region]
-            distances = np.array(points)
-            D = squareform(pdist(distances))
-            N = np.max(D)
-            if N <= min_dist:
-                regions.remove(region)
+    def _is_small_distance(self, region, min_dist):
+        points = [list(self.table[obj, ]) for obj in region]
+        distances = np.array(points)
+        D = squareform(pdist(distances))
+        N = np.max(D)
+        if N <= min_dist:
+            return True
+        return False
 
-    def _get_new_column(self, table, best_hyperplane):
+    def _get_new_column(self, best_hyperplane):
             attr = best_hyperplane[0]
-            axis_table = table[attr]
-            other_attrs = [x for x in attrs_list if not x == attr]
-            new_table = table[other_attrs]
+            axis_table = self.table[attr]
+            other_attrs = [x for x in self.attrs_list if not x == attr]
+            new_table = self.table[other_attrs]
             new_column = []
             for ind, row in enumerate(new_table):
                 x = axis_table[ind]
@@ -239,14 +239,14 @@ class HyperplaneExtractor(SimpleExtractor):
 
             return new_column
 
-    def _search_best_hyperplane(self, table, attrs_list, unconsistent_reg, par):
+    def _search_best_hyperplane(self, unconsistent_reg, par):
         best_hyperplane = ('x', (-1, [0], 0))
         # TODO: make it paralell
-        for attr in attrs_list:
+        for attr in self.attrs_list:
             print "-------------------counting " + attr + " attrbiute-----------------------"
-            axis_table = table[attr]
-            other_attrs = [x for x in attrs_list if not x == attr]
-            new_table = table[other_attrs]
+            axis_table = self.table[attr]
+            other_attrs = [x for x in self.attrs_list if not x == attr]
+            new_table = self.table[other_attrs]
 
             gen_search = GeneticSearch(len(other_attrs), self.dec, new_table,
                                                axis_table, unconsistent_reg)
@@ -257,25 +257,26 @@ class HyperplaneExtractor(SimpleExtractor):
         return best_hyperplane
 
     # TODO: maybe add table and attrs_list to object arguments
-    def extract(self, table, attrs_list, par=False):
+    def extract(self, par=False):
 
         extracted_table = []
         i = 0
         while True:
-            unconsistent_reg = self._get_unconsistent_reg(extracted_table, self.dec)
+            unconsistent_reg = self._get_unconsistent_reg(extracted_table)
 
             print "--------------------unconsistent regs-----------------------------"
             print unconsistent_reg
 
-            self._check_distances(table, unconsistent_reg, 1)
+            # TODO: other strategy of closer points
+            unconsistent_reg = filter(lambda x: not self._is_small_distance(x, 1), unconsistent_reg)
             print "--------------------unconsistent regs after clustering-----------------------------"
             print unconsistent_reg
             i += 1
             # TODO: add stop criterion if doesn't stop
             if unconsistent_reg:
                 print "-------------------performing " + str(i) + " iteration-----------------------"
-                best_hyperplane = self._search_best_hyperplane(table, attrs_list, unconsistent_reg, par)
-                extracted_table.append(self._get_new_column(table, best_hyperplane))
+                best_hyperplane = self._search_best_hyperplane(unconsistent_reg, par)
+                extracted_table.append(self._get_new_column(best_hyperplane))
             else:
                 break
 
@@ -285,12 +286,24 @@ class HyperplaneExtractor(SimpleExtractor):
     # TODO: make decision tree
     def count_decision_tree(self, objects):
         dec_set = set([self.dec[obj] for obj in objects])
+
         if len(dec_set) == 1:
-            return DecisionTree(self.dec[objects][0], 0, 0)
-        else:
-            best_hyperplane = self._search_best_hyperplane(table, attrs_list, )
-            return DecisionTree
-        return True
+            return DecisionTree(self.dec[objects[0]], 0, 0)
+        if self._is_small_distance(objects, 3):
+            return DecisionTree(Counter(dec_set).most_common(1)[0][0], 0, 0)
+
+        best_hyperplane = self._search_best_hyperplane([objects], False)
+        hyperplane_indicator = self._get_new_column(best_hyperplane)
+        left_son_objects = filter(lambda x: hyperplane_indicator[x] == 0, objects)
+        right_son_objects = filter(lambda x: hyperplane_indicator[x] == 1, objects)
+
+        if left_son_objects == [] or right_son_objects == []:
+            print left_son_objects
+            print right_son_objects
+            print "nie znaleziono plaszczyzny"
+            return self.count_decision_tree(objects)
+        return DecisionTree(best_hyperplane, self.count_decision_tree(left_son_objects),
+                            self.count_decision_tree(right_son_objects))
 
 
 class DecisionTree:
@@ -301,9 +314,16 @@ class DecisionTree:
         self.right = right
 
     def is_leaf(self):
-        if type(self.value) == list:
+        if type(self.value) == list or type(self.value) == tuple:
             return False
         return True
+
+    def print_tree(self):
+        print "value:"
+        print self.value
+        if not self.is_leaf():
+            self.left.print_tree()
+            self.left.print_tree()
 
 
 if __name__ == "__main__":
@@ -318,16 +338,18 @@ if __name__ == "__main__":
                        (4, 5, 8, 5, 4, 1),
                        (1, 2, 3, 8, 9, 1),
                        (10, 2, 3, 8, 9, 1),
-                       (4, 2, 3, 8, 9, 1),
+                       (400, 2, 3, 8, 9, 1),
                        (7, 2, 3, 8, 9, 1),
-                       (9, 2, 3, 8, 9, 1),
+                       (900, 2, 3, 8, 9, 1),
                        (3, 8, 9, 5, 1, 2)],
                       dtype=[('x', int), ('y', float), ('z', float), ('a', int), ('b', float), ('c', float)])
     dec = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     attrs_list = ['x', 'y', 'z', 'a', 'b', 'c']
-    discretizer = HyperplaneExtractor(dec, 0.1)
-    table = discretizer.extract(table, attrs_list)
-    print table
+    discretizer = HyperplaneExtractor(table, attrs_list, dec, 0.1)
+    # TODO: [1, 3, 5, 6, 9, 11] nie znajduje rozdzielenia
+    #table = discretizer.extract()
+    dec_tree = discretizer.count_decision_tree(range(12))
+    dec_tree.print_tree()
     # un_reg = [[0,1,2,3,4]]
     # table = np.array([(-1,-1),
     #                   (-1,1),

@@ -11,7 +11,9 @@ from numpy.lib import recfunctions as rfn
 
 class SimpleExtractor(object):
 
-    def __init__(self, dec, cuts_limit_ratio, **kwargs):
+    def __init__(self, table, attrs_list, dec, cuts_limit_ratio, **kwargs):
+        self.table =table
+        self.attrs_list = attrs_list
         self.dec = dec
         self.cuts_limit_ratio = cuts_limit_ratio
         for key, value in kwargs.iteritems():
@@ -34,6 +36,7 @@ class SimpleExtractor(object):
         dec_fqs_disc = {k: (0, v) for k, v in dec_fqs.iteritems()}
         gini_index = 0
         indexes = []
+        # TODO: fix it to disc measure
         for elem in column[:-1]:
             dec = self.dec[elem[0]]
             old_gini = dec_fqs_disc[dec][0] * dec_fqs_disc[dec][1]
@@ -54,40 +57,41 @@ class SimpleExtractor(object):
         for cut in good_cuts:
             yield (cut[0], cut[1], [int(x[2] > cut[1]) for x in column])
 
-    def add_to_table(self, table, new_col_set):
+    def add_to_table(self, new_col_set):
+        new_table = np.copy(self.table)
         col_names = [col[0] + "_gt_" + str(col[1]) for col in new_col_set]
         data_set = [col[2] for col in new_col_set]
-        return rfn.append_fields(table, names=col_names, data=data_set, usemask=False)
+        return rfn.append_fields(new_table, names=col_names, data=data_set, usemask=False)
 
-    def extract(self, table, attrs_list, par=False):
+    def extract(self, par=False):
         div_list = lambda lst, sz: [lst[i:i + sz] for i in range(0, len(lst), sz)]
-        eav = Eav(Eav.convert_to_eav(table[attrs_list]))
+        eav = Eav(Eav.convert_to_eav(self.table[self.attrs_list]))
         eav.sort()
         eav_table = eav.eav
         if par:
-            eav_rdd_part = Configuration.sc.parallelize(eav_table, len(attrs_list))
+            eav_rdd_part = Configuration.sc.parallelize(eav_table, len(self.attrs_list))
             new_col_set = eav_rdd_part.mapPartitions(self.extract_cuts_column).collect()
         else:
-            eav_div = div_list(eav_table, len(eav_table) / len(attrs_list))
+            eav_div = div_list(eav_table, len(eav_table) / len(self.attrs_list))
             new_col_set = reduce(lambda x, y: x + y,
                               map(lambda col: list(self.extract_cuts_column(col)), eav_div))
-        return self.add_to_table(table, new_col_set)
+        return self.add_to_table(new_col_set)
 
-    def eval(self, table, clf):
-        res = cross_validation.cross_val_score(clf, table, self.dec, cv=10, scoring='f1_weighted')
+    def eval(self, clf):
+        res = cross_validation.cross_val_score(clf, self.table, self.dec, cv=10, scoring='f1_weighted')
         return res
 
-    def compare_eval(self, table, attrs_list, clf):
-        res_ndisc = self.eval(table, clf)
-        res_disc = self.eval(self.extract(table, attrs_list), clf)
+    def compare_eval(self, clf):
+        res_ndisc = self.eval(clf)
+        res_disc = self.eval(self.extract(), clf)
         return res_ndisc, res_disc
 
-    def compare_time(self, table, attrs_list):
+    def compare_time(self):
         start_par = time.time()
-        self.extract(table, attrs_list, par=True)
+        self.extract(par=True)
         time_par = time.time() - start_par
         start_npar = time.time()
-        self.extract(table, attrs_list)
+        self.extract()
         time_npar = time.time() - start_npar
         return time_par, time_npar
 
@@ -97,11 +101,11 @@ if __name__ == "__main__":
                      dtype=[('x', int), ('y', float), ('z', float)])
     dec = [0, 1, 0, 1, 0, 1, 0, 1]
     attrs_list = ['x', 'y']
-    discretizer = SimpleExtractor(dec, 0.1)
+    discretizer = SimpleExtractor(table, attrs_list, dec, 0.1)
     # table = discretizer.extract(table, attrs_list, par=True)
     # print table
     # print table.dtype.names
-    print discretizer.compare_time(table, attrs_list)
+    print discretizer.compare_time()
     # disc_table = discretizer.discretize(table, ['y', 'z'], par=False)
     # print table
     # print table.dtype.names
