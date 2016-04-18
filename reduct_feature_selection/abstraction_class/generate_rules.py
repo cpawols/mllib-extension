@@ -107,13 +107,13 @@ class GenerateRules:
         return {key: attributes_values}
 
     @staticmethod
-    def cut_rule(rule, treshold=0.9, br_decision_table=None, max_length_of_cut=6):
+    def cut_rule(rule, treshold=0.9, br_decision_table=None, max_length_of_cut=7):
         """TODO"""
         attributes = set()
         accepted_rules = []
         rule_size = len(reduce(add, rule.values())) - 1
 
-        if 1 < rule_size < 6:
+        if 1 < rule_size < max_length_of_cut:
             for key in rule.keys():
                 for attribute in key:
                     attributes.add(attribute)
