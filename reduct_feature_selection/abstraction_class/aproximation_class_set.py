@@ -7,6 +7,8 @@ import numpy as np
 import operator
 from collections import Counter
 from random import randint
+from sklearn.cross_validation import train_test_split
+from sklearn.tree import tree
 
 from reduct_feature_selection.abstraction_class.abstraction_class import AbstractionClass
 from reduct_feature_selection.abstraction_class.generate_rules import GenerateRules
@@ -212,12 +214,14 @@ class SetAbstractionClass:
             table_tmp = SetAbstractionClass.rewrite_matrix(table, r[1])
             rules_for_approximation = GenerateRules.generate_all_rules(table_tmp, cut_rules=cut_rules,
                                                                        treshold=treshold)
+
             if weight is True:
                 counter.update(
                     SetAbstractionClass.weight_attribute_importance(rules_for_approximation, table, subset_col_nums))
             else:
                 counter.update(
                     subset_col_nums[e] for dictionary in rules_for_approximation for e in dictionary.keys()[0])
+
         return counter
 
     @staticmethod
@@ -277,7 +281,7 @@ class SetAbstractionClass:
 
         return np.array([row for row in list_of_rows])
 
-    def run_pipeline(self, subset_col_nums, subset_cardinality=2, take=1, cut_rules=False, treshold=0.9,
+    def run_pipeline(self, subset_col_nums, subset_cardinality=2, take=5, cut_rules=False, treshold=0.9,
                      weight=False):
         """
         TODO - zmienic nazwe
@@ -286,6 +290,7 @@ class SetAbstractionClass:
         :param take:
         :return:
         """
+
         z = sorted(list(subset_col_nums))
         z.append(self.table.shape[1] - 1)
         t = self.table[:, z]
@@ -320,7 +325,32 @@ class SetAbstractionClass:
             lambda x: (1, self.run_pipeline(x, cut_rules=cut_rules, treshold=treshold,
                                             weight=weight))).reduceByKey(
             lambda x, y: x + y)
+        # attribute_rank = result.collect()[0][1].most_common()
         return result.collect()
+
+    @staticmethod
+    def cut_attributes(attributes_rank):
+        """
+        TODO
+        :param attributes_rank:
+        :return:
+        """
+        value_of_model = float("inf")
+        number_of_all_attributes = len(attributes_rank)
+        sum_of_all_scores = sum(e[1] for e in attributes_rank)
+        number_of_significant_attributes = 0
+
+        for i in range(1, number_of_all_attributes + 1):
+            ith_score = sum(e[1] for j, e in enumerate(attributes_rank) if j < i)
+            fir = (1 - (1.0 * ith_score) / sum_of_all_scores) * (1 - (1.0 * ith_score) / sum_of_all_scores)
+            sec = ((1.0 * i) / number_of_all_attributes) * ((1.0 * i) / number_of_all_attributes)
+            fir += sec
+
+            if fir < value_of_model:
+                value_of_model = fir
+                number_of_significant_attributes = i
+
+        return sorted([e[0] for i, e in enumerate(attributes_rank) if i < number_of_significant_attributes])
 
 
 if __name__ == "__main__":
@@ -345,8 +375,38 @@ if __name__ == "__main__":
     #     [1, 1, 1, 1, 1],
     #     [0, 1, 1, 1, 0]
     # ])
-    # table = np.array([[randint(0, 50) for _ in range(50)] for _ in range(500)])
+    import scipy.io as sio
+
+    x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        x['X'], x['Y'], test_size=0.2, random_state=42)
+    # table = np.append(x['X'], x['Y'], axis=1)
+    table = np.append(X_train, y_train, axis=1)
+    table_v = np.append(X_test, y_test, axis=1)
+
+    # table = np.array([[randint(0, 5) for _ in range(7000)] for _ in range(500)])
+    # X_train, X_test = table[:400, :-1], table[400:, :-1]
+    # y_train, y_test = table[:400, -1], table[400:, -1]
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X_train, y_train)
+    print clf.score(X_test, y_test)
 
     a = SetAbstractionClass(table)
-    res = a.select_attributes(50, 1, 4, cut_rules=True, treshold=0.9, weight=False)
-    print (res[0][1].most_common())
+    res = a.select_attributes(4000, 4, 15, cut_rules=True, treshold=0.8, weight=True)
+    print res[0][1].most_common()
+    for i in range(1, 1500, 3):
+        sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
+
+        clf = tree.DecisionTreeClassifier()
+        clf.fit(X_train[:, sorted(sel)], y_train)
+        print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
+
+    selected = SetAbstractionClass.cut_attributes(res[0][1].most_common())
+
+    clf = tree.DecisionTreeClassifier()
+
+    clf.fit(X_train[:, sorted(selected)], y_train)
+    print clf.score(X_test[:, sorted(selected)], y_test)
+    print len(selected)
