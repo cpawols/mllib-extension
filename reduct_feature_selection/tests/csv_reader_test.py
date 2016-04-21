@@ -1,6 +1,6 @@
 from numpy.testing import assert_array_equal
 from unittest import TestCase
-from reduct_feature_selection.commons.cvs_reader import CSVReader
+from reduct_feature_selection.commons.loader.cvs_reader import CSVReader
 import numpy as np
 from settings import Configuration
 
