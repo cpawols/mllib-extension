@@ -22,8 +22,10 @@ class TestGeneticSearch(TestCase):
         gen = GeneticSearch(1, dec, new_table, axis_table, un_reg)
         individual = [0.5]
         award = gen.count_global_award(individual)
+        award_local = gen.count_local_award(individual)
         self.assertEqual(award[0], 6)
         self.assertEqual(award[2], 0.5)
+        self.assertEqual(award, award_local)
 
     def test_count_award2(self):
         table2 = np.array([(-1,-1),

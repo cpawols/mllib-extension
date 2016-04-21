@@ -34,7 +34,7 @@ if __name__ == "__main__":
     print discretizer.discretize(table, attrs_list, par=True)
     print discretizer.discretize(table, attrs_list, par=False)
 
-
+# TODO: add tests and docs
 
 
 

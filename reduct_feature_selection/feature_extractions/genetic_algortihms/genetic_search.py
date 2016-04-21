@@ -5,12 +5,13 @@ import math
 from operator import add
 from collections import Counter
 
+from reduct_feature_selection.feature_extractions.disc_measure_calculator import DiscMeasureCalculator
 from settings import Configuration
 
 
 class GeneticSearch(object):
 
-    def __init__(self, k, dec, table, axis_table, unconsistent_reg,
+    def __init__(self, k, dec, table, projection_axis, unconsistent_groups,
                  b=50,
                  first_generation_size=200,
                  population_size=50,
@@ -28,58 +29,89 @@ class GeneticSearch(object):
         self.mutation_chance = mutation_chance
         self.dec = dec
         self.table = table
-        self.axis_table = axis_table
-        self.unconsistent_reg = unconsistent_reg
+        self.projection_axis = projection_axis
+        self.unconsistent_groups = unconsistent_groups
 
     def init_generation(self):
         max_vec = math.pow(2, self.b)
         return [[randrange(-max_vec, max_vec) for _ in range(self.k)]
                 for _ in range(self.first_generation_size)]
 
-    def count_global_award(self, individual):
+    # TODO: add test
+    def count_projections(self, individual, objects):
+        '''
+        :param individual: hyperplane
+        :param objects: objects projection to axis
+        :return: list of tuples (objects, projection) projection of object to axis
+        '''
         projections = []
-        valid_objects = reduce(add, self.unconsistent_reg)
-        for ind, row in enumerate(self.table):
-            if ind in valid_objects:
-                x = self.axis_table[ind]
+        for obj, row in enumerate(self.table):
+            if obj in objects:
+                x = self.projection_axis[obj]
                 proj = x
                 if self.k > 1:
                     for i, r in enumerate(row):
                         proj -= individual[i] * r
                 else:
                     proj -= individual[0] * row
-                projections.append((ind, proj))
+                projections.append((obj, proj))
+        return projections
+
+    # TODO: add tests and docs
+    def count_award(self, individual):
+        if len(self.unconsistent_groups) == 1:
+            return self.count_local_award(individual)
+        return self.count_global_award(individual)
+
+    def count_global_award(self, individual):
+        valid_objects = reduce(add, self.unconsistent_groups)
+        projections = self.count_projections(individual, valid_objects)
         objects = [x for x in sorted(projections, key=lambda x: x[1])]
-        reg_ob_map = {}
-        reg_fqs_map = {}
+
+        object_group_map = {}
+        group_fqs_map = {}
         act_left_sum = {}
-        act_sum_sq = {}
         act_right_sum = {}
 
-        for ind, reg in enumerate(self.unconsistent_reg):
-            reg_fqs = Counter()
-            for obj in reg:
-                reg_ob_map[obj] = ind
-                reg_fqs[self.dec[obj]] += 1
-            sum = 0
-            for fq in reg_fqs.values():
-                sum += fq
-
+        for ind, group in enumerate(self.unconsistent_groups):
+            group_decisions = []
+            for obj in group:
+                group_decisions.append(self.dec[obj])
+                object_group_map[obj] = ind
             act_left_sum[ind] = 0
-            act_right_sum[ind] = sum
-            act_sum_sq[ind] = 0
-            reg_fqs_map[ind] = {k: (0, v) for k, v in reg_fqs.iteritems()}
+            act_right_sum[ind] = len(group_decisions)
+            group_fqs_map[ind] = DiscMeasureCalculator.prepare_hist(group_decisions)
 
         act_award = 0
         max_award = 0
         for obj, proj in objects:
-            ind = reg_ob_map[obj]
-            act_award += (act_right_sum[ind] - act_left_sum[ind] - 1) - \
-                         (reg_fqs_map[ind][self.dec[obj]][1] - reg_fqs_map[ind][self.dec[obj]][0] - 1)
-            act_left_sum[ind] += 1
-            act_right_sum[ind] -= 1
-            reg_fqs_map[ind][self.dec[obj]] = (reg_fqs_map[ind][self.dec[obj]][0] + 1,
-                                              reg_fqs_map[ind][self.dec[obj]][1] - 1)
+            group_id = object_group_map[obj]
+            dec = self.dec[obj]
+            act_left_sum[group_id], act_right_sum[group_id], act_award = \
+                DiscMeasureCalculator.update_award(dec, act_left_sum[group_id], act_right_sum[group_id],
+                                                   group_fqs_map[group_id], act_award)
+            if act_award > max_award:
+                max_award = act_award
+                good_proj = proj
+
+        return max_award, individual, good_proj
+
+    def count_local_award(self, individual):
+        valid_objects = self.unconsistent_groups[0]
+        projections = self.count_projections(individual, valid_objects)
+        objects = [x for x in sorted(projections, key=lambda x: x[1])]
+        decisions = [self.dec[obj] for obj in valid_objects]
+
+        act_left_sum = 0
+        act_right_sum = len(decisions)
+        dec_fqs_disc = DiscMeasureCalculator.prepare_hist(decisions)
+
+        act_award = 0
+        max_award = 0
+        for obj, proj in objects:
+            dec = self.dec[obj]
+            act_left_sum, act_right_sum, act_award = \
+                DiscMeasureCalculator.update_award(dec, act_left_sum, act_right_sum, dec_fqs_disc, act_award)
             if act_award > max_award:
                 max_award = act_award
                 good_proj = proj
@@ -130,7 +162,7 @@ class GeneticSearch(object):
 
     def count_award_for_chunk(self, population):
         for individual in population:
-            yield self.count_global_award(individual)
+            yield self.count_award(individual)
 
     def _eliminate_duplicates(self, population):
         sorted_population = sorted(population)
@@ -156,7 +188,7 @@ class GeneticSearch(object):
                 rdd_population = Configuration.sc.parallelize(population, self.population_size * 10)
                 awards = rdd_population.mapPartitions(self.count_award_for_chunk).collect()
             else:
-                awards = map(self.count_global_award, population)
+                awards = map(self.count_award, population)
 
             population_awards = self.select_best_individuals(awards)
 

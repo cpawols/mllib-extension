@@ -18,6 +18,7 @@ class HyperplaneExtractor(SimpleExtractor):
         super(HyperplaneExtractor, self).__init__(table, attrs_list, dec, cuts_limit_ratio)
         self.dpoints_strategy = dpoints_strategy
 
+    # TODO: add tests and docs
     def _count_objects_positions(self, best_hyperplane):
         attr = best_hyperplane[0]
         axis_table = self.table[attr]
@@ -120,7 +121,7 @@ class HyperplaneExtractor(SimpleExtractor):
         if decision is not None:
             return DecisionTree(decision, 0, 0)
 
-        best_hyperplane = self._search_best_hyperplane([objects], True)
+        best_hyperplane = self._search_best_hyperplane([objects], False)
         hyperplane_indicator = self._count_objects_positions(best_hyperplane)
         left_son_objects = filter(lambda x: hyperplane_indicator[x] == 0, objects)
         right_son_objects = filter(lambda x: hyperplane_indicator[x] == 1, objects)
@@ -163,10 +164,10 @@ if __name__ == "__main__":
     md = MinDistDoubtfulPointsStrategy(table, dec, 3)
     discretizer = HyperplaneExtractor(table, attrs_list, dec, 0.1, md)
     # TODO: [1, 3, 5, 6, 9, 11] nie znajduje rozdzielenia
-    #table = discretizer.extract(par=True)
-    dec_tree = discretizer.count_decision_tree(range(12))
-    dec_tree.print_tree()
-    #print table
+    table = discretizer.extract(par=False)
+    #dec_tree = discretizer.count_decision_tree(range(12))
+    #dec_tree.print_tree()
+    print table
     # un_reg = [[0,1,2,3,4]]
     # table = np.array([(-1,-1),
     #                   (-1,1),
