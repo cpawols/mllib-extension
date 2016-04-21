@@ -11,13 +11,11 @@ from numpy.lib import recfunctions as rfn
 
 class SimpleExtractor(object):
 
-    def __init__(self, table, attrs_list, dec, cuts_limit_ratio, **kwargs):
+    def __init__(self, table, attrs_list, dec, cuts_limit_ratio):
         self.table =table
         self.attrs_list = attrs_list
         self.dec = dec
         self.cuts_limit_ratio = cuts_limit_ratio
-        for key, value in kwargs.iteritems():
-            setattr(self, key, value)
 
     def generate_data(self, rows, cols):
         table = []

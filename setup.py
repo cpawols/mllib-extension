@@ -12,7 +12,7 @@ setup(name='reduct_feature_selection',
           'markdown',
           'numpy',
           'py4j',
-          'PyYAML', 'sklearn'
+          'PyYAML', 'sklearn', 'scipy'
       ],
       test_suite='nose.collector',
       tests_require=['nose'],

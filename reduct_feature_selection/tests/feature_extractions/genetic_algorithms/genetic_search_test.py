@@ -1,7 +1,9 @@
-from unittest import TestCase
-import numpy as np
 import copy
-from reduct_feature_selection.feature_extractions.hyperplane_extractors import GeneticSearch
+from unittest import TestCase
+
+import numpy as np
+
+from reduct_feature_selection.feature_extractions.genetic_algortihms.genetic_search import GeneticSearch
 
 
 class TestGeneticSearch(TestCase):
