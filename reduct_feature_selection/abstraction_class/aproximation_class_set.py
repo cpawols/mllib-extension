@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 TODO
 """
@@ -113,8 +114,6 @@ class SetAbstractionClass:
         """
         Only one have to be.
         :param decision_subset:
-        :param abstraction_class:
-        :param decision_system:
         :return:
         """
         upper_approximation = []
@@ -228,10 +227,8 @@ class SetAbstractionClass:
     def weight_attribute_importance(rules_for_approximation, table, subset_col_nums):
         """
         TODO
-        :param counter:
         :param rules_for_approximation:
         :param table:
-        :param weight_importance_by_coverage:
         :return:
         """
         counter = Counter()
@@ -394,7 +391,7 @@ if __name__ == "__main__":
     print clf.score(X_test, y_test)
 
     a = SetAbstractionClass(table)
-    res = a.select_attributes(4000, 4, 15, cut_rules=True, treshold=0.8, weight=True)
+    res = a.select_attributes(4, 4, 30, cut_rules=True, treshold=0.8, weight=True)
     print res[0][1].most_common()
     for i in range(1, 1500, 3):
         sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
