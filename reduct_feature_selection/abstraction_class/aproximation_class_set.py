@@ -393,7 +393,7 @@ if __name__ == "__main__":
     a = SetAbstractionClass(table)
     res = a.select_attributes(4, 4, 30, cut_rules=True, treshold=0.8, weight=True)
     print res[0][1].most_common()
-    for i in range(1, 1500, 3):
+    for i in range(1, 150, 3):
         sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
 
         clf = tree.DecisionTreeClassifier()

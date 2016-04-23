@@ -24,7 +24,28 @@ class DistniguishMatrixCreator:
             for j, s_row in enumerate(self.table):
                 if i != j and f_row[-1] != s_row[-1] and i < j:
                     result_dictionary.update(DistniguishMatrixCreator.process_objects(f_row, i, j, s_row))
+        return result_dictionary
 
+    @staticmethod
+    def create_distingiush_matrix_sort_table(table):
+        result_dictionary = []
+        col = [[e] for e in range(table.shape[0])]
+        t = np.append(table, col, axis=1)
+        sorted_table = t[np.lexsort(np.fliplr(t).T)]
+        # print sorted_table
+        if sorted_table.shape[0] < 2:
+            raise ValueError("Table contains to less elements!")
+        else:
+            begin = 0
+            end = 1
+            while end < table.shape[0]:
+                if sorted_table[begin][-2] != sorted_table[end][-2] \
+                        and (sorted_table[begin][:-2] == sorted_table[end][:-2]).all():
+                    result_dictionary.append((min((sorted_table[begin][-1], sorted_table[end][-1])),
+                                              max((sorted_table[begin][-1], sorted_table[end][-1]))))
+        # Wsadzac na tuple i tam patrzyc jak to bedzie
+                begin += 1
+                end += 1
         return result_dictionary
 
     @staticmethod
@@ -57,6 +78,8 @@ class DistniguishMatrixCreator:
 
 
 if __name__ == "__main__":
-    table = np.array([[1, 2, 3], [2, 1, 1], [1, 2, 1], [0, 0, 0], [0, 1, 0]])
+    table = np.array([[1, 2, 3], [1, 2, 1], [1, 2, 1], [0, 0, 0], [0, 1, 0]])
     ds = DistniguishMatrixCreator(table)
-    com = ds.create_distinguish_table()
+    print table
+    com = ds.create_distingiush_matrix_sort_table(table)
+    print com

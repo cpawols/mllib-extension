@@ -22,10 +22,27 @@ class ReductCreatorTest(TestCase):
             [2, 2, 0, 1, 1]
         ])
 
-        ds = DistniguishMatrixCreator(table)
-        ds = ds.create_distinguish_table()
+        ds_creator = DistniguishMatrixCreator(table)
+        ds_matrix = ds_creator.create_distinguish_table()
+        reduct_generator = ReductsCreator(table, sorted(ds_matrix.keys()))
+        list_of_reducts = reduct_generator.compute_up_reduct(ds_matrix)
 
-        reduct_generator = ReductsCreator(table, 2, 1, 3, sorted(ds.keys()))
-        list_of_upreducts = reduct_generator.compute_up_reduct(ds)
-        reducts = reduct_generator.check_if_reduct(list_of_upreducts)
+        reducts =reduct_generator.check_if_reduct(table, list_of_reducts)
         self.assertEqual(sorted(reducts), sorted([[0, 1, 3], [0, 2, 3]]))
+
+    def test_reduct_creator_2(self):
+        table = np.array([
+            [1, 1, 0, 0, 0],
+            [1, 1, 0, 1, 0],
+            [2, 1, 0, 0, 1],
+        ])
+
+        ds_creator = DistniguishMatrixCreator(table)
+        ds_matrix = ds_creator.create_distinguish_table()
+        reduct_generator = ReductsCreator(table, sorted(ds_matrix.keys()))
+        list_of_reducts = reduct_generator.compute_up_reduct(ds_matrix)
+        print list_of_reducts
+
+        reducts =reduct_generator.check_if_reduct(table, list_of_reducts)
+        print reducts
+        #self.assertEqual(sorted(reducts), sorted([[0, 1, 3], [0, 2, 3]]))
