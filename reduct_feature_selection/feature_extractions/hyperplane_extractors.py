@@ -10,7 +10,7 @@ from reduct_feature_selection.feature_extractions.doubtful_points_strategies.min
 from reduct_feature_selection.feature_extractions.genetic_algortihms.genetic_search import GeneticSearch
 from reduct_feature_selection.feature_extractions.hyperplane_decison_tree.decision_tree import DecisionTree
 from reduct_feature_selection.feature_extractions.simple_extractors import SimpleExtractor
-from settings import Configuration
+from pyspark import SparkContext, SparkConf
 
 
 class HyperplaneExtractor(SimpleExtractor):
@@ -37,7 +37,7 @@ class HyperplaneExtractor(SimpleExtractor):
 
         return new_column
 
-    def _search_best_hyperplane_for_projection(self, attr, unconsistent_groups):
+    def _search_best_hyperplane_for_projection(self, attr, unconsistent_groups, sc=None):
 
         projection_axis = self.table[attr]
         other_axes = [x for x in self.attrs_list if not x == attr]
@@ -45,7 +45,7 @@ class HyperplaneExtractor(SimpleExtractor):
 
         gen_search = GeneticSearch(len(other_axes), self.dec, new_table,
                                    projection_axis, unconsistent_groups)
-        cand_hyperplane = gen_search.genetic_search(False)
+        cand_hyperplane = gen_search.genetic_search(sc)
 
         return attr, cand_hyperplane
 
@@ -81,23 +81,23 @@ class HyperplaneExtractor(SimpleExtractor):
     #
     #     return best_hyperplane
 
-    def _search_best_hyperplane(self, unconsistent_groups, par):
+    def _search_best_hyperplane(self, unconsistent_groups, sc=None):
 
-        if not par:
-            hyperplanes = map(lambda x: self._search_best_hyperplane_for_projection(x, unconsistent_groups),
+        if sc is None:
+            hyperplanes = map(lambda x: self._search_best_hyperplane_for_projection(x, unconsistent_groups, sc),
                               self.attrs_list)
         else:
-            rdd_attrs = Configuration.sc.parallelize(self.attrs_list)
+            rdd_attrs = sc.parallelize(self.attrs_list)
             hyperplanes = rdd_attrs.map(
                 lambda x: self._search_best_hyperplane_for_projection(x, unconsistent_groups)).collect()
 
         return max(hyperplanes, key=lambda x: x[1][0])
 
-    def extract(self, par=False):
+    def extract(self, sc=None):
         extracted_table = []
         i = 0
         while True:
-            unconsistent_groups = ConsistentChecker.count_unconsistent_groups(extracted_table, self.dec)
+            unconsistent_groups = ConsistentChecker.count_unconsistent_groups(extracted_table, self.dec, sc)
 
             print "--------------------unconsistent groups-----------------------------"
             print unconsistent_groups
@@ -109,19 +109,19 @@ class HyperplaneExtractor(SimpleExtractor):
             # TODO: add stop criterion if doesn't stop
             if unconsistent_groups:
                 print "-------------------performing " + str(i) + " iteration-----------------------"
-                best_hyperplane = self._search_best_hyperplane(unconsistent_groups, par)
+                best_hyperplane = self._search_best_hyperplane(unconsistent_groups, sc)
                 extracted_table.append(self._count_objects_positions(best_hyperplane))
             else:
                 break
 
         return np.array(extracted_table)
 
-    def count_decision_tree(self, objects):
+    def count_decision_tree(self, objects, sc=None):
         decision = self.dpoints_strategy.decision(objects)
         if decision is not None:
             return DecisionTree(decision, 0, 0)
 
-        best_hyperplane = self._search_best_hyperplane([objects], False)
+        best_hyperplane = self._search_best_hyperplane([objects], sc)
         hyperplane_indicator = self._count_objects_positions(best_hyperplane)
         left_son_objects = filter(lambda x: hyperplane_indicator[x] == 0, objects)
         right_son_objects = filter(lambda x: hyperplane_indicator[x] == 1, objects)
@@ -140,7 +140,9 @@ class HyperplaneExtractor(SimpleExtractor):
 
 
 if __name__ == "__main__":
-    logger = Configuration.sc._jvm.org.apache.log4j
+    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
+    sc = SparkContext(conf=conf)
+    logger = sc._jvm.org.apache.log4j
     logger.LogManager.getLogger("org").setLevel(logger.Level.ERROR)
     logger.LogManager.getLogger("akka").setLevel(logger.Level.ERROR)
     table = np.array([(0, 1, 7, 1, 1, 1),
@@ -163,8 +165,7 @@ if __name__ == "__main__":
     new_table = table[new_objects,]
     md = MinDistDoubtfulPointsStrategy(table, dec, 3)
     discretizer = HyperplaneExtractor(table, attrs_list, dec, 0.1, md)
-    # TODO: [1, 3, 5, 6, 9, 11] nie znajduje rozdzielenia
-    table = discretizer.extract(par=False)
+    table = discretizer.extract(sc)
     #dec_tree = discretizer.count_decision_tree(range(12))
     #dec_tree.print_tree()
     print table

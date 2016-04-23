@@ -6,7 +6,6 @@ from operator import add
 from collections import Counter
 
 from reduct_feature_selection.feature_extractions.disc_measure_calculator import DiscMeasureCalculator
-from settings import Configuration
 
 
 class GeneticSearch(object):
@@ -175,7 +174,7 @@ class GeneticSearch(object):
         return sorted_population
 
     # TODO: add stop criterion
-    def genetic_search(self, par=False):
+    def genetic_search(self, sc=None):
 
         print "--------------------init population-------------------------------------------"
         population = self.init_generation()
@@ -184,8 +183,8 @@ class GeneticSearch(object):
         the_same_awards = 0
         for i in range(self.max_iter):
             print "-----------------------------performing " + str(i) + " generation---------------"
-            if par:
-                rdd_population = Configuration.sc.parallelize(population, self.population_size * 10)
+            if sc is not None:
+                rdd_population = sc.parallelize(population, self.population_size * 10)
                 awards = rdd_population.mapPartitions(self.count_award_for_chunk).collect()
             else:
                 awards = map(self.count_award, population)

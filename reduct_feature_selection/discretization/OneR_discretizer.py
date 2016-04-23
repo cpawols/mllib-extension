@@ -2,6 +2,7 @@ from reduct_feature_selection.discretization.simple_discretizer import SimpleDis
 from collections import Counter
 
 import numpy as np
+from pyspark import SparkContext, SparkConf
 
 
 class OneRDiscretizer(SimpleDiscretizer):
@@ -26,13 +27,15 @@ class OneRDiscretizer(SimpleDiscretizer):
             yield (elem[0], elem[1], dis)
 
 if __name__ == "__main__":
+    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
+    sc = SparkContext(conf=conf)
     table = np.array([(1, 7), (1, 8), (1, 3), (1, 9), (1, 1), (1, 2), (1, 5), (1, 10)],
                      dtype=[('y', float), ('z', float)])
     dec = [0,1,1,1,0,0,1,1]
     attrs_list = ['z']
     discretizer = OneRDiscretizer(dec, 2)
-    print discretizer.discretize(table, attrs_list, par=True)
-    print discretizer.discretize(table, attrs_list, par=False)
+    print discretizer.discretize(table, attrs_list, sc)
+    print discretizer.discretize(table, attrs_list)
 
 # TODO: add tests and docs
 

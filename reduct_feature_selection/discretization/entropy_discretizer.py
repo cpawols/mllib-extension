@@ -5,11 +5,12 @@ import math
 
 import numpy as np
 
+from pyspark import SparkContext, SparkConf
+
 
 class EntropyDiscretizer(SimpleDiscretizer):
     def __init__(self, dec, m):
-        self.dec = dec
-        self.m = m
+        super(EntropyDiscretizer, self).__init__(dec, m)
         self.MAX_ENT = 1000000
 
     def entropy(self, U):
@@ -126,6 +127,8 @@ class EntropyDiscretizer(SimpleDiscretizer):
 
 
 if __name__ == "__main__":
+    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
+    sc = SparkContext(conf=conf)
     # table = np.array([(1, 7), (1, 8), (1, 3), (1, 9), (1, 1), (1, 2), (1, 5), (1, 10)],
     #                  dtype=[('y', float), ('z', float)])
     # U = [(0, 'x', 5), (1, 'x', 8), (2, 'x', 4), (3, 'x', 5), (4, 'x', 2), (5, 'x', 3)]
@@ -141,7 +144,7 @@ if __name__ == "__main__":
     discretizer_1 = EntropyDiscretizer(dec_1, 2)
     discretizer_2 = EntropyDiscretizer(dec_2, 2)
     #print discretizer.discretize(table, attrs_list, par=True)
-    print discretizer_1.discretize(table, attrs_list, par=True)
-    print discretizer_2.discretize(table, attrs_list, par=True)
+    print discretizer_1.discretize(table, attrs_list, sc)
+    print discretizer_2.discretize(table, attrs_list, sc)
 
 # TODO: add tests and docs

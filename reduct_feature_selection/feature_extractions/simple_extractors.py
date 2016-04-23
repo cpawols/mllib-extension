@@ -6,7 +6,7 @@ from sklearn import cross_validation
 
 from reduct_feature_selection.commons.tables.eav import Eav
 from reduct_feature_selection.feature_extractions.disc_measure_calculator import DiscMeasureCalculator
-from settings import Configuration
+from pyspark import SparkContext, SparkConf
 from numpy.lib import recfunctions as rfn
 
 
@@ -27,7 +27,7 @@ class SimpleExtractor(object):
         formats = [(str(i), float) for i in range(cols)]
         return np.array(table, dtype=formats)
 
-    def extract_cuts_column2(self, column):
+    def extract_cuts_column(self, column):
         column = list(column)
         dec_fqs_disc = DiscMeasureCalculator.prepare_hist(self.dec)
         act_left_sum = 0
@@ -63,32 +63,32 @@ class SimpleExtractor(object):
         data_set = [col[2] for col in new_col_set]
         return rfn.append_fields(new_table, names=col_names, data=data_set, usemask=False)
 
-    def extract(self, par=False):
+    def extract(self, sc=None):
         div_list = lambda lst, sz: [lst[i:i + sz] for i in range(0, len(lst), sz)]
         eav = Eav(Eav.convert_to_eav(self.table[self.attrs_list]))
-        eav.sort()
+        eav.sort(sc)
         eav_table = eav.eav
-        if par:
-            eav_rdd_part = Configuration.sc.parallelize(eav_table, len(self.attrs_list))
-            new_col_set = eav_rdd_part.mapPartitions(self.extract_cuts_column2).collect()
+        if sc is not None:
+            eav_rdd_part = sc.parallelize(eav_table, len(self.attrs_list))
+            new_col_set = eav_rdd_part.mapPartitions(self.extract_cuts_column).collect()
         else:
             eav_div = div_list(eav_table, len(eav_table) / len(self.attrs_list))
             new_col_set = reduce(lambda x, y: x + y,
-                              map(lambda col: list(self.extract_cuts_column2(col)), eav_div))
+                              map(lambda col: list(self.extract_cuts_column(col)), eav_div))
         return self.add_to_table(new_col_set)
 
     def eval(self, clf):
         res = cross_validation.cross_val_score(clf, self.table, self.dec, cv=10, scoring='f1_weighted')
         return res
 
-    def compare_eval(self, clf):
+    def compare_eval(self, clf, sc):
         res_ndisc = self.eval(clf)
-        res_disc = self.eval(self.extract(), clf)
+        res_disc = self.eval(self.extract(sc), clf)
         return res_ndisc, res_disc
 
-    def compare_time(self):
+    def compare_time(self, sc):
         start_par = time.time()
-        self.extract(par=True)
+        self.extract(sc)
         time_par = time.time() - start_par
         start_npar = time.time()
         self.extract()
@@ -96,6 +96,8 @@ class SimpleExtractor(object):
         return time_par, time_npar
 
 if __name__ == "__main__":
+    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
+    sc = SparkContext(conf=conf)
     table = np.array([(0, 1, 7),
                       (4, 5, 8),
                       (1, 2, 3),
@@ -108,7 +110,7 @@ if __name__ == "__main__":
     dec = [0, 1, 0, 1, 0, 1, 0, 1]
     attrs_list = ['x', 'y']
     discretizer = SimpleExtractor(table, attrs_list, dec, 0.1)
-    table = discretizer.extract(par=False)
+    table = discretizer.extract(sc)
     print table
     print table.dtype.names
     #print discretizer.compare_time()

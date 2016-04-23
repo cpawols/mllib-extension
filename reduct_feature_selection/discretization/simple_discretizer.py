@@ -4,16 +4,14 @@ import numpy as np
 from sklearn import cross_validation
 
 from reduct_feature_selection.commons.tables.eav import Eav
-from settings import Configuration
+from pyspark import SparkContext, SparkConf
 
 
 class SimpleDiscretizer(object):
 
-    def __init__(self, dec, m, **kwargs):
+    def __init__(self, dec, m):
         self.dec = dec
         self.m = m
-        for key, value in kwargs.iteritems():
-            setattr(self, key, value)
 
     def generate_data(self, rows, cols):
         table = []
@@ -28,13 +26,13 @@ class SimpleDiscretizer(object):
         for ind, row in enumerate(column):
             yield (row[0], row[1], ind / self.m)
 
-    def discretize(self, table, attrs_list, par=False):
+    def discretize(self, table, attrs_list, sc=None):
         div_list = lambda lst, sz: [lst[i:i + sz] for i in range(0, len(lst), sz)]
         eav = Eav(Eav.convert_to_eav(table[attrs_list]))
-        eav.sort()
+        eav.sort(sc)
         eav_table = eav.eav
-        if par:
-            eav_rdd_part = Configuration.sc.parallelize(eav_table, len(attrs_list))
+        if sc is not None:
+            eav_rdd_part = sc.parallelize(eav_table, len(attrs_list))
             eav_disc = eav_rdd_part.mapPartitions(self.discretize_column).collect()
         else:
             eav_div = div_list(eav_table, len(eav_table) / len(attrs_list))
@@ -47,14 +45,14 @@ class SimpleDiscretizer(object):
         res = cross_validation.cross_val_score(clf, table, self.dec, cv=10, scoring='f1_weighted')
         return res
 
-    def compare_eval(self, table, attrs_list, clf):
+    def compare_eval(self, table, attrs_list, clf, sc=None):
         res_ndisc = self.eval(table, clf)
-        res_disc = self.eval(self.discretize(table, attrs_list), clf)
+        res_disc = self.eval(self.discretize(table, attrs_list, sc), clf)
         return res_ndisc, res_disc
 
-    def compare_time(self, table, attrs_list):
+    def compare_time(self, table, attrs_list, sc=None):
         start_par = time.time()
-        self.discretize(table, attrs_list, par=True)
+        self.discretize(table, attrs_list, sc)
         time_par = time.time() - start_par
         start_npar = time.time()
         self.discretize(table, attrs_list)
@@ -62,6 +60,8 @@ class SimpleDiscretizer(object):
         return time_par, time_npar
 
 if __name__ == "__main__":
+    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
+    sc = SparkContext(conf=conf)
     table = np.array([(0, 1, 7), (4, 5, 8), (1, 2, 3), (3, 8, 9),
                       (0, 1, 7), (4, 5, 8), (1, 2, 3), (3, 8, 9)],
                      dtype=[('x', int), ('y', float), ('z', float)])
@@ -75,6 +75,6 @@ if __name__ == "__main__":
     # print disc_table.dtype.names
     #print discretizer.compare_time(table, ['y', 'z'])
     table2 = discretizer.generate_data(100, 50)
-    print discretizer.compare_time(table2, attrs_list)
+    print discretizer.compare_time(table2, attrs_list, sc)
 
 
