@@ -5,7 +5,29 @@ import math
 from operator import add
 from collections import Counter
 
+import numpy as np
+import time
+from sklearn.cross_validation import train_test_split
+from sklearn.datasets import load_digits
+
+from reduct_feature_selection.commons.tables.eav import Eav
 from reduct_feature_selection.feature_extractions.disc_measure_calculator import DiscMeasureCalculator
+
+#from pyspark import SparkContext, SparkConf
+
+
+def timeit(method):
+
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+
+        print '%r %2.5f sec' % \
+              (method.__name__, te - ts)
+        return result
+
+    return timed
 
 
 class GeneticSearch(object):
@@ -28,6 +50,7 @@ class GeneticSearch(object):
         self.mutation_chance = mutation_chance
         self.dec = dec
         self.table = table
+        self.table_as_matrix = np.array([list(row) for row in table])
         self.projection_axis = projection_axis
         self.unconsistent_groups = unconsistent_groups
 
@@ -36,25 +59,55 @@ class GeneticSearch(object):
         return [[randrange(-max_vec, max_vec) for _ in range(self.k)]
                 for _ in range(self.first_generation_size)]
 
+    @timeit
+    def _get_subtable(self, table, objects):
+        return np.array([table[obj] for obj in objects], dtype=table.dtype)
+
+    @timeit
+    def _get_subtable_as_matrix(self, table, objects):
+        return np.array([table[obj] for obj in objects])
+
     # TODO: add test
-    def count_projections(self, individual, objects):
+    @timeit
+    def count_projections2(self, individual, objects):
         '''
         :param individual: hyperplane
         :param objects: objects projection to axis
         :return: list of tuples (objects, projection) projection of object to axis
         '''
         projections = []
-        for obj, row in enumerate(self.table):
-            if obj in objects:
-                x = self.projection_axis[obj]
-                proj = x
-                if self.k > 1:
-                    for i, r in enumerate(row):
-                        proj -= individual[i] * r
-                else:
-                    proj -= individual[0] * row
-                projections.append((obj, proj))
+        table = self._get_subtable(self.table, objects)
+        for obj, row in enumerate(table):
+            proj = self.projection_axis[objects[obj]]
+            if self.k > 1:
+                for ind, r in enumerate(row):
+                    proj -= individual[ind] * r
+            else:
+                proj -= individual[0] * row
+            projections.append((objects[obj], proj))
         return projections
+
+    @timeit
+    def count_projections(self, individual, objects):
+        '''
+        :param individual: hyperplane
+        :param objects: objects projection to axis
+        :return: list of tuples (objects, projection) projection of object to axis
+        '''
+        table = self.table_as_matrix[objects, :]
+        proj = [self.projection_axis[obj] for obj in objects]
+        return zip(objects, proj - table.dot(individual))
+
+    @timeit
+    def count_projections3(self, individual, objects):
+        '''
+        :param individual: hyperplane
+        :param objects: objects projection to axis
+        :return: list of tuples (objects, projection) projection of object to axis
+        '''
+        table = self._get_subtable_as_matrix(self.table_as_matrix, objects)
+        proj = [self.projection_axis[obj] for obj in objects]
+        return zip(objects, proj - table.dot(individual))
 
     # TODO: add tests and docs
     def count_award(self, individual):
@@ -95,6 +148,7 @@ class GeneticSearch(object):
 
         return max_award, individual, good_proj
 
+    @timeit
     def count_local_award(self, individual):
         valid_objects = self.unconsistent_groups[0]
         projections = self.count_projections(individual, valid_objects)
@@ -203,15 +257,33 @@ class GeneticSearch(object):
 
             new_generation = self.count_new_generation(copy.deepcopy(population))
 
-            print sorted(new_generation) == sorted(population)
+            # print sorted(new_generation) == sorted(population)
 
             population = new_generation + population
 
-            set_population = self._eliminate_duplicates(population)
-            sorted_population = sorted(population)
-            print "new generation ratio"
-            print float(len(set_population)) / float(len(sorted_population))
+            # set_population = self._eliminate_duplicates(population)
+            # sorted_population = sorted(population)
+            # print "new generation ratio"
+            # print float(len(set_population)) / float(len(sorted_population))
             if the_same_awards > self.stop_treshold:
                 break
 
         return best_individual
+
+if __name__ == "__main__":
+    # conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("extractor"))
+    # sc = SparkContext(conf=conf)
+    # logger = sc._jvm.org.apache.log4j
+    # logger.LogManager.getLogger("org").setLevel(logger.Level.ERROR)
+    # logger.LogManager.getLogger("akka").setLevel(logger.Level.ERROR)
+
+    iris = load_digits(3)
+    X_train, X_test, y_train, y_test = train_test_split(
+        iris['data'], iris['target'], test_size=0.33, random_state=42)
+    iris_train = Eav.convert_to_proper_format(X_train)
+    iris_test = Eav.convert_to_proper_format(X_test)
+    tab_names = ['C' + str(i + 2) for i in range(63)]
+    gen = GeneticSearch(63, y_train, iris_train[tab_names], iris_train['C1'], [range(len(iris_train))])
+    gen.count_projections(range(63), range(len(iris_train)))
+    gen.count_projections2(range(63), range(len(iris_train)))
+    gen.count_projections3(range(63), range(len(iris_train)))

@@ -7,9 +7,9 @@ from pyspark import SparkContext, SparkConf
 
 class OneRDiscretizer(SimpleDiscretizer):
 
-    def __init__(self, dec, m):
-        self.dec = dec
-        self.m = m
+    def __init__(self, table, attrs_list, dec, min_elem=6):
+        super(OneRDiscretizer, self).__init__(table, attrs_list, dec)
+        self.min_elem = min_elem
 
     def discretize_column(self, column):
         dis = 0
@@ -17,7 +17,7 @@ class OneRDiscretizer(SimpleDiscretizer):
         dec_fqs = Counter()
         for elem in column:
 
-            if dis_elems > self.m and dec_fqs.most_common(1)[0][1] > dis_elems / 2:
+            if dis_elems > self.min_elem and dec_fqs.most_common(1)[0][1] > dis_elems / 2:
                 dis_elems = 0
                 dis += 1
                 dec_fqs = Counter()
@@ -29,15 +29,18 @@ class OneRDiscretizer(SimpleDiscretizer):
 if __name__ == "__main__":
     conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
     sc = SparkContext(conf=conf)
-    table = np.array([(1, 7), (1, 8), (1, 3), (1, 9), (1, 1), (1, 2), (1, 5), (1, 10)],
-                     dtype=[('y', float), ('z', float)])
+    table = np.array([(1, 7),
+                      (1, 8),
+                      (1, 3),
+                      (1, 9),
+                      (1, 1),
+                      (1, 2),
+                      (1, 5),
+                      (1, 10)])
     dec = [0,1,1,1,0,0,1,1]
-    attrs_list = ['z']
-    discretizer = OneRDiscretizer(dec, 2)
-    print discretizer.discretize(table, attrs_list, sc)
-    print discretizer.discretize(table, attrs_list)
-
-# TODO: add tests and docs
+    attrs_list = ['C1', 'C2']
+    discretizer = OneRDiscretizer(table, attrs_list, dec, 2)
+    discretizer.compare_time()
 
 
 

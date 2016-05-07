@@ -29,8 +29,16 @@ class Eav:
     # TODO: convert to format with dtype.names
 
     @staticmethod
-    def _convert_to_proper_format(array):
-        return array
+    def convert_to_proper_format(array):
+        ncols = len(array[0])
+        formats = [('C' + str(i + 1), type(array[0][i])) for i in range(ncols)]
+        new_array = map(lambda row: tuple(row), array)
+        return np.array(new_array, dtype=formats)
+
+    @staticmethod
+    def convert_to_proper_array(array):
+        new_array = map(lambda row: list(row), array)
+        return np.array(new_array)
 
     @staticmethod
     def convert_to_eav(array):
@@ -40,6 +48,7 @@ class Eav:
         :return: list of eav tuples
         """
         if array.size:
+            Eav.convert_to_proper_format(array)
             rows = range(array.shape[0])
             colnames = array.dtype.names
             list_of_eav = ([(r, c, array[c][r]) for c in colnames] for r in rows)
@@ -48,7 +57,7 @@ class Eav:
 
     def convert_to_array(self):
         """
-        this function convert eav format (list of tuples (enitity, attribute, value)) to numpy array
+        this function convert eav format (list of tuples (entity, attribute, value)) to numpy array
         :param eav: array list of eav tuples
         :return: numpy
         """
@@ -58,7 +67,6 @@ class Eav:
             formats = sorted(list(set([(x[1], float) for x in self.eav])))
             array = np.array([tuple([0] * (cols_size))] * (rows_size + 1),
                              dtype=formats)
-            print array
             for t in self.eav:
                 array[t[0]][t[1]] = t[2]
             return array
@@ -106,7 +114,7 @@ class Eav:
         num_chunks = 10
         eav_rdd_part = sc.parallelize(self.eav, num_chunks)
         self.eav = eav_rdd_part.mapPartitions(Eav._compare)\
-            .reduce(lambda x, y: sorted(x+y, key=lambda x: (x[1], x[2], x[0])))
+            .reduce(lambda x, y: sorted(x + y, key=lambda x: (x[1], x[2], x[0])))
         self.update_index(0)
         self.update_index(1)
 

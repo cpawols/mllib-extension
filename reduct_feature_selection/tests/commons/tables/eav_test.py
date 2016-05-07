@@ -5,11 +5,19 @@ import numpy as np
 from unittest import TestCase
 
 from reduct_feature_selection.commons.tables.eav import Eav
+from pyspark import SparkContext, SparkConf
 
 __author__ = 'krzysztof'
 
 
 class TestEav(TestCase):
+    def test_convert_to_proper_format(self):
+        array_example = np.array([[1, 2, 3], [3, 4, 5]])
+        expected_output = np.array([(1, 2, 3), (3, 4, 5)], dtype=[('C1', int), ('C2', int), ('C3', int)])
+        output = Eav.convert_to_proper_format(array_example)
+        self.assertEqual(list(expected_output), list(output))
+        self.assertEqual(expected_output.dtype, output.dtype)
+
     def test_to_eav_convert(self):
         array_example = np.array([(0, 1), (4, 5)], dtype=[('x', int), ('y', float)])
         expected_output = [(0, 'x', 0), (0, 'y', 1), (1, 'x', 4), (1, 'y', 5)]
@@ -58,10 +66,12 @@ class TestEav(TestCase):
         self.assertEqual(expected_output, sort_eav.eav)
 
     def test_merge_sort(self):
+        conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
+        sc = SparkContext(conf=conf)
         eav_example = [(0, 'x', 5), (0, 'y', 8), (1, 'x', 4), (1, 'y', 5), (1, 'z', 2), (0, 'z', 3)]
         expected_output = [(1, 'x', 4), (0, 'x', 5), (1, 'y', 5), (0, 'y', 8), (1, 'z', 2), (0, 'z', 3)]
         sort_eav = Eav(eav_example)
-        sort_eav.merge_sort()
+        sort_eav.merge_sort(sc)
         self.assertEqual(expected_output, sort_eav.eav)
 
     def test_consistent(self):

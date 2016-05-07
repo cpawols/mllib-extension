@@ -12,8 +12,14 @@ from numpy.lib import recfunctions as rfn
 
 class SimpleExtractor(object):
 
-    def __init__(self, table, attrs_list, dec, cuts_limit_ratio):
-        self.table =table
+    def __init__(self, table, attrs_list, dec, cuts_limit_ratio=0.1):
+        '''
+        :param table: decision table
+        :param attrs_list: list of attrbibutes to process
+        :param dec: decision column
+        :param cuts_limit_ratio: ratio of good cut
+        '''
+        self.table = Eav.convert_to_proper_format(table)
         self.attrs_list = attrs_list
         self.dec = dec
         self.cuts_limit_ratio = cuts_limit_ratio
@@ -77,12 +83,12 @@ class SimpleExtractor(object):
                               map(lambda col: list(self.extract_cuts_column(col)), eav_div))
         return self.add_to_table(new_col_set)
 
-    def eval(self, clf):
-        res = cross_validation.cross_val_score(clf, self.table, self.dec, cv=10, scoring='f1_weighted')
+    def eval(self, table, clf):
+        res = cross_validation.cross_val_score(clf, table, self.dec, cv=10, scoring='f1_weighted')
         return res
 
     def compare_eval(self, clf, sc):
-        res_ndisc = self.eval(clf)
+        res_ndisc = self.eval(self.table, clf)
         res_disc = self.eval(self.extract(sc), clf)
         return res_ndisc, res_disc
 
@@ -108,7 +114,7 @@ if __name__ == "__main__":
                       (3, 8, 9)],
                      dtype=[('x', int), ('y', float), ('z', float)])
     dec = [0, 1, 0, 1, 0, 1, 0, 1]
-    attrs_list = ['x', 'y']
+    attrs_list = ['C1', 'C2']
     discretizer = SimpleExtractor(table, attrs_list, dec, 0.1)
     table = discretizer.extract(sc)
     print table
