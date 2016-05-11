@@ -50,7 +50,7 @@ class GeneticSearch(object):
         self.mutation_chance = mutation_chance
         self.dec = dec
         self.table = table
-        self.table_as_matrix = np.array([list(row) for row in table])
+        self.table_as_matrix = np.array([[row] for row in table]) if k == 1 else np.array([list(row) for row in table])
         self.projection_axis = projection_axis
         self.unconsistent_groups = unconsistent_groups
 
@@ -115,7 +115,7 @@ class GeneticSearch(object):
             return self.count_local_award(individual)
         return self.count_global_award(individual)
 
-    def count_global_award(self, individual):
+    def count_global_award2(self, individual):
         valid_objects = reduce(add, self.unconsistent_groups)
         projections = self.count_projections(individual, valid_objects)
         objects = [x for x in sorted(projections, key=lambda x: x[1])]
@@ -148,11 +148,67 @@ class GeneticSearch(object):
 
         return max_award, individual, good_proj
 
+    def count_global_award(self, individual):
+        valid_objects = reduce(add, self.unconsistent_groups)
+        projections = self.count_projections(individual, valid_objects)
+        objects = sorted(projections, key=lambda x: x[1])
+
+        object_group_map = {}
+        group_fqs_map = {}
+        act_left_sum = {}
+        act_right_sum = {}
+
+        for ind, group in enumerate(self.unconsistent_groups):
+            group_decisions = []
+            for obj in group:
+                group_decisions.append(self.dec[obj])
+                object_group_map[obj] = ind
+            act_left_sum[ind] = 0
+            act_right_sum[ind] = len(group_decisions)
+            group_fqs_map[ind] = DiscMeasureCalculator.prepare_hist(group_decisions)
+
+        act_award = 0
+        max_award = 0
+        for obj, proj in objects:
+            group_id = object_group_map[obj]
+            dec = self.dec[obj]
+            act_left_sum[group_id], act_right_sum[group_id], act_award = \
+                DiscMeasureCalculator.update_award(dec, act_left_sum[group_id], act_right_sum[group_id],
+                                                   group_fqs_map[group_id], act_award)
+            if act_award > max_award:
+                max_award = act_award
+                good_proj = proj
+
+        return max_award, individual, good_proj
+
+    @timeit
+    def count_local_award2(self, individual):
+        valid_objects = self.unconsistent_groups[0]
+        projections = self.count_projections(individual, valid_objects)
+        objects = [x for x in sorted(projections, key=lambda x: x[1])]
+        decisions = [self.dec[obj] for obj in valid_objects]
+
+        act_left_sum = 0
+        act_right_sum = len(decisions)
+        dec_fqs_disc = DiscMeasureCalculator.prepare_hist(decisions)
+
+        act_award = 0
+        max_award = 0
+        for obj, proj in objects:
+            dec = self.dec[obj]
+            act_left_sum, act_right_sum, act_award = \
+                DiscMeasureCalculator.update_award(dec, act_left_sum, act_right_sum, dec_fqs_disc, act_award)
+            if act_award > max_award:
+                max_award = act_award
+                good_proj = proj
+
+        return max_award, individual, good_proj
+
     @timeit
     def count_local_award(self, individual):
         valid_objects = self.unconsistent_groups[0]
         projections = self.count_projections(individual, valid_objects)
-        objects = [x for x in sorted(projections, key=lambda x: x[1])]
+        objects = sorted(projections, key=lambda x: x[1])
         decisions = [self.dec[obj] for obj in valid_objects]
 
         act_left_sum = 0
@@ -284,6 +340,8 @@ if __name__ == "__main__":
     iris_test = Eav.convert_to_proper_format(X_test)
     tab_names = ['C' + str(i + 2) for i in range(63)]
     gen = GeneticSearch(63, y_train, iris_train[tab_names], iris_train['C1'], [range(len(iris_train))])
-    gen.count_projections(range(63), range(len(iris_train)))
-    gen.count_projections2(range(63), range(len(iris_train)))
-    gen.count_projections3(range(63), range(len(iris_train)))
+    gen.count_local_award2(range(63))
+    gen.count_local_award(range(63))
+    # gen.count_projections(range(63), range(len(iris_train)))
+    # gen.count_projections2(range(63), range(len(iris_train)))
+    # gen.count_projections3(range(63), range(len(iris_train)))

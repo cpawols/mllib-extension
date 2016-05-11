@@ -6,10 +6,7 @@ class DiscMeasureCalculator(object):
 
     @staticmethod
     def prepare_hist(decisions):
-        dec_fqs = Counter()
-        for dec in decisions:
-            dec_fqs[dec] += 1
-        return {k: (0, v) for k, v in dec_fqs.iteritems()}
+        return {k: (0, v) for k, v in Counter(decisions).iteritems()}
 
     @staticmethod
     def update_award(dec, act_left_sum, act_right_sum, dec_fqs_disc, act_award):

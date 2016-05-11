@@ -198,32 +198,49 @@ if __name__ == "__main__":
     new_table = table[new_objects,]
     md = MinDistDoubtfulPointsStrategy(table, dec, 3)
     discretizer = HyperplaneExtractor(table, attrs_list, dec, md, 60)
-    #table = discretizer.extract(sc)
-    dec_tree = discretizer.count_decision_tree(range(12), svm=True)
-    dec_tree.print_tree()
-    for row in table:
-        print dec_tree.predict(list(row), svm=True)
+    table = discretizer.extract(sc)
+    print table
+    # dec_tree = discretizer.(range(12), svm=True)
+    # dec_tree.print_tree()
+    # for row in table:
+    #     print dec_tree.predict(list(row), svm=True)
 
-    iris = load_digits(3)
+    # iris = load_iris()
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     iris['data'], iris['target'], test_size=0.33, random_state=42)
+    # iris_train = Eav.convert_to_proper_format(X_train)
+    # iris_test = Eav.convert_to_proper_format(X_test)
+    # md = MinDistDoubtfulPointsStrategy(iris_train, y_train, 3)
+    # extractor = HyperplaneExtractor(iris_train, list(iris_train.dtype.names), y_train, md, 300)
+    # dec_tree = extractor.count_decision_tree(range(len(iris_train)))
+    # svm_dec_tree = extractor.count_decision_tree(range(len(iris_train)), svm=True)
+    # standard_tree = tree.DecisionTreeClassifier()
+    # standard_tree.fit(Eav.convert_to_proper_array(iris_train), y_train)
+    # results_standard = standard_tree.predict(Eav.convert_to_proper_array(iris_test))
+    # results_gen = dec_tree.predict_list(iris_test)
+    # results_svm = svm_dec_tree.predict_list(iris_test, svm=True)
+    # print "genetic"
+    # print accuracy_score(results_gen, y_test)
+    # print "svm"
+    # print accuracy_score(results_svm, y_test)
+    # print "standard"
+    # print accuracy_score(results_standard, y_test)
+
+    iris = load_iris()
+    X = Eav.convert_to_proper_format(iris['data'])
+    y = iris['target']
+    md = MinDistDoubtfulPointsStrategy(X, y, 3)
+    extractor = HyperplaneExtractor(X, list(X.dtype.names), y, md, 300)
+    extracted_table = extractor.extract()
     X_train, X_test, y_train, y_test = train_test_split(
-        iris['data'], iris['target'], test_size=0.33, random_state=42)
-    iris_train = Eav.convert_to_proper_format(X_train)
-    iris_test = Eav.convert_to_proper_format(X_test)
-    md = MinDistDoubtfulPointsStrategy(iris_train, y_train, 3)
-    extractor = HyperplaneExtractor(iris_train, list(iris_train.dtype.names), y_train, md, 300)
-    dec_tree = extractor.count_decision_tree(range(len(iris_train)))
-    svm_dec_tree = extractor.count_decision_tree(range(len(iris_train)), svm=True)
+        extracted_table, y, test_size=0.33, random_state=42)
     standard_tree = tree.DecisionTreeClassifier()
-    standard_tree.fit(Eav.convert_to_proper_array(iris_train), y_train)
-    results_standard = standard_tree.predict(Eav.convert_to_proper_array(iris_test))
-    results_gen = dec_tree.predict_list(iris_test)
-    results_svm = svm_dec_tree.predict_list(iris_test, svm=True)
-    print "genetic"
-    print accuracy_score(results_gen, y_test)
-    print "svm"
-    print accuracy_score(results_svm, y_test)
-    print "standard"
-    print accuracy_score(results_standard, y_test)
+    standard_tree.fit(Eav.convert_to_proper_array(X_train), y_train)
+    results = standard_tree.predict(Eav.convert_to_proper_array(X_test))
+    print "extracted table"
+    print extracted_table
+    print "score"
+    print accuracy_score(y_test, results)
 
     # svm = LinearSVC()
     # prop_tab = Eav.convert_to_proper_array(table)
