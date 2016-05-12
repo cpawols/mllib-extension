@@ -49,7 +49,7 @@ class SimpleDiscretizer(object):
 
     @timeit
     def discretize(self, sc=None):
-        div_list = lambda lst, sz: [lst[i:i + sz] for i in range(0, len(lst), sz)]
+        div_list = lambda lst, size: [lst[i:i + size] for i in range(0, len(lst), size)]
         eav = Eav(Eav.convert_to_eav(self.table[self.attrs_list]))
         eav.sort(sc)
         eav_table = eav.eav
@@ -98,6 +98,7 @@ if __name__ == "__main__":
     # print disc_table.dtype.names
     #print discretizer.compare_time(table, ['y', 'z'])
     # table2 = discretizer.generate_data(100, 50)
+    table
     discretizer.compare_time(sc)
 
 

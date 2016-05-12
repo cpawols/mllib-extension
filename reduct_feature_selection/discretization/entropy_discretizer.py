@@ -120,11 +120,10 @@ class EntropyDiscretizer(SimpleDiscretizer):
                 for cut in self.find_cut_quadr(begin + min_cut, objects[min_cut:]):
                     yield cut
 
-    def discretize_column(self, column, lin=False):
+    def discretize_column(self, column):
         column = list(column)
         dis = 0
-        cuts_set = sorted(list(self.find_cut_lin(0, column))) if lin else \
-            sorted(list(self.find_cut_quadr(0, column)))
+        cuts_set = sorted(self.find_cut_lin(0, column))
         cur_cut = cuts_set[0]
 
         for i, elem in enumerate(column):
@@ -180,6 +179,10 @@ if __name__ == "__main__":
         iris['data'], iris['target'], test_size=0.2, random_state=42)
     iris_data = Eav.convert_to_proper_format(iris['data'])
     discretizer = EntropyDiscretizer(iris_data, ['C1', 'C2', 'C3'], iris['target'])
-    clf = GaussianNB()
-    print discretizer.compare_eval(clf)
-    print "discretized"
+    table1 = discretizer.discretize()
+    #table2 = discretizer.discretize()
+    # clf = GaussianNB()
+    # print discretizer.compare_eval(clf)
+    # print "discretized"
+    print table1
+    #print table2

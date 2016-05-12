@@ -1,3 +1,8 @@
+from sklearn.cross_validation import train_test_split
+from sklearn.datasets import load_iris
+from sklearn.naive_bayes import GaussianNB
+
+from reduct_feature_selection.commons.tables.eav import Eav
 from reduct_feature_selection.discretization.simple_discretizer import SimpleDiscretizer
 from collections import Counter
 
@@ -37,10 +42,21 @@ if __name__ == "__main__":
                       (1, 2),
                       (1, 5),
                       (1, 10)])
-    dec = [0,1,1,1,0,0,1,1]
-    attrs_list = ['C1', 'C2']
-    discretizer = OneRDiscretizer(table, attrs_list, dec, 2)
-    discretizer.compare_time()
+    # dec = [0,1,1,1,0,0,1,1]
+    # attrs_list = ['C1', 'C2']
+    # discretizer = OneRDiscretizer(table, attrs_list, dec, 2)
+
+    iris = load_iris()
+    X_train, X_test, y_train, y_test = train_test_split(
+        iris['data'], iris['target'], test_size=0.2, random_state=42)
+    iris_data = Eav.convert_to_proper_format(iris['data'])
+    discretizer = OneRDiscretizer(iris_data, ['C1', 'C2', 'C3'], iris['target'])
+    table1 = discretizer.discretize()
+    # table2 = discretizer.discretize()
+    # clf = GaussianNB()
+    # print discretizer.compare_eval(clf)
+    # print "discretized"
+    print table1
 
 
 

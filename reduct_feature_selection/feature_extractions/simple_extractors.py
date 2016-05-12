@@ -70,7 +70,7 @@ class SimpleExtractor(object):
         return rfn.append_fields(new_table, names=col_names, data=data_set, usemask=False)
 
     def extract(self, sc=None):
-        div_list = lambda lst, sz: [lst[i:i + sz] for i in range(0, len(lst), sz)]
+        div_list = lambda lst, size: [lst[i:i + size] for i in range(0, len(lst), size)]
         eav = Eav(Eav.convert_to_eav(self.table[self.attrs_list]))
         eav.sort(sc)
         eav_table = eav.eav
