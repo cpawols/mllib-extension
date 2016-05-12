@@ -36,33 +36,46 @@ bindingoffset=0mm, top=1in, bottom=1in}
 \usepackage[export]{adjustbox}
 \lstset{language=Python}
 
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
 
+% Custom colors
+\usepackage{color}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+\definecolor{myred}{rgb}{0.7,0,0}
 
-\author{Krzysztof Rutkowski}
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+language=Python,
+basicstyle=\ttm,
+commentstyle=\color{myred},
+otherkeywords={self, map, reduce, reduceByKey, mapPartitions, collect, paralellize, yield},             % Add keywords here
+keywordstyle=\ttb\color{deepblue},
+emph={MyClass,__init__},          % Custom highlighting
+emphstyle=\ttb\color{deepred},    % Custom highlighting style
+stringstyle=\color{deepgreen},
+frame=tb,                         % Any extra options here
+showstringspaces=false            % 
+}}
 
-\nralbumu{319379}
-
-\title{Wybrane metody dyskretyzacji i generowania nowych cech z zastosowaniem paradygmatu MapReduce}
-
-\tytulang{Discretization and feature extraction methods with application of MapReduce paradigm}
-
-\kierunek{Matematyka}
-
-
-\opiekun{prof.dr.hab Andrzej Skowron\\
-  Zakład Logiki Matematycznej\\
-  }
-
-\date{Czerwiec 2016}
-
-\dziedzina{ 
-11.1 Matematyka\\ 
+% Python environment
+\lstnewenvironment{python}[1][]
+{
+\pythonstyle
+\lstset{#1}
 }
+{}
 
-%Klasyfikacja tematyczna wedlug AMS (matematyka) lub ACM (informatyka)
-\klasyfikacja{sztuczna inteligencja, systemy decyzyjne}
+% Python for external files
+\newcommand\pythonexternal[2][]{{
+\pythonstyle
+\lstinputlisting[#1]{#2}}}
 
-\keywords{discretization, feature extraction, decision system, mapreduce}
+% Python for inline
+\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
 
 % Tu jest dobre miejsce na Twoje wżasne makra i~żrodowiska:
 \newtheorem{thm}{Thm}[chapter]
@@ -91,6 +104,33 @@ bindingoffset=0mm, top=1in, bottom=1in}
 \newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
 
 % koniec definicji
+
+
+\author{Krzysztof Rutkowski}
+
+\nralbumu{319379}
+
+\title{Wybrane metody dyskretyzacji i generowania nowych cech z zastosowaniem paradygmatu MapReduce}
+
+\tytulang{Discretization and feature extraction methods with application of MapReduce paradigm}
+
+\kierunek{Matematyka}
+
+
+\opiekun{prof.dr.hab Andrzej Skowron\\
+  Zakład Logiki Matematycznej\\
+  }
+
+\date{Czerwiec 2016}
+
+\dziedzina{ 
+11.1 Matematyka\\ 
+}
+
+%Klasyfikacja tematyczna wedlug AMS (matematyka) lub ACM (informatyka)
+\klasyfikacja{sztuczna inteligencja, systemy decyzyjne}
+
+\keywords{discretization, feature extraction, decision system, mapreduce}
 
 \begin{document}
 
@@ -232,7 +272,7 @@ Zaś podział całego uniwersum jako:
 
 \begin{uwaga}
 Szukanie niesprzecznego zbioru cięć o najmniejszej mocy jest $NP$-zupełny.
-Dowód poprzez sprowadzenie do problemy $SET COVER$.
+Dowód poprzez sprowadzenie do problemu $SET COVER$.
 \end{uwaga}
 
 
@@ -292,7 +332,7 @@ Typowy potok obliczeń w Sparku polega na:
 \begin{itemize}
  \item Stworzeniu RDD bazującego na kolekcji utrzymywanej w programie
  \item Wykonaniu transformacji na RDD
- \item Wykonanie akcji
+ \item Wykonaniu akcji
 \end{itemize}
 
 Funkcje w Sparku dzielą się na transformacje i akcje. 
@@ -318,14 +358,30 @@ Przykłady akcji:
 W powyższych przykładach zamiast funkcji $f$ można użyć wyrażeń lambda (funkcji anonimowych).
 
 Przykład, zliczanie słów w języku python:
-\begin{lstlisting}[frame=single] 
+\begin{python}
+#ustawiamy kontekst i konfiguracje
+conf = (SparkConf().setMaster("spark://localhost:7077").
+		    setAppName("entropy"))
+sc = SparkContext(conf=conf)
 words = ["ala", "ma", "ala", "kota", "ma"]
 #tworzenie rdd na podstawie listy
-words_rdd = sc.paralellize(words)          
+words_rdd = sc.paralellize(words)  
 words_counts =  words_rdd.
 		map(lambda x: (x, 1)).
 		reduceByKey(lambda x, y: x+y)
-\end{lstlisting}
+\end{python}
+
+W powyższym, jak i w następnych listingach algorytmów w języku python, sc zawsze będzie obiektem klasy $SparkContext$, który inicjuje
+RDD na podstawie konfiguracji klastrowego środowiska dla Sparka. Konfigurację tworzymy na podstawie obiektu klasy $SparkConf$, bądź
+ustawiamy parametry klastra, takie jak:
+\begin{itemize}
+ \item liczba komputerów
+ \item liczba procesorów
+ \item pamięć RAM na jednostkę obliczeniową
+ \item nazwa aplikacji
+\end{itemize}
+w odpowiednim pliku konfiguracyjnym. 
+
 
 Obliczenia wykonywane w Sparku są nie tylko skalowalne, ale również szybkie ze względu na:
 \begin{itemize}
@@ -346,23 +402,33 @@ Obliczenia wykonywane w Sparku są nie tylko skalowalne, ale również szybkie z
 \chapter{Skalowalne algorytmy dyskretyzacji}
 
 W tym rozdziale omówię zaimplementowane algorytmy dyskretyzacji, jak i przedstawię wyniki eksperymentów i obliczeń.
-Algorytmy dyskretyzacji dzielimy na globalne i lokalne. Lokalne szukają cięć dla każdego atrybutu niezależnie, przez 
-co w naturalny sposób łatwo je zrównoleglić, zgodnie ze schematem:
-\begin{lstlisting}[frame=single] 
-columns_rdd = sc.paralellize(table, numer_of_columns)          
+Algorytmy dyskretyzacji dzielimy na:
+\begin{itemize}
+ \item \textbf{globalne} - szukają cięć na podstawie całej tabeli
+ \item \textbf{lokalne} - szukają cięć na podstawie każdego atrubutu niezależnie
+\end{itemize}
+Będziemy tu analizować algorytmy lokalne, gdyż
+w naturalny sposób łatwo je zrównoleglić, zgodnie ze schematem:
+\begin{python}
+# tworzymy RDD na podstawie listy kolumn i 
+# dzielimy na $numer_of_columns$ kawalkow
+columns_rdd = sc.paralellize(table, numer_of_columns)
+# wykonujemy algorytm dyskretyzacyjny rownolegle dla kazdej kolumny
 discretized_columns = columns_rdd.
 		      mapPartitions(discretizeColumn).
 		      collect()
-\end{lstlisting}
+\end{python}
 Gdzie funkcja discretizeColumn przyjmuje kolumnę liczb rzeczywistych tabeli decyzyjnej i zwraca
 jej dyskretyzację.
 Metody globalne szukają zbioru cięć dla całej tabeli, przez co trudniej je zrównoleglić.
-Niżej przedstawię 3 algorytmy lokalne i jeden globalny.
+Niżej przedstawię 3 lokalne algorytmy dyskretyzacji.
 
 \section{Sprawdzanie spójności tabeli}
 By dyskretyzacja miała sens, potrzebujemy sprawdzić czy tabela jest spójna, w Sparku możemy 
 to w prosty sposób zrobić za pomocą poniższego algorytmu:
-\begin{lstlisting}[frame=single] 
+\begin{python}
+# funkcja agregujaca, zwraca tuple skladajaca sie z roznych decyzji
+# dla danej kombinacji atrybutow
 def get_unique_dec(x, y):
   return tuple(set(x + y))
 # rows_rdd = (row, (dec,))
@@ -371,41 +437,50 @@ one_dec = rows_rdd.
 	  reduceByKey(get_unique_dec).
 	  map(lambda k, v: len(v) == 1).
 	  collect()
+# tabela jest spojna jesli dla kazdej kombinacji atrybutow
+# mamy jedna decyzje
 is_consistent = all(one_dec)
-\end{lstlisting}
+\end{python}
 \section{Opis algorytmów}
-\subsection{Algorytmy lokalne}
 Wszystkie z poniższych algorytmów są zrównoleglane ze względu na kolumnę, tak 
-jak było to napisane we wstępie. Różnią się metodą discretizeColumn.
-\subsubsection{Sortowanie}
+jak było to napisane we wstępie. Różnią się metodą $discretizeColumn$.
+\subsection{Sortowanie}
 Wszystkie niżej wymienione algorytmy operują na posortowanych kolumnach. By posortować całą tabelę najpierw
 sprowadzam ją do postaci EAV, tj listy trójek (Obiekt, Atrybut, Wartość), a następnie sortuję tę listę 
-najpierw względem wartości, potem obiektów, a następnie atrybutów, otrzymujemy listę posortowanych wartości
-zgrupowanych względem atrybutów. W Sparku wykonujemy sortowanie równoległe, dzieląc listę na kawałki, 
-sortując równolegle każdy kawałek, a następnie scalając wszystkie części, kod algorytmu:
-\begin{lstlisting}[frame=single]
+najpierw względem wartości, potem obiektów, a następnie atrybutów, otrzymująć listę posortowanych wartości
+zgrupowanych względem atrybutów. W Sparku wykonujemy sortowanie równoległe, za pomocą poniższego algorytmu,
+będącego uogólnieniem mergesort:
+\begin{itemize}
+ \item dzielę listę na $numchunks$ kawałków
+ \item sortuję każdy kawałek niezależnie
+ \item scalam posortowane kawałki
+\end{itemize}
+Kod algorytmu w języku python:
+\begin{python}
+# funkcja porownujaca
+# wzgledem atrybutu, potem wartosci, a nastepnie nazwy obiektu
 def compare(iterator):
   yield sorted(iterator, key=lambda x: (x[1], x[2], x[0]))
 
 def merge_sort():
-  num_chunks = 10
-  eav_rdd_part = Configuration.sc.parallelize(eav, num_chunks)
+  numChunks = 10
+  eav_rdd_part = Configuration.sc.parallelize(eav, numChunks)
   self.eav =  eav_rdd_part.
 	      mapPartitions(compare).
 	      reduce(lambda x, y: 
 	      sorted(x+y, key=lambda x: (x[1], x[2], x[0])))
-\end{lstlisting}
+\end{python}
 
-\subsubsection{Algorytm bazowy}
+\subsection{Algorytm bazowy}
 Jest to prosty algorytm polegający na wykonywania cięć w równych odstępach, co $m$ obiektów, gdzie
 $m$ jest parametrem. Przy czym kolumna 
 Jego zaletą jest prostota, jednak wogóle nie patrzymy na decyzję.
 Kod algorytmu:
-\begin{lstlisting}[frame=single] 
+\begin{python} 
 def discretizeColumn(column, m):
   for ind, row in enumerate(column):
     yield (row[0], row[1], ind / m)
-\end{lstlisting}
+\end{python}
 
 \begin{przyklad}[Przykładowa dyskretyzacja]
 Dla tabeli:
@@ -437,12 +512,12 @@ Oraz $m$ = 3, mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgo
  \end{tabular}
 \end{center}
 \end{przyklad}
-\subsubsection{OneR Discretizer}
-W tym algorytmie wykonujemy cięcia w miejscach, w których 
+\subsection{OneR Discretizer}
+W tym algorytmie wykonujemy cięcie w momencie, gdy
 jednej z decyzji jest więcej niż innych, przy czym dany przedział musi zawierać więcej niżej
 $m$ elementów, gdzie $m$ jest ustalonym parametrem.
 Algorytm:
-\begin{lstlisting}[frame=single]
+\begin{python}
 def discretize_column(column, m):
         new_dec = 0
         block_elements = 0
@@ -458,7 +533,7 @@ def discretize_column(column, m):
             block_elements += 1
 
             yield (elem[0], elem[1], new_dec)
-\end{lstlisting}
+\end{python}
 \begin{przyklad}[Przykładowa dyskretyzacja]
 Dla tabeli:
 \begin{center}
@@ -469,7 +544,7 @@ Dla tabeli:
   $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
   $u_{3}$ & 20     & 30      & słabe   	      & Tak \\
   $u_{4}$ & 15     & 50      & deszcz         & Nie \\
-  $u_{5}$ & 15     & 30      & deszcz         & Nie \\
+  $u_{5}$ & 15     & 30      & deszcz         & Tak \\
   $u_{6}$ & 30     & 70      & deszcz         & Nie \\
   $u_{7}$ & 15     & 30      & deszcz         & Nie \\
  \end{tabular}
@@ -489,9 +564,143 @@ Oraz $m$ = 4, mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgo
  \end{tabular}
 \end{center}
 \end{przyklad}
-\subsubsection{Dyskretyzacja za pomocą entropii}
-\subsection{Algorytmy globalne}
-\subsubsection{Algorytm oparty o heurystykę zachłanną i algorytmy genetyczne}
+\subsection{Dyskretyzacja za pomocą entropii}
+Entropię dla zbioru obiektów $U$ definiujemy jako:
+\begin{align*}
+  Ent(U) = - \sum_{d \in dec(U)} p_d \cdot log(p_d)
+\end{align*}
+Gdzie $dec(U)$ to zbiór decyzji obiektów ze zbioru $U$, oraz $p_d$ jest 
+empirycznym prawdopodobieństwem decyzji $d$, liczonym z wzoru:
+\begin{align*}
+  p_d = \frac{|\{u \in U: dec(u) = d\}|}{|U|}
+\end{align*}
+Entropia jest miarą informacji jaką mamy o danym zbiorze obiektów.
+Jest ona zerowa, gdy w danym zbiorze obiektów mamy jedną decyzję, a więc 
+mamy pełną informację, zaś największa gdy wszystkich decyzji jest po równo. 
+Entropię dla danego cięcia $c$ na danym atrybucie $a$ możemy zdefiniować jako:
+\begin{align*}
+  E(a, c, U) = \frac{U_1}{n}Ent(U_1) + \frac{U_2}{n}Ent(U_2)
+\end{align*}
+Gdzie $n$ jest liczbą obiektów w $u$ oraz $U_1$ i $U_2$ powstają z $U$ na podstawie cięcia $c$.
+Dla danego cięcia możemy więc zdefniować miarę przyrostu informacji:
+\begin{align*}
+ Gain(a, c, U) = Ent(U) - E(a, c, U)
+\end{align*}
+Wybieramy takie cięcie, by zmaksymalizować zysk informacji. Cięcia wykonujemy rekurencyjnie,
+dopóki nie spełniony zostanie pewien warunek stopu, tj gdy zysk informacji, który osiągamy
+dla danego optymalnego cięcia jest mniejszy niż jakaś wielkość.
+\subsubsection{Szukanie optymalnego cięcia - algorytm liniowy}
+Możemy łatwo znależć optymalne cięcie dla danego zbioru obiektów w czasie $O(n^2)$ gdzie $n$ jest
+liczbą obiektów za pomocą algorytmu (gdzie Ent(U) jest funkcją obliczającą entropię obiektów ze zbioru U):
+\begin{python}
+min_cut = 1
+# mozliwe ciecia - pomiedzy obiektami od 1 do n
+possible_cuts = range(1, n)
+# ustawiamy wartosc minimalnego ciecia na nieskonczonosc
+min_cut_value = INFINITY
+for cut in possible_cuts:
+  cut_value = cut / n * Ent(U[cut:]) + 
+	      (n - cut) / n * Ent(U[:cut])
+  if cut_value < min_cut_value:
+    min_cut_value = cut_value
+    min_cut = cut	      
+\end{python}
+Możemy jednak nie obliczać za każdym razem entropii, lecz liczyć ją na podstawie 
+wcześniejszych wyników w czasie stałym, otrzymując algorytm liniowy ze względu na liczbę 
+obiektów. Algorytm opiera się na obserwacji (zakładamy, że dla obiektów $1, ..., k-1$ mamy już obliczone 
+częstości poszczególnych decyzji (słownik $decHist$ w którym trzymamy histogram decyzji, za pomocą którego w czasie stałym
+liczymy $p_d$):
+\begin{align*}
+  Ent(U_k) = Ent(U_{k-1}) + log(p_{dec(u_k)}) \cdot p_{dec(u_k)} \\
+  decHist[dec(u_k)] += 1 \\
+  Ent(U_k) = Ent(U_{k-1}) - log(p_{dec(u_k)}) \cdot p_{dec(u_k)}
+\end{align*}
+Analogicznie trzymamy histogram dla drugiej obiektów $k, ..., n$ aktualizując entropię drugiej połowy.
+Otrzymujemy więc następujący algorytm liniowy:
+\begin{python}
+def find_cut(U):
+  # decHist1 -> histogram dla 1 połowy
+  # decHist2 -> histogram dla 2 połowy
+  # p1 -> prawdopodobieństwo liczone na podstawie decHist1
+  # p2 -> prawdopodobieństwo liczone na podstawie decHist2
+  def updateEnt(U, k):
+    Ent[U[k:]] = Ent([[k-1:]] - (-log(p1[dec(u_k)])*p1[dec(u_k)])
+    Ent[U[:k]] = Ent[U[:k+1]] - (-log(p2[dec(u_k)])*p2[dec(u_k)])
+    decHist1[dec(U[k])] += 1    
+    decHist2[dec(U[k])] -= 1
+    Ent[U[k:]] = Ent[U[k-1:]] - (-log(p1[dec(u_k)])*p1[dec(u_k)])
+    Ent[U[:k]] = Ent[U[:k+1]] - (-log(p2[dec(u_k)])*p2[dec(u_k)])
+    return Ent[U[k:]], Ent[U[:k]]
+    
+  min_cut = 1
+  # mozliwe ciecia - pomiedzy obiektami od 1 do n
+  possible_cuts = range(1, n)
+  # ustawiamy wartosc minimalnego ciecia na nieskonczonosc
+  min_cut_value = INFINITY
+  Ent[0] = 0
+  for cut in possible_cuts:
+    Ent1, Ent2 = updateEnt(U, cut)
+    cut_value = cut / n * Ent1 + 
+		(n - cut) / n * Ent2
+    if cut_value < min_cut_value:
+      min_cut_value = cut_value
+      min_cut = cut	
+  # jesli nie jest spelnione kryterium stopu zwracamy minimalne ciecie
+  # oraz ciecia dla odpowiednich podzbiorow obiektow
+  if not stop_criterion_satisfied(U, min_cut_value):
+    yield min_cut
+    
+    for cut in find_cut(U[k:]):
+      yield cut 
+    for cut in find_cut(U[:k]):
+      yield cut
+\end{python}
+Koncowy Algorytm:
+\begin{python}
+# zwracamy tabele z odpowiednimi wartosciami disc_value
+def discretize_column(column):
+  disc_value = 0
+  cuts_set = sorted(find_cut_lin(column))
+  cur_cut = cuts_set[0]
+
+  for i, elem in enumerate(column):
+    if cur_cut == i:
+      disc_value += 1
+    if len(cuts_set) > disc_value:
+      cur_cut = cuts_set[disc_value]
+
+    yield (elem[0], elem[1], dis_value)
+\end{python}
+\begin{przyklad}[Przykładowa dyskretyzacja]
+Dla tabeli:
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Tak \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Nie \\
+  $u_{4}$ & 15     & 50      & deszcz         & Tak \\
+  $u_{5}$ & 15     & 30      & deszcz         & Nie \\
+  $u_{6}$ & 30     & 70      & deszcz         & Nie \\
+  $u_{7}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgotność):
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0     & 0      & słabe          & Tak \\
+  $u_{2}$ & 0     & 2      & umiarkowane    & Nie \\
+  $u_{3}$ & 1     & 1      & słabe   	    & Nie \\
+  $u_{4}$ & 0     & 2      & deszcz         & Tak \\
+  $u_{5}$ & 1     & 1      & deszcz         & Nie \\
+  $u_{6}$ & 1     & 2      & deszcz         & Nie \\
+  $u_{7}$ & 1     & 1      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+\end{przyklad}
 \section{Wyniki eksperymentów}
 
 
@@ -500,10 +709,39 @@ Oraz $m$ = 4, mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgo
 W tym rozdziale omówię uogólnienie pojęcia dyskretyzacji jako generowanie nowych cech i omówię
 znajdowanie nowych cech za pomocą hiperpłaszczyzn i algorytmu genetycznego.
 
-\section{Dyskretyzacja jako generowanie nowych cech}
-\section{Generowanie nowych cech przez hiperpłaszczyzny}
+\section{Dyskretyzacja jako generowanie nowych cech oraz generowanie nowych cech przez hiperpłaszczyzny}
+Na dyskretyzację, a konkretnie na cięcie na pewnym atrybucie rzeczywistym możemy też patrzeć
+jak na nową cechę zdefiniowaną przez funkcję charakterystyczną odpowiedniej półprzestrzeni. Na cięcie cięcia o wartości
+$c$ na atrybucie $a_k$ możemy patrzeć jak na cechę:
+\begin{align*}
+v(a_1(u), a_2(u), ..., a_n(u)) = \begin{cases} 1 \text{ dla } a_k(u) \leq c \\ 0 \text{ dla } a_k(u) > c \end{cases}
+\end{align*}
+Dyskretyzacja na danym atrybucie definiuje nam jedynie hiperpłaszczyzny równoległe do odpowiednich osi. 
+Możemy zdefiniować nowe cechy jako funkcje charakterystyczne ogólnych półprzestrzeni:
+\begin{align*}
+v(a_1(u), a_2(u), ..., a_n(u)) = \begin{cases} 1 \text{ dla } w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) \leq c 
+\\ 0 \text{ dla } w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) > c \end{cases}
+\end{align*}
+Ogólne półprzestrzenie mają o wiele większą moc wyrazu i zwykle wystarczy ich mniej by znależć minimalny zbiór cięć dla
+danej przestrzeni, tj tak podzielić przestrzeń, aby otrzymać spójną tabelę.
+Jednak przestrzeń poszukiwań odpowiednich parametrów, tj wag $w_k$ jest nieskończona. Dla danego zbioru wag, tj dla danej półprzestrzeni,
+możemy jednak ocenić jak dobre jest dane cięcie na podstawie funkcji oceny. Jedną z popularniejszych miar jest miara rozróżnialności, 
+zdefiniujmy $C_i^R$ oraz $C_i^L$ jako liczbę obiektów o decyzji $i$ należących do odpowiednich półprzestrzeni:
+\begin{align*}
+C_i^R(H) = |\{u \in U: dec(u) = i \wedge w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) > c\}| \\
+C_i^L(H) = |\{u \in U: dec(u) = i \wedge w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) \leq c\}|
+\end{align*}
+Na podstawie tych wielkości definiujemy miarę rozróżnialności dla hiperpłaszczyzny $H$:
+\begin{align*}
+discMeasure(H) = \sum_{i \neq j} C_i^R(h) \cdot C_j^L(H)
+\end{align*}
+Mając funkcję oceny możemy więc z powodzeniem stosować pewne heurystyki doboru wag i algorytmy genetyczne. Konkretny algorytm omówię w następnym
+rozdziale.
 \section{Algorytmy ewolucyjne}
-\section{Rozszerzenie na krzywe wyższych rzędów}
+\section{Indukcja drzewa decyzyjnego na podstawie cięć przez hiperpłaszczyzny}
+\subsection{Generowanie lasu losowego}
+\section{Drzewo SVM vs drzewo na podstawie algorytmu genetycznego}
+\section{Strategie klasyfikacji bliskich punktów o różnej decyzji}
 \section{Wyniki eksperymentów}
 
 \begin{thebibliography}{9}
