@@ -31,6 +31,8 @@ bindingoffset=0mm, top=1in, bottom=1in}
 \usepackage{array}
 \usepackage[]{algorithm2e}
 %\usepackage{pstricks}
+\usepackage{enumitem}
+\setlist[enumerate]{label*=\arabic*.}
 \usepackage{textcomp}
 \usepackage{listings}
 \usepackage[export]{adjustbox}
@@ -738,10 +740,390 @@ discMeasure(H) = \sum_{i \neq j} C_i^R(h) \cdot C_j^L(H)
 Mając funkcję oceny możemy więc z powodzeniem stosować pewne heurystyki doboru wag i algorytmy genetyczne. Konkretny algorytm omówię w następnym
 rozdziale.
 \section{Algorytmy ewolucyjne}
+Algorytmy ewolucyjne są jedną popularniejszych metod heurystycznych metod optymalizacji, jak np symulowane wyżarzanie. Sprawdzają się,
+gdy mamy dobrze określoną funkcję celu oraz potrafimy odpowiednio zamodelować nasze uniwersum. Algorytm genetyczny polega na iteracyjnym 
+poprawianiu wyniku poprzez dobieranie do następnej fazy tych osobników, które osiągają najlepsze wartośc funkcji celu. Podstawowym
+pojęciem jest tu populacji i osobnik. Osobnik jest pewnym obiektem matematycznym, najczęściej wektorem zerojedynkowym, który modeluje
+wielkości, które chcemy optymalizować. W przypadku problemu szukania optymalnej hiperpłaszczyzny będzie to wektor reprezentujący wagi $w_i$.
+Populacja zaś jest zbiorem osobników. Algorytm genetyczny można podzielić na następujące etapy:
+\begin{enumerate}
+ \item Inicjowanie populacji początkowej
+ \begin{enumerate}
+  \item Inicjowanie losowe
+  \item Inicjowanie wg wcześniej ustalonego schematu
+ \end{enumerate}
+ \item W pętli, aż do spełnienia pewnego warunku stopu wykonuj:
+ \begin{enumerate}
+  \item Liczymy funkcję oceny każdego osobnika w populacji. Najlepsze osobniki poddajemy reprodukcji.
+  \item Proces repropdukcji najlepszych osobników:
+  \begin{enumerate}
+   \item Krzyżowanie - łączenie genotypów rodziców
+   \item Mutacja - wprowadzanie losowych zmian
+  \end{enumerate}
+  \item Po procesie reprodukcji wybieramy najlepsze osobniki.
+  \item Jeśli został spełniony warunek stopu wybieramy i zwracamy najlepszego osobnika w populacji.
+ \end{enumerate}
+\end{enumerate}
+Podstawowymi zadaniami przy projektowaniu algorytmu genetycznego są:
+\begin{itemize}
+ \item ustalenie genomu osobnika jako reprezentanta wyniku
+ \item ustalenie funkcji oceny
+ \item dobór parametrów (warunek stopu, prawdopodobieństwo krzyżowania, mutacji, rozmiar populacji)
+\end{itemize}
+Dla problemu znajdowania optymalnej hiperpłaszczyzny funkcją oceny będzie wspomniana wcześniej miara $discMeasure$.
+Pozostaje ustalić genom osobnika (hiperpłaszczyzny). Będziemy reprezentować hiperpłaszczyznę w przestrzeni $\mathbb{R}^n$
+jako zbiór $n-1$ liniowo niezależnych wektorów i przesunięcia. 
+\subsection{Reprezentacja hiperpłaszczyzny}
+Ustalmy jedną z osi, niech to będzie $x_1$ odpowiadająca atrybutowi $a_1$ i liczbę naturalną $b$, będzie to parametr odpowiadający
+za zbiór, z którego inicjujemy populację początkową. Z każdej dwu-wymiarowej płaszczyzny $L(x_1, x_i)$ wybieramy wektory 
+$v_1^i, v_2^i, ..., v_{2^b}^i$ (nierównoległe do $x_1$) zdefiniowane przez:
+\begin{align*}
+v_j^i = [\alpha_j^i, 0, ..., 0, \underbrace{1}_{\text{i-ta pozycja}} , 0, ..., 0] \text{ dla } i=2, ..., n \text{ oraz } j=1, ..., 2^b 
+\end{align*}
+Wektory te będziemy inicjować przez losowy dobór $2^b$ liczb: $\alpha_1^i, \alpha_2^i, ..., \alpha_{2^b}^i$.
+Każdy z wektorów $v_j^i$ może być reprezentowany przez $b$ bitów odpowiadających reprezentacji
+binarnej liczby $j$. Rozważmy zbiór $n-1$ wektorów $\{v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n\}$:
+\begin{align*}
+ v_{j_2}^2 = [\alpha_{j_2}^2, 1, 0, 0,  ..., 0] \\
+ v_{j_3}^3 = [\alpha_{j_3}^3, 0, 1, 0,  ..., 0] \\
+ ..... \\
+ v_{j_n}^n = [\alpha_{j_n}^n, 0, 0, 0,  ..., 1]
+\end{align*}
+Łatwo widać, że wektory dla dowolnego doboru indeksów $j_2, j_3, ..., j_n$ wektory $\{v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n\}$ 
+są liniowo niezależne. Wybierając przesunięcie $P_1 = (p, 0, ..., 0)$ na osi $x_1$, możemy zdefiniować 
+hiperpłaszczyznę $(P_1, v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n)$ przez:
+\begin{align*}
+ H = \{(x_1, x_2, ..., x_n\} \in \mathbb{R}^n : x_1 - \alpha_{j_2}^2 x_2 - \alpha_{j_3}^3 x_3 - ... - \alpha_{j_n}^n x_n - p = 0\}
+\end{align*}
+Osobniki będziemy reprezentować przez $n-1$ liczb b-bitowych $\alpha_1, \alpha_2, ..., \alpha_{n-1}$, które będą 
+reprezentować wektory (dla osi $x_1$):
+\begin{align*}
+ v_1 = [\alpha_1, 1, 0, 0,  ..., 0] \\
+ v_2 = [\alpha_2, 0, 1, 0,  ..., 0] \\
+ ..... \\
+ v_{n-1} = [\alpha_{n-1}, 0, 0, 0,  ..., 1]
+\end{align*}
+Są one liniowo niezależne i rozpinają $n-1$ wymiarową podprzestrzeń liniową.
+Taka reprezentacja umożliwia nam sprawdzenie w czasie $O(n)$ po której stronie hiperpłaszczyzny znajduje się dany obiekt $u \in U$ oraz 
+policzyć w czasie $O(n)$ rzut wektora $u$ na $x_1$ równoległy do $L = lin(v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n)$. Odpowiednie funkcje, $Test(u)$
+licząca, po której stronie hiperpłaszczyzny jest obiekt $u$:
+\begin{align*}
+ Test(u) = \begin{cases} 1 \text{ jeśli } a_1(u) - \alpha_{j_2}^2 a_2(u) - \alpha_{j_3}^3 a_3(u) - 
+ ... - \alpha_{j_n}^n a_n(u) \geq p \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Oraz $Projection(u)$ licząca rzut obiektu $u$ na odpowiednią oś (tu $x_1$):
+\begin{align*}
+ Projection(u) = a_1(u) - \alpha_{j_2}^2 a_2(u) - \alpha_{j_3}^3 a_3(u) - ... - \alpha_{j_n}^n a_n(u)
+\end{align*}
+\subsection{Szukanie optymalnej hiperpłaszczyzny za pomocą algorytmu genetycznego}
+Za pomocą algorytmu genetycznego będziemy chcieli szukać optymalnej hiperłpaszczyzny dla danej osi. Dla każdego osobnika liczymy rzut obiektów na 
+odpowiednią oś za pomocą funkcji $Projection$, a następnie wybieramy najlepszą hiperpłaszczyznę równoległą do podprzestrzeni liniowej 
+reprezentowanej przez osobnika za pomocą funkcji oceny. Na rysunku 4.1 widzimy to dla przestrzeni dwuwymiarowej.
+\begin{figure}
+ \caption{Interpretacja szukania optymalnej hiperpłaszczyzny w przestrzeni dwuwymiarowej}
+ \includegraphics[scale=0.8]{hiperp.png}
+\end{figure}
+Powtarzając algorytm dla każdej z osi,
+wybierzemy najlepszą hiperpłaszczyznę. Hiperpłaszczyzny szukamy do momentu, w którym tabela otrzymana z nowych cech indykatorów odpowiednich 
+półprzestrzeni będzie spójna, bądź spełniony zostanie warunek stopu, o którym opowiem w następnych rozdziałach. Na rysunku 4.2 widac 
+przykładowy podział obiektów
+w przestrzeni dwuwymiarowej po znalezieniu dwóch hiperpłaszczyzn.
+\begin{figure}
+ \caption{Podział obiektów przez hiperpłaszczyzny}
+ \includegraphics[scale=0.8]{obszary.png}
+\end{figure}
+Po znalezieniu kolejnych hiperpłaszczyzn grupy obszarów niespójnych będą się stale zmniejszać. Funkcję liczę jedynie dla obszarów
+niespójnych, które nie są jeszcze podzielone. Funkcję celu dla listy obszarów niespójnych wyliczam z wzoru (kod w języku python):
+\begin{python}
+# unconsistent_groups jest lista niespojnych grup obiektow
+award = sum([discMeasure(H, U) for U in unconsistent_groups])
+\end{python}
+Kod algorytmu w języku python:
+\begin{python}
+# dla wszyskich funkcji:
+
+# dec <- lista decyzji
+# table <- tabela 
+# attrs_list <- lista atrybutow
+
+# ekstracja nowych cech, generowanie nowej tabeli
+def extract_features(sc=None):
+        extracted_table = []
+        while True:
+            unconsistent_groups = ConsistentChecker.
+				  count_unconsistent_groups(
+				  extracted_table, dec, sc)
+# kompresja niespojnych obszarow, np wyrzucanie 
+# bliskch punktow o roznych decyzjach
+            unconsistent_groups = filter(
+				  lambda x: 
+				  dpoints_strategy.decision(x) is None, 
+				  unconsistent_groups)
+# jesli sa jeszcze jakies niespojne grupy szukamy hiperplaszczyzn
+            if unconsistent_groups:
+            
+                best_hyperplane = search_best_hyperplane(
+				  unconsistent_groups, sc)
+                extracted_table.append(
+				count_objects_positions(best_hyperplane))
+            else:
+                break
+
+        return np.transpose(np.array(extracted_table))
+
+# szukanie optymalnej hiperplaszczyzny
+def search_best_hyperplane(unconsistent_groups, sc=None):
+
+            rdd_attributes = sc.parallelize(attrs_list)
+# zrownoleglamy ze wzgledu na osie (atrybuty)
+# i liczymy optymalne hiperplaszczyzny dla rzutow
+            hyperplanes = rdd_attributes.map(
+			  lambda x: 
+			  search_best_hyperplane_for_projection(
+			  x, unconsistent_groups)).collect()
+	
+# zwracamy najlepsza
+        return max(hyperplanes, key=lambda x: x[1][0])
+
+# szukanie optymalnej hiperplaszczyzny dla rzutu
+def search_best_hyperplane_for_projection(
+    attr, unconsistent_groups, sc=None):
+
+        projection_axis = table[attr]
+        other_axes = [x for x in attrs_list if not x == attr]
+        new_table = table[other_axes]
+	
+	# szukamy optymalnej hiperplaszczyzny algorytmem genetycznym
+        gen_search = GeneticSearch(len(other_axes), dec, new_table,
+                                   projection_axis, unconsistent_groups)
+        cand_hyperplane = gen_search.genetic_search(sc)
+
+        return attr, cand_hyperplane
+
+# unconsistent_groups <- lista niespojnych grup
+# population_size <- rozmiar populacji
+# przeszukiwanie genetyczne
+def genetic_search(sc=None):
+
+# inicjowanie populacji
+        population = init_generation()
+
+        current_best_award = 0
+        the_same_awards = 0
+        for i in range(max_iter):
+# liczymy funkcje celu dla populacji
+            rdd_population = sc.parallelize(population, 
+					    population_size * 10)
+            awards = rdd_population.mapPartitions(
+				    count_award_for_chunk).collect()
+	    
+# wybieramy najlepszych osobników
+            population_awards = select_best_individuals(awards)
+
+            best_individual = population_awards[0]
+
+            population = map(lambda x: x[1], population_awards)
+
+            new_generation = count_new_generation(
+			     copy.deepcopy(population))
+
+            population = new_generation + population
+
+        return best_individual
+        
+def count_award_for_chunk(self, population):
+        for individual in population:
+            yield self.count_award(individual)
+            
+def count_award(individual):
+        all_objects = reduce(add, unconsistent_groups)
+# liczymy rzuty wszystkich obiektow
+        projections = count_projections(individual, all_objects)
+# sortujemy po wartosci rzutu
+        objects = sorted(projections, key=lambda x: x[1])
+
+# liczenie funkcji oceny (discMeasure) dla posortowanych obiektow
+        object_group_dict = {}
+        group_fqs_dict = {}
+        act_left_sum = {}
+        act_right_sum = {}
+
+        for ind, group in enumerate(unconsistent_groups):
+            group_decisions = []
+            for obj in group:
+                group_decisions.append(self.dec[obj])
+                object_group_dict[obj] = ind
+            act_left_sum[ind] = 0
+            act_right_sum[ind] = len(group_decisions)
+            group_fqs_dict[ind] = DiscMeasureCalculator.
+				 prepare_hist(group_decisions)
+
+        act_award = 0
+        max_award = 0
+        for obj, proj in objects:
+            group_id = object_group_dict[obj]
+            dec = self.dec[obj]
+            act_left_sum[group_id], act_right_sum[group_id], act_award = \
+                DiscMeasureCalculator.
+	        update_award(dec, act_left_sum[group_id], 
+			     act_right_sum[group_id],
+                             group_fqs_dict[group_id], act_award)
+            if act_award > max_award:
+                max_award = act_award
+                good_proj = proj
+                
+# zwracamy wartosc najlepszego wyniku, osobnika (wektory) i przesuniecie
+        return max_award, individual, good_proj  
+
+# wyliczanie rzutu dla osobnika i grupy obiektow 
+def count_projections(individual, objects):
+        table = table_as_matrix[objects, :]
+        proj = [projection_axis[obj] for obj in objects]
+        return zip(objects, proj - table.dot(individual))
+\end{python}
+
 \section{Indukcja drzewa decyzyjnego na podstawie cięć przez hiperpłaszczyzny}
+Optymalne hiperpłaszczyzny mogą być użyte nie tylko ekstracji nowych cech, ale również do indukcji drzewa
+decyzyjnego. W standardowym drzewie, w węźle mamy funkcję $test$ odpowiadającą atrybutom, dla wartości ciągłych zwykle
+jest to:
+\begin{align*}
+test(x) = \begin{cases} 1 \text{ jeśli } a_i(x) > c \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Możemy jednak użyć funkcji testu opartej o hiperplaszczyzny, wtedy drzewo będzie miało zwykle mniejszą głębokośc
+(hiperpłaszczyzny mogą mieć wyższą wartośc funkcji oceny na danym węźle), ale większy jest koszt czasowy predykcji
+(funkcja testu działa w czasie $O(n)$ gdzie $n$ jest liczbą atrybutów) oraz szukania drzewa. Funkcja testu dla 
+uogólnionego drzewa (dla wag $w_i$):
+  \begin{align*}
+test(x) = \begin{cases} 1 \text{ jeśli } w_1 a_1(x) + ... + w_n a_n(x) > c \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Oraz funkcja dla testu dla reprezentacji hiperplaszczyzny z algorytmu genetycznego (gdy $x_1$ jest najlepszą osią):
+\begin{align*}
+ test(x) = \begin{cases} 1 \text{ jeśli } a_1(x) - \alpha_{j_2}^2 a_2(x) - \alpha_{j_3}^3 a_3(x) - 
+ ... - \alpha_{j_n}^n a_n(x) \geq p \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Algorytm znajdowania drzewa przez algorytm genetyczny w języku python:
+\begin{python}
+def count_decision_tree(objects, sc=None):
+# jesli mozemy podjac decyzje dla danego zbioru obiektow
+# zwracamy koncowy wezel
+        decision = dpoints_strategy.decision(objects)
+        if decision is not None:
+            return DecisionTree(decision, 0, 0)
+
+# szukamy najlepszej hiperplaszczyzny algorytmem genetycznym
+# (tak jak dla ekstrakcji cech)
+        best_hyperplane = search_best_hyperplane([objects], sc)
+        hyperplane_indicator = count_objects_positions(
+			       best_hyperplane, objects)
+        left_son_objects = map(
+			   lambda x: x[1], 
+			   filter(
+			   lambda (i, x): 
+			   hyperplane_indicator[i] == 0, 
+			   enumerate(objects)))
+        right_son_objects = map(
+			    lambda x: x[1], 
+			    filter(
+			    lambda (i, x): 
+			    hyperplane_indicator[i] == 1, 
+			    enumerate(objects)))
+
+        return DecisionTree(best_hyperplane, 
+			    count_decision_tree(left_son_objects),
+                            count_decision_tree(right_son_objects))
+\end{python}
+
 \subsection{Generowanie lasu losowego}
-\section{Drzewo SVM vs drzewo na podstawie algorytmu genetycznego}
+Jako, że w algrytmie genetycznym początkowe wartości wektorów dobierane są w sposób losowy, 
+drzewa decyzyjne generowane kilkukrotnie przez algorytm genetyczny mogą się od siebie różnić.
+Przy jednokrotnym generowaniu drzewa istnieje prawdopodobieństwo utknięcia w lokalnym maksimum funkcji celu.
+Możemy więc stworzyć wiele drzew i podjąć decyzję na podstawie głosowania, tworząc coś na kształt lasu losowego.
+Algorytm w języku python:
+\begin{python}
+# objects <- lista wszyskich obiektow w tabeli
+def count_random_forest(size=50):	
+	return [count_decision_tree(objects) for _ in range(size)]
+      
+def predict(object):
+	forest = count_random_forest()
+# liczymy predykcje dla kazdego drzewa
+	decisions = map(lambda tree: tree.predict(object), forest)
+# zwracamy najczesciej wystpujaca decyzje
+	return most_common(Counter(decisions))		
+\end{python}
+
+\section{Drzewo SVM}
+Dla celów analizy porównawczej możemy stworzyć drzewo, w którym funkcją testu
+również będzie funkcja charakterystyczna półprzestrzeni, ale odpowiednią hiperpłaszczyznę
+będziemy szukać nie za pomocą algorytmu genetycznego, ale algorytmu SVM, szukającego 
+hiperpłaszczyzny maksymalizującej sumę odległości od obiektów. Rysunek 4.3 ilustruje działanie
+algorytmu SVM.
+\begin{figure}
+ \caption{Podział obiektów przez hiperpłaszczyznę SVM}
+ \includegraphics[scale=0.8]{svm_hiperp.png}
+\end{figure}
+Kod algorytmu w języku python:
+\begin{python}
+def count_decision_tree(objects, sc=None):
+        decision = dpoints_strategy.decision(objects)
+        if decision is not None:
+            return DecisionTree(decision, 0, 0)
+
+        X = [self.table[i] for i in objects]
+        y = [self.dec[i] for i in objects]
+        svm = LinearSVC()
+# wyliczanie SVM z zewnetrznej biblioteki
+        svm.fit(X, y)
+# wybieranie wspolczynnikow optymalnej hiperplaszczyzny
+        coefs = svm.coef_[0]
+        intercept = svm.intercept_[0]
+        best_hyperplane = (intercept, coefs)
+        hyperplane_indicator = map(
+			       lambda r: 
+			       (np.dot(
+			       list(r), coefs) + intercept > 0),
+			       X)
+        left_son_objects = map(
+			   lambda x: x[1], 
+			   filter(
+			   lambda (i, x): 
+			   not hyperplane_indicator[i], 
+			   enumerate(objects)))
+        right_son_objects = map(
+		            lambda x: x[1], 
+		            filter(lambda (i, x): 
+		            hyperplane_indicator[i], 
+		            enumerate(objects)))
+
+        return DecisionTree(best_hyperplane, 
+			    count_decision_tree(left_son_objects),
+                            count_decision_tree(right_son_objects))
+\end{python}
+
 \section{Strategie klasyfikacji bliskich punktów o różnej decyzji}
+Zarówno w algorytmie indukcji drzewa decyzyjnego jak i w algorytmie szukania 
+nowych cech pojawiła się funkcja $dpoints\_strategy.decison(objects)$. W przypadku
+gdy pojawią się punkty będące ``blisko'' siebie mające różne decyzje algorytmowi genetycznemu ciężko
+będzie ``wcisnąć'' się pomiędzy te punkty przy losowej optymalizacji. Dlatego w przypadku indukcji drzewa 
+wyliczamy decyzję dla takich punktów w inny, deterministyczny sposób, natomiast przy generowaniu cech
+takie punkty ignorujemy. Pytanie jakie się nasuwają są dwa:
+\begin{enumerate}
+ \item Kiedy uznawać, że punkty są bliskie?
+ \item W jaki sposób podejmować decyzję dla takich punktów?
+\end{enumerate}
+W swojej pracy uznaję punkty za bliskie, gdy średnica zbioru jest mniejsza niż pewien procent 
+średnicy całego zbioru (problem pojawia się gdy występują outliery, wtedy można liczyć średnicę
+bez outlierów). Decyzją zaś jest najczęściej występująca decyzja w danym zbiorze. Kod algorytmu w języku python:
+\begin{python}
+# max_dist <- srednia calego zbioru obiektow
+def decision(objects, ratio):
+	max_dist_objects = count_max_dist(objects)
+	if max_dist_objects / max_dist < ratio:
+	  return most_common(Counter(decisions(objects)))
+	return None
+\end{python}
+
+
 \section{Wyniki eksperymentów}
 
 \begin{thebibliography}{9}
