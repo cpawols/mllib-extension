@@ -38,46 +38,43 @@ bindingoffset=0mm, top=1in, bottom=1in}
 \usepackage[export]{adjustbox}
 \lstset{language=Python}
 
-% Default fixed font does not support bold face
-\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
-\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
+\usepackage[]{algorithm2e} %Algorytm czy Algorithm?
+\renewcommand{\listalgorithmcfname}{Lista algorytmów}%
+\renewcommand{\algorithmcfname}{Algorytm}%
+\renewcommand{\algorithmautorefname}{algorytm}%
+\renewcommand{\algorithmcflinename}{linia}%
+\makeatletter
+\renewcommand{\algocf@typo}{}%
+\renewcommand{\@algocf@procname}{Procedura}%
+\renewcommand{\@algocf@funcname}{Funkcja}%
+\makeatother
+\renewcommand{\procedureautorefname}{procedura}%
+\renewcommand{\functionautorefname}{funkcja}%
 
-% Custom colors
-\usepackage{color}
-\definecolor{deepblue}{rgb}{0,0,0.5}
-\definecolor{deepred}{rgb}{0.6,0,0}
-\definecolor{deepgreen}{rgb}{0,0.5,0}
-\definecolor{myred}{rgb}{0.7,0,0}
-
-% Python style for highlighting
-\newcommand\pythonstyle{\lstset{
-language=Python,
-basicstyle=\ttm,
-commentstyle=\color{myred},
-otherkeywords={self, map, reduce, reduceByKey, mapPartitions, collect, paralellize, yield},             % Add keywords here
-keywordstyle=\ttb\color{deepblue},
-emph={MyClass,__init__},          % Custom highlighting
-emphstyle=\ttb\color{deepred},    % Custom highlighting style
-stringstyle=\color{deepgreen},
-frame=tb,                         % Any extra options here
-showstringspaces=false            % 
-}}
-
-% Python environment
-\lstnewenvironment{python}[1][]
-{
-\pythonstyle
-\lstset{#1}
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=python,
+  showstringspaces=true,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
 }
-{}
 
-% Python for external files
-\newcommand\pythonexternal[2][]{{
-\pythonstyle
-\lstinputlisting[#1]{#2}}}
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+}
 
-% Python for inline
-\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+\lstset{escapechar=@,style=customc}
 
 % Tu jest dobre miejsce na Twoje wżasne makra i~żrodowiska:
 \newtheorem{thm}{Thm}[chapter]
@@ -360,7 +357,7 @@ Przykłady akcji:
 W powyższych przykładach zamiast funkcji $f$ można użyć wyrażeń lambda (funkcji anonimowych).
 
 Przykład, zliczanie słów w języku python:
-\begin{python}
+\begin{lstlisting}
 #ustawiamy kontekst i konfiguracje
 conf = (SparkConf().setMaster("spark://localhost:7077").
 		    setAppName("entropy"))
@@ -371,7 +368,7 @@ words_rdd = sc.paralellize(words)
 words_counts =  words_rdd.
 		map(lambda x: (x, 1)).
 		reduceByKey(lambda x, y: x+y)
-\end{python}
+\end{lstlisting}
 
 W powyższym, jak i w następnych listingach algorytmów w języku python, sc zawsze będzie obiektem klasy $SparkContext$, który inicjuje
 RDD na podstawie konfiguracji klastrowego środowiska dla Sparka. Konfigurację tworzymy na podstawie obiektu klasy $SparkConf$, bądź
@@ -395,6 +392,8 @@ Obliczenia wykonywane w Sparku są nie tylko skalowalne, ale również szybkie z
 
 \newpage
 
+Na rysunku 2.2 widzimy porównanie szybkości działania Hadoop MapReduce i Sparka. Widzimy jak bardzo idea RDD, która 
+nie występuje w Hadoop MapReduce zwiększa szybkość działania.
 \begin{figure}
  \caption{porównanie szybkości działania Hadoop MapReduce i Spark na przykładzie regresji logistycznej}
  \includegraphics[scale=0.8]{spark-hadoop.png}
@@ -411,7 +410,7 @@ Algorytmy dyskretyzacji dzielimy na:
 \end{itemize}
 Będziemy tu analizować algorytmy lokalne, gdyż
 w naturalny sposób łatwo je zrównoleglić, zgodnie ze schematem:
-\begin{python}
+\begin{lstlisting}
 # tworzymy RDD na podstawie listy kolumn i 
 # dzielimy na $numer_of_columns$ kawalkow
 columns_rdd = sc.paralellize(table, numer_of_columns)
@@ -419,7 +418,7 @@ columns_rdd = sc.paralellize(table, numer_of_columns)
 discretized_columns = columns_rdd.
 		      mapPartitions(discretizeColumn).
 		      collect()
-\end{python}
+\end{lstlisting}
 Gdzie funkcja discretizeColumn przyjmuje kolumnę liczb rzeczywistych tabeli decyzyjnej i zwraca
 jej dyskretyzację.
 Metody globalne szukają zbioru cięć dla całej tabeli, przez co trudniej je zrównoleglić.
@@ -428,7 +427,7 @@ Niżej przedstawię 3 lokalne algorytmy dyskretyzacji.
 \section{Sprawdzanie spójności tabeli}
 By dyskretyzacja miała sens, potrzebujemy sprawdzić czy tabela jest spójna, w Sparku możemy 
 to w prosty sposób zrobić za pomocą poniższego algorytmu:
-\begin{python}
+\begin{lstlisting}
 # funkcja agregujaca, zwraca tuple skladajaca sie z roznych decyzji
 # dla danej kombinacji atrybutow
 def get_unique_dec(x, y):
@@ -442,7 +441,7 @@ one_dec = rows_rdd.
 # tabela jest spojna jesli dla kazdej kombinacji atrybutow
 # mamy jedna decyzje
 is_consistent = all(one_dec)
-\end{python}
+\end{lstlisting}
 \section{Opis algorytmów}
 Wszystkie z poniższych algorytmów są zrównoleglane ze względu na kolumnę, tak 
 jak było to napisane we wstępie. Różnią się metodą $discretizeColumn$.
@@ -458,7 +457,7 @@ będącego uogólnieniem mergesort:
  \item scalam posortowane kawałki
 \end{itemize}
 Kod algorytmu w języku python:
-\begin{python}
+\begin{lstlisting}
 # funkcja porownujaca
 # wzgledem atrybutu, potem wartosci, a nastepnie nazwy obiektu
 def compare(iterator):
@@ -471,18 +470,25 @@ def merge_sort():
 	      mapPartitions(compare).
 	      reduce(lambda x, y: 
 	      sorted(x+y, key=lambda x: (x[1], x[2], x[0])))
-\end{python}
+\end{lstlisting}
+
+Dla podziału na $k$ kawałków algorytm ma złożoność czasową 
+$O(\underbrace{\frac{n}{k} \cdot log(\frac{n}{k})}_{\text{ dzielenie }} + \underbrace{\frac{n}{k} \cdot k)}_{\text{ scalanie }}$,
+	    czyli $O(\frac{n}{k} \cdot log(\frac{n}{k}) + n)$
+a więc dla dostatecznie dużych $k$ otrzymujemy algorytm liniowy.
+	      
+	      
 
 \subsection{Algorytm bazowy}
 Jest to prosty algorytm polegający na wykonywania cięć w równych odstępach, co $m$ obiektów, gdzie
-$m$ jest parametrem. Przy czym kolumna 
+$m$ jest parametrem.
 Jego zaletą jest prostota, jednak wogóle nie patrzymy na decyzję.
 Kod algorytmu:
-\begin{python} 
+\begin{lstlisting} 
 def discretizeColumn(column, m):
   for ind, row in enumerate(column):
     yield (row[0], row[1], ind / m)
-\end{python}
+\end{lstlisting}
 
 \begin{przyklad}[Przykładowa dyskretyzacja]
 Dla tabeli:
@@ -519,7 +525,7 @@ W tym algorytmie wykonujemy cięcie w momencie, gdy
 jednej z decyzji jest więcej niż innych, przy czym dany przedział musi zawierać więcej niżej
 $m$ elementów, gdzie $m$ jest ustalonym parametrem.
 Algorytm:
-\begin{python}
+\begin{lstlisting}
 def discretize_column(column, m):
         new_dec = 0
         block_elements = 0
@@ -535,7 +541,7 @@ def discretize_column(column, m):
             block_elements += 1
 
             yield (elem[0], elem[1], new_dec)
-\end{python}
+\end{lstlisting}
 \begin{przyklad}[Przykładowa dyskretyzacja]
 Dla tabeli:
 \begin{center}
@@ -594,7 +600,7 @@ dla danego optymalnego cięcia jest mniejszy niż jakaś wielkość.
 \subsubsection{Szukanie optymalnego cięcia - algorytm liniowy}
 Możemy łatwo znależć optymalne cięcie dla danego zbioru obiektów w czasie $O(n^2)$ gdzie $n$ jest
 liczbą obiektów za pomocą algorytmu (gdzie Ent(U) jest funkcją obliczającą entropię obiektów ze zbioru U):
-\begin{python}
+\begin{lstlisting}
 min_cut = 1
 # mozliwe ciecia - pomiedzy obiektami od 1 do n
 possible_cuts = range(1, n)
@@ -606,7 +612,7 @@ for cut in possible_cuts:
   if cut_value < min_cut_value:
     min_cut_value = cut_value
     min_cut = cut	      
-\end{python}
+\end{lstlisting}
 Możemy jednak nie obliczać za każdym razem entropii, lecz liczyć ją na podstawie 
 wcześniejszych wyników w czasie stałym, otrzymując algorytm liniowy ze względu na liczbę 
 obiektów. Algorytm opiera się na obserwacji (zakładamy, że dla obiektów $1, ..., k-1$ mamy już obliczone 
@@ -619,7 +625,7 @@ liczymy $p_d$):
 \end{align*}
 Analogicznie trzymamy histogram dla drugiej obiektów $k, ..., n$ aktualizując entropię drugiej połowy.
 Otrzymujemy więc następujący algorytm liniowy:
-\begin{python}
+\begin{lstlisting}
 def find_cut(U):
   # decHist1 -> histogram dla 1 połowy
   # decHist2 -> histogram dla 2 połowy
@@ -656,9 +662,9 @@ def find_cut(U):
       yield cut 
     for cut in find_cut(U[:k]):
       yield cut
-\end{python}
+\end{lstlisting}
 Koncowy Algorytm:
-\begin{python}
+\begin{lstlisting}
 # zwracamy tabele z odpowiednimi wartosciami disc_value
 def discretize_column(column):
   disc_value = 0
@@ -672,7 +678,7 @@ def discretize_column(column):
       cur_cut = cuts_set[disc_value]
 
     yield (elem[0], elem[1], dis_value)
-\end{python}
+\end{lstlisting}
 \begin{przyklad}[Przykładowa dyskretyzacja]
 Dla tabeli:
 \begin{center}
@@ -834,12 +840,12 @@ w przestrzeni dwuwymiarowej po znalezieniu dwóch hiperpłaszczyzn.
 \end{figure}
 Po znalezieniu kolejnych hiperpłaszczyzn grupy obszarów niespójnych będą się stale zmniejszać. Funkcję liczę jedynie dla obszarów
 niespójnych, które nie są jeszcze podzielone. Funkcję celu dla listy obszarów niespójnych wyliczam z wzoru (kod w języku python):
-\begin{python}
+\begin{lstlisting}
 # unconsistent_groups jest lista niespojnych grup obiektow
 award = sum([discMeasure(H, U) for U in unconsistent_groups])
-\end{python}
+\end{lstlisting}
 Kod algorytmu w języku python:
-\begin{python}
+\begin{lstlisting}
 # dla wszyskich funkcji:
 
 # dec <- lista decyzji
@@ -980,8 +986,73 @@ def count_projections(individual, objects):
         table = table_as_matrix[objects, :]
         proj = [projection_axis[obj] for obj in objects]
         return zip(objects, proj - table.dot(individual))
-\end{python}
+\end{lstlisting}
 
+\subsection{Analiza złożoności czasowej algorytmu}
+W skócie algorytm można przedstawić za pomocą pseudokodu: \\
+
+\begin{algorithm}[H]
+ \KwData{Tabela decyzyjna $\mathbb{S}$ \\
+         Zbiór obiektów $\mathbb{U}$ \\
+	 Zbiór atrybutów $\mathbb{A}$ \\
+         Lista niespójnych grup obiektów $UncGroups$ \\
+         Nowa tabela $\mathbb{B}$}
+ \KwResult{Nowa tabela $\mathbb{B}$ z nowymi cechami}
+  $ B = \emptyset$\;
+  $ UncGroups = \mathbb{U}$\;
+  $ H = \emptyset$\;
+ \While{$UncGroups$ $\neg$ $\emptyset$}{
+  \For{$atr$ in $\mathbb{A}$}{
+      $H$ = $H$ $\cup$ najlepsza hiperpłaszczyzna znaleziona za pomocą algorytmu genetycznego 
+            dla osi odpowiadającej atrybutowi $atr$ i grupom obiektów z $UncGroups$
+  }
+ }
+ $OptH$ = najlepsza hiperpłaszczyzna z zbioru $H$. \\
+ $B$ = $B$ $\cup$ cecha wyznaczona przez $OptH$. \\
+ Aktualizuj $UncGroups$ na podstawie $B$
+\end{algorithm} 
+
+Koszt czasowy zewnętrznej pętli while ciężko jest oszacować, gdyż płaszczyzna wybierana jest w sposób niedeterministyczny. Możemy ustalić pewien 
+próg czasowy, w którym algorytm musi się zatrzymać jeśli $UncGroups$ wciąż jest niepuste. Koszt czasowy pętli wewnętrznej wynosi
+$O(n \cdot gen)$, gdzie $gen$ to koszt czasowy algorytmu genetycznego. Przyjrzyjmy się pseudokodowi algorytmu genetycznego oraz
+wyznaczania funkcji oceny: \\
+\begin{algorithm}[H]
+ \KwData{Populacja $P$}
+ {maksymalna liczba iteracji $max\_iter$}
+  $ i = 0 $\;
+  $ P = init\_generation $\;
+ \While{$i \leq max\_iter$}{
+  i = i+1 \\
+  \For{$Osobnik \in P$}{
+  $Oceny$ = $Oceny$ $\cup$ wartość oceny dla $Osobnik$
+  }
+ Wybierz najlepszych osobników. \\
+ Skrzyżuj i mutuj najlepsze osobniki. \\
+ $P$ = Zainicjuj nowe pokolenie. 
+ }
+ zwróć najlepszego osobnika. \
+ \caption{przeszukiwanie genetyczne}
+\end{algorithm}
+
+\begin{algorithm}
+ \KwData{Osobnik $o$}
+	{Niespójne grupy obiektow $UncGroups$} \\
+  rzuty = oblicz rzuty obiektów z $UncGroups$ na odpowiednią oś równolegle do podprzestrzeni wyznaczonej przez $o$.\\
+  sortuj rzuty. \\
+  oceny = licz wartośc $DiscMeasure$ dla wszystkich rzutów. \\
+  zwróć najlepszą ocenę. \
+  \caption{wyznaczanie funkcji oceny}
+\end{algorithm}
+
+Złożonośc czasowa wyznaczania rzutu dla obiektu wynosi $O(n)$, zaś liczenia funkcji oceny dla wszystkich rzutów $O(k)$, gdzie $k$ jest liczbą 
+obiektów (dla posortowanych obiektów aktualizujemy w czasie stałym wartość $DiscMeasure$). A więc koszt czasowy wyznaczania funkcji oceny wynosi
+$O(n \cdot k + k \cdot log(k) + k) = O(k(log(k) + n))$. Koszt czasowy algorytmu genetycznego wynosi więc 
+$O(max\_iter \cdot |P| \cdot k(log(k) + n))$. A więc koszt szukania pojedyńczej hiperplaszczyzny wynosi 
+$O(n \cdot max\_iter \cdot |P| \cdot k(log(k) + n))$ i zależy od doboru parametrów $|P|$ i $max\_iter$. W idealnym modelu obliczeń 
+   równoległych, gdy mamy do dyspozycji $K$ komputerów koszt czasowy wyniesie:
+$O(\frac{n}{K} \cdot max\_iter \cdot \frac{|P|}{K} \cdot k(log(k) + n))$, a więc dla dostatecznie dużych $K$ dostajemy:
+$O(max\_iter \cdot k(log(k) + n))$.
+   
 \section{Indukcja drzewa decyzyjnego na podstawie cięć przez hiperpłaszczyzny}
 Optymalne hiperpłaszczyzny mogą być użyte nie tylko ekstracji nowych cech, ale również do indukcji drzewa
 decyzyjnego. W standardowym drzewie, w węźle mamy funkcję $test$ odpowiadającą atrybutom, dla wartości ciągłych zwykle
@@ -1002,7 +1073,7 @@ Oraz funkcja dla testu dla reprezentacji hiperplaszczyzny z algorytmu genetyczne
  ... - \alpha_{j_n}^n a_n(x) \geq p \\ 0 \text{ wpp } \end{cases}
 \end{align*}
 Algorytm znajdowania drzewa przez algorytm genetyczny w języku python:
-\begin{python}
+\begin{lstlisting}
 def count_decision_tree(objects, sc=None):
 # jesli mozemy podjac decyzje dla danego zbioru obiektow
 # zwracamy koncowy wezel
@@ -1031,7 +1102,7 @@ def count_decision_tree(objects, sc=None):
         return DecisionTree(best_hyperplane, 
 			    count_decision_tree(left_son_objects),
                             count_decision_tree(right_son_objects))
-\end{python}
+\end{lstlisting}
 
 \subsection{Generowanie lasu losowego}
 Jako, że w algrytmie genetycznym początkowe wartości wektorów dobierane są w sposób losowy, 
@@ -1039,7 +1110,7 @@ drzewa decyzyjne generowane kilkukrotnie przez algorytm genetyczny mogą się od
 Przy jednokrotnym generowaniu drzewa istnieje prawdopodobieństwo utknięcia w lokalnym maksimum funkcji celu.
 Możemy więc stworzyć wiele drzew i podjąć decyzję na podstawie głosowania, tworząc coś na kształt lasu losowego.
 Algorytm w języku python:
-\begin{python}
+\begin{lstlisting}
 # objects <- lista wszyskich obiektow w tabeli
 def count_random_forest(size=50):	
 	return [count_decision_tree(objects) for _ in range(size)]
@@ -1050,7 +1121,7 @@ def predict(object):
 	decisions = map(lambda tree: tree.predict(object), forest)
 # zwracamy najczesciej wystpujaca decyzje
 	return most_common(Counter(decisions))		
-\end{python}
+\end{lstlisting}
 
 \section{Drzewo SVM}
 Dla celów analizy porównawczej możemy stworzyć drzewo, w którym funkcją testu
@@ -1063,7 +1134,7 @@ algorytmu SVM.
  \includegraphics[scale=0.8]{svm_hiperp.png}
 \end{figure}
 Kod algorytmu w języku python:
-\begin{python}
+\begin{lstlisting}
 def count_decision_tree(objects, sc=None):
         decision = dpoints_strategy.decision(objects)
         if decision is not None:
@@ -1098,7 +1169,7 @@ def count_decision_tree(objects, sc=None):
         return DecisionTree(best_hyperplane, 
 			    count_decision_tree(left_son_objects),
                             count_decision_tree(right_son_objects))
-\end{python}
+\end{lstlisting}
 
 \section{Strategie klasyfikacji bliskich punktów o różnej decyzji}
 Zarówno w algorytmie indukcji drzewa decyzyjnego jak i w algorytmie szukania 
@@ -1114,14 +1185,14 @@ takie punkty ignorujemy. Pytanie jakie się nasuwają są dwa:
 W swojej pracy uznaję punkty za bliskie, gdy średnica zbioru jest mniejsza niż pewien procent 
 średnicy całego zbioru (problem pojawia się gdy występują outliery, wtedy można liczyć średnicę
 bez outlierów). Decyzją zaś jest najczęściej występująca decyzja w danym zbiorze. Kod algorytmu w języku python:
-\begin{python}
+\begin{lstlisting}
 # max_dist <- srednia calego zbioru obiektow
 def decision(objects, ratio):
 	max_dist_objects = count_max_dist(objects)
 	if max_dist_objects / max_dist < ratio:
 	  return most_common(Counter(decisions(objects)))
 	return None
-\end{python}
+\end{lstlisting}
 
 
 \section{Wyniki eksperymentów}
