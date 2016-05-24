@@ -1,18 +1,26 @@
 from operator import add
-
+from itertools import groupby
 
 class ConsistentChecker(object):
     # TODO: add non paralell reduce by key
     @staticmethod
     def reduce_by_rows(extracted_table, dec, sc=None):
         if extracted_table:
-            table_list = []
-            for i, decision in enumerate(dec):
-                row = tuple(map(lambda x: x[i], extracted_table))
-                table_list.append((row, (i, decision)))
+            if sc is not None:
+                table_list = [(tuple(map(lambda x: x[i], extracted_table)), (i, d)) for i, d in enumerate(dec)]
+                # for i, decision in enumerate(dec):
+                #     row = tuple(map(lambda x: x[i], extracted_table))
+                #     table_list.append((row, (i, decision)))
 
-            table_list_rdd = sc.parallelize(table_list)
-            return table_list_rdd.reduceByKey(add).collect()
+                table_list_rdd = sc.parallelize(table_list)
+                return table_list_rdd.reduceByKey(add).collect()
+            else:
+                table_list = [tuple(map(lambda x: x[i], extracted_table)) for i in range(len(dec))]
+                unique_rows = list(set(table_list))
+                rows_dict = {row: [] for row in unique_rows}
+                for i, d in enumerate(dec):
+                    rows_dict[table_list[i]] += (i, d)
+                return rows_dict.items()
 
         return []
 

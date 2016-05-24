@@ -87,7 +87,7 @@ class GeneticSearch(object):
             projections.append((objects[obj], proj))
         return projections
 
-    @timeit
+    #@timeit
     def count_projections(self, individual, objects):
         '''
         :param individual: hyperplane
@@ -204,7 +204,7 @@ class GeneticSearch(object):
 
         return max_award, individual, good_proj
 
-    @timeit
+    #@timeit
     def count_local_award(self, individual):
         valid_objects = self.unconsistent_groups[0]
         projections = self.count_projections(individual, valid_objects)
@@ -284,6 +284,7 @@ class GeneticSearch(object):
         return sorted_population
 
     # TODO: add stop criterion
+    @timeit
     def genetic_search(self, sc=None):
 
         print "--------------------init population-------------------------------------------"
