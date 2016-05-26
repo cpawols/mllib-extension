@@ -1,6 +1,7 @@
 from operator import add
 from itertools import groupby
 
+
 class ConsistentChecker(object):
     # TODO: add non paralell reduce by key
     @staticmethod

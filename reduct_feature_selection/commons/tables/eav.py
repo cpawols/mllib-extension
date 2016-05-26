@@ -58,7 +58,6 @@ class Eav:
     def convert_to_array(self):
         """
         this function convert eav format (list of tuples (entity, attribute, value)) to numpy array
-        :param eav: array list of eav tuples
         :return: numpy
         """
         if self.eav:
