@@ -102,7 +102,14 @@ if __name__ == "__main__":
     # print compute_core()
     from random import randint
 
-    table = np.array([[randint(0, 5) for _ in range(10000)] for _ in range(400)])
+    import scipy.io as sio
+    # begin = time.time()
+    #
+    x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
+    #
+
+    #X_train,  y_train = x['X'], x['Y']
+    table = np.append(x['X'], x['Y'], axis=1)
     from datetime import datetime
 
     a = datetime.now()

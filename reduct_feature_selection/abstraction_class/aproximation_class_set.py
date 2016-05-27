@@ -11,6 +11,8 @@ from random import randint
 from sklearn.cross_validation import train_test_split
 from sklearn.tree import tree
 
+import time
+
 from reduct_feature_selection.abstraction_class.abstraction_class import AbstractionClass
 from reduct_feature_selection.abstraction_class.generate_rules import GenerateRules
 from reduct_feature_selection.abstraction_class.reduce_inconsistent_table import ReduceInconsistentTable
@@ -373,14 +375,17 @@ if __name__ == "__main__":
     #     [0, 1, 1, 1, 0]
     # ])
     import scipy.io as sio
+    begin = time.time()
 
     x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
 
     X_train, X_test, y_train, y_test = train_test_split(
         x['X'], x['Y'], test_size=0.2, random_state=42)
+
+    #X_train,  y_train = x['X'], x['Y']
     # table = np.append(x['X'], x['Y'], axis=1)
     table = np.append(X_train, y_train, axis=1)
-    table_v = np.append(X_test, y_test, axis=1)
+    # table_v = np.append(X_test, y_test, axis=1)
 
     # table = np.array([[randint(0, 5) for _ in range(7000)] for _ in range(500)])
     # X_train, X_test = table[:400, :-1], table[400:, :-1]
@@ -391,19 +396,32 @@ if __name__ == "__main__":
     print clf.score(X_test, y_test)
 
     a = SetAbstractionClass(table)
-    res = a.select_attributes(4, 4, 30, cut_rules=True, treshold=0.8, weight=True)
-    print res[0][1].most_common()
-    for i in range(1, 150, 3):
-        sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
 
+    for i in range(1500, 2560, 500):
+        suma = 0
+        iteration = 0
+        maximum  = 0
+        print "Subtables number is equal = ", i
+        res = a.select_attributes(i, 5, 15, cut_rules=True, treshold=0.8, weight=True)
+        end = time.time()
+        print 'total time', end - begin
+        # print res[0][1].most_common()
+        for i in range(1, 2500, 3):
+            sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
+
+            clf = tree.DecisionTreeClassifier()
+            clf.fit(X_train[:, sorted(sel)], y_train)
+            q = clf.score(X_test[:, sorted(sel)], y_test)
+            suma += q
+            maximum = max(maximum, q)
+            iteration += 1
+            print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
+        #
+        print 1.0*suma/iteration, maximum
+        selected = SetAbstractionClass.cut_attributes(res[0][1].most_common())
+        #
         clf = tree.DecisionTreeClassifier()
-        clf.fit(X_train[:, sorted(sel)], y_train)
-        print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
-
-    selected = SetAbstractionClass.cut_attributes(res[0][1].most_common())
-
-    clf = tree.DecisionTreeClassifier()
-
-    clf.fit(X_train[:, sorted(selected)], y_train)
-    print clf.score(X_test[:, sorted(selected)], y_test)
+        #
+        clf.fit(X_train[:, sorted(selected)], y_train)
+        print clf.score(X_test[:, sorted(selected)], y_test)
     print len(selected)
