@@ -7,8 +7,83 @@ from random import randint, shuffle
 from sklearn.cross_validation import train_test_split
 from sklearn.tree import tree
 
-from reduct_feature_selection.reducts.distinguish_matrix import DistniguishMatrixCreator
-from settings import Configuration
+from pyspark import SparkConf, SparkContext
+
+#from reduct_feature_selection.reducts.distinguish_matrix import DistniguishMatrixCreator
+# from settings import Configuration
+
+
+
+class DistniguishMatrixCreator:
+    """
+    TODO
+    """
+
+    def __init__(self, table_initial):
+        self.table = table_initial
+
+    def create_distinguish_table(self):
+        """
+        Returns dictionary which represents distinguish table.
+        :return: dictionary.
+        """
+        result_dictionary = dict()
+        for i, f_row in enumerate(self.table):
+            for j, s_row in enumerate(self.table):
+                if i != j and f_row[-1] != s_row[-1] and i < j:
+                    result_dictionary.update(DistniguishMatrixCreator.process_objects(f_row, i, j, s_row))
+        return result_dictionary
+
+    @staticmethod
+    def create_distingiush_matrix_sort_table(table):
+        result_dictionary = []
+        col = [[e] for e in range(table.shape[0])]
+        t = np.append(table, col, axis=1)
+        sorted_table = t[np.lexsort(np.fliplr(t).T)]
+        # print sorted_table
+        if sorted_table.shape[0] < 2:
+            raise ValueError("Table contains to less elements!")
+        else:
+            begin = 0
+            end = 1
+            while end < table.shape[0]:
+                if sorted_table[begin][-2] != sorted_table[end][-2] \
+                        and (sorted_table[begin][:-2] == sorted_table[end][:-2]).all():
+                    result_dictionary.append((min((sorted_table[begin][-1], sorted_table[end][-1])),
+                                              max((sorted_table[begin][-1], sorted_table[end][-1]))))
+        # Wsadzac na tuple i tam patrzyc jak to bedzie
+                begin += 1
+                end += 1
+        return result_dictionary
+
+    @staticmethod
+    def process_objects(f_row, i, j, s_row):
+        """
+        Creates distinguish row between two objects.
+        :param f_row: row of original matrix
+        :param i: number of  f_row
+        :param j: number od s_row
+        :param s_row:
+        :return: distinguish row
+        """
+        result_dictionary = {}
+        for attr_num in range(len(f_row) - 1):
+            if f_row[attr_num] != s_row[attr_num]:
+                if (i, j) not in result_dictionary:
+                    result_dictionary[(i, j)] = [attr_num]
+                else:
+                    result_dictionary[(i, j)].append(attr_num)
+        return result_dictionary
+
+    @staticmethod
+    def get_attributes_frequency(distinguish_matrix):
+        """
+        Returns counter with attributes frequency.
+        :param distinguish_matrix: dictionary.
+        :return: counter with attributes frequency.
+        """
+        return Counter(attr for attr_list in distinguish_matrix.values() for attr in attr_list)
+
 
 
 class ReductsCreator:
@@ -113,7 +188,7 @@ class ReductsCreator:
         return mean_difference
 
     @staticmethod
-    def compute_up_reduct(distinguish_table, ranking=None, iter_number=18):
+    def compute_up_reduct(distinguish_table, ranking=None, iter_number=20):
         """
         This function return reducts
         :param distinguish_table distinguish_table
@@ -168,7 +243,8 @@ class ReductsCreator:
 
         attributes_number = decision_table.shape[1]
         reduct_list = []
-
+        tmp1 = DistniguishMatrixCreator(decision_table)
+        tmp = tmp1.create_distinguish_table()
         for reduct in list_of_reducts:
 
             attr_subtable = list(reduct)
@@ -176,10 +252,12 @@ class ReductsCreator:
             erase = []
             for attribute in reduct:
                 attr_table = filter(lambda x: x != attribute, attr_subtable)
+#                print('table: check if reduct', decision_table[:, attr_table])
                 up_reduct_dist = DistniguishMatrixCreator.create_distingiush_matrix_sort_table(
                     decision_table[:, attr_table])
                 for pair in up_reduct_dist:
-                    if pair not in self.ind_original_relation:
+                    # if pair not in self.ind_original_relation:
+                    if pair not in tmp:
                         continue
                     erase.append(False)
                     break
@@ -276,14 +354,14 @@ class ComputeReductsForSubtables:
         reducts = reduct_generator.check_if_reduct(table, list_of_reducts)
         return Counter(choosen_attributes[attr] for red in reducts for attr in red)
 
-    def sparkdriver(self):
+    def sparkdriver(self, sc):
         """
         Computes reducts for subtables and returns ranking of attributes.
         :return: Counter.
         """
         x = self.generate_attributes_for_subtables()
 
-        x_rdd = Configuration.sc.parallelize(x)
+        x_rdd = sc.parallelize(x)
         # a = x_rdd \
         #     .map(lambda x: ComputeReductsForSubtables.compute_reducts_for_subtables(self.table[:, x], x)) \
         #     .reduce(lambda x, y: x + y)
@@ -293,12 +371,12 @@ class ComputeReductsForSubtables:
         return a
 
 
-class SkowronDreamHeuristic:
+class ShortReductHeuristic:
     """
     TODO - full description of algorithm.
     """
 
-    def __init__(self, decision_table, sub_number, min, max, object_subtable=False, size=200):
+    def __init__(self, decision_table, sub_number, min, max, object_subtable=False, size=1):
         """
         TODO Make it in the feature.
         :return:
@@ -348,27 +426,30 @@ class SkowronDreamHeuristic:
         :param choosen_attributes:
         :return:
         """
+#        print('table: second stage', table)
         ds_creator = DistniguishMatrixCreator(table)
         ds_table = ds_creator.create_distinguish_table()
-
+        #print ds_table
         reduct_creator = ReductsCreator(table, sorted(ds_table.keys()), attr_rank=ranking)
         list_of_up_reducts = reduct_creator.compute_up_reduct(ds_table)
+        #print list_of_up_reducts
         reducts = reduct_creator.check_if_reduct(table, list_of_up_reducts)
+        #reducts = list_of_up_reducts
         return ReductsCreator.renumerate_attributes_in_list_ofreducts(reducts,
                                                                       choosen_attributes=choosen_attributes)
 
-    def spark_driver(self):
+    def spark_driver(self, sc):
         """
         TODO
         :return:
         """
         dict()
         x = self.generate_attributes_for_subtables()
-        x_rdd = Configuration.sc.parallelize(x)
+        x_rdd = sc.parallelize(x, 20)
         ranking = x_rdd \
-            .map(lambda x: SkowronDreamHeuristic.first_stage(table[x[0],:][:, x[1]])) \
+            .map(lambda x: ShortReductHeuristic.first_stage(table[x[0], :][:, x[1]])) \
             .reduce(lambda x, y: x + y)
-
+        print("finished first stage")
         reducts = x_rdd.map(lambda x: self.second_stage(table[x[0],:][:, x[1]], ranking, choosen_attributes=x[1])).reduce(
             lambda x, y: x + y)
         return reducts
@@ -391,27 +472,30 @@ if __name__ == "__main__":
     ])
     # print Counter(e for a in r for e in a)
 
-    table = np.array([
-        [1, 1, 0, 0],
-        [1, 0, 1, 1],
-        [1, 1, 1, 0]
-    ])
+    # table = np.array([
+    #     [1, 1, 0, 0],
+    #     [1, 0, 1, 1],
+    #     [1, 1, 1, 0]
+    # ])
 
     import scipy.io as sio
     # begin = time.time()
     #
     x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
     #
+
+    conf = SparkConf().setMaster("spark://localhost:7077").setAppName("Name")
+    sc = SparkContext(conf=conf)
     X_train, X_test, y_train, y_test = train_test_split(
          x['X'], x['Y'], test_size=0.2, random_state=42)
     clf = tree.DecisionTreeClassifier()
     clf.fit(X_train, y_train)
     print clf.score(X_test, y_test)
-    #X_train,  y_train = x['X'], x['Y']
+    X_train,  y_train = x['X'], x['Y']
     table = np.append(x['X'], x['Y'], axis=1)
-    x = SkowronDreamHeuristic(table, 15000, 5, 500, size=10)
-    r = x.spark_driver()
-
+    x = ShortReductHeuristic(table, 500, 450, 450, size=15)
+    r = x.spark_driver(sc)
+    print r
     res = Counter(e for a in r for e in a)
     all_occurence = sum(res.values())
     tmp = res.most_common()
@@ -419,9 +503,11 @@ if __name__ == "__main__":
     for e in tmp:
         res_scal.append((e[0], 1.0*e[1]/all_occurence))
 
-
-
-    for i in range(1, 2500, 3):
+    print len(res_scal),res_scal
+    #
+    #
+    #
+    for i in range(1, 20, 3):
         sel = [e[0] for j, e in enumerate(res_scal) if j < i]
         clf = tree.DecisionTreeClassifier()
         clf.fit(X_train[:, sorted(sel)], y_train)
