@@ -6,12 +6,11 @@ TODO
 import itertools
 import numpy as np
 import operator
+import time
 from collections import Counter
 from random import randint
 from sklearn.cross_validation import train_test_split
 from sklearn.tree import tree
-
-import time
 
 from reduct_feature_selection.abstraction_class.abstraction_class import AbstractionClass
 from reduct_feature_selection.abstraction_class.generate_rules import GenerateRules
@@ -319,12 +318,14 @@ class SetAbstractionClass:
         subtable_attributes_numbers = [
             sorted(list(np.random.choice(self.table.shape[1] - 1, randint(min_s, max_s), replace=False)))
             for _ in range(subtable_num)]
+
         subtable_attr_num_rdd = Configuration.sc.parallelize(subtable_attributes_numbers)
         result = subtable_attr_num_rdd.map(
             lambda x: (1, self.run_pipeline(x, cut_rules=cut_rules, treshold=treshold,
                                             weight=weight))).reduceByKey(
             lambda x, y: x + y)
-        # attribute_rank = result.collect()[0][1].most_common()
+
+
         return result.collect()
 
     @staticmethod
@@ -352,61 +353,32 @@ class SetAbstractionClass:
         return sorted([e[0] for i, e in enumerate(attributes_rank) if i < number_of_significant_attributes])
 
 
-if __name__ == "__main__":
-    table = np.array(
-        [
-            [1, 1, 0, 0, 1],
-            [1, 1, 0, 0, 3],
-            [0, 0, 1, 1, 2],
-            [0, 1, 1, 0, 1],
-            [1, 0, 0, 1, 2],
-            [1, 0, 0, 1, 2],
-            [1, 1, 1, 1, 3],
-            [1, 1, 1, 0, 2],
-            [1, 1, 1, 0, 2],
-            [1, 1, 1, 0, 1]
-
-        ]
-    )
-    # table = np.array([
-    #     [1, 0, 0, 0, 1],
-    #     [0, 1, 0, 0, 0],
-    #     [1, 1, 1, 1, 1],
-    #     [0, 1, 1, 1, 0]
-    # ])
+def load_data():
+    global X_train, X_test, y_train, y_test, table
     import scipy.io as sio
-    begin = time.time()
-
     x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
-
     X_train, X_test, y_train, y_test = train_test_split(
-        x['X'], x['Y'], test_size=0.2, random_state=42)
-
-    #X_train,  y_train = x['X'], x['Y']
-    # table = np.append(x['X'], x['Y'], axis=1)
+        x['X'], x['Y'], test_size=0.3, random_state=42)
     table = np.append(X_train, y_train, axis=1)
-    # table_v = np.append(X_test, y_test, axis=1)
 
-    # table = np.array([[randint(0, 5) for _ in range(7000)] for _ in range(500)])
-    # X_train, X_test = table[:400, :-1], table[400:, :-1]
-    # y_train, y_test = table[:400, -1], table[400:, -1]
 
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
-    print clf.score(X_test, y_test)
+if __name__ == "__main__":
+
+    load_data()
 
     a = SetAbstractionClass(table)
 
-    for i in range(1500, 2560, 500):
+    for i in range(500, 2001, 500):
+        begin = time.time()
         suma = 0
         iteration = 0
-        maximum  = 0
+        maximum = 0
         print "Subtables number is equal = ", i
-        res = a.select_attributes(i, 5, 15, cut_rules=True, treshold=0.8, weight=True)
+        res = a.select_attributes(i, 50, 105, cut_rules=True, treshold=0.8, weight=True)
         end = time.time()
         print 'total time', end - begin
-        # print res[0][1].most_common()
-        for i in range(1, 2500, 3):
+        print res[0][1].most_common()
+        for i in range(1, 1000, 3):
             sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
 
             clf = tree.DecisionTreeClassifier()
@@ -416,12 +388,3 @@ if __name__ == "__main__":
             maximum = max(maximum, q)
             iteration += 1
             print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
-        #
-        print 1.0*suma/iteration, maximum
-        selected = SetAbstractionClass.cut_attributes(res[0][1].most_common())
-        #
-        clf = tree.DecisionTreeClassifier()
-        #
-        clf.fit(X_train[:, sorted(selected)], y_train)
-        print clf.score(X_test[:, sorted(selected)], y_test)
-    print len(selected)

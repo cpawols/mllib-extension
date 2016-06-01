@@ -1,14 +1,20 @@
 # coding=utf-8
 """Compute reducts"""
 import numpy as np
+import scipy.io as sio
 from collections import Counter
 from math import ceil
+from numpy.ma import ravel
 from random import randint, shuffle
 from sklearn.cross_validation import train_test_split
 from sklearn.tree import tree
 
 from reduct_feature_selection.reducts.distinguish_matrix import DistniguishMatrixCreator
 from settings import Configuration
+
+x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
+table = np.append(x['X'], x['Y'], axis=1)
+broadcast_table = Configuration.sc.broadcast(table)
 
 
 class ReductsCreator:
@@ -320,8 +326,10 @@ class SkowronDreamHeuristic:
                                   replace=False)))
                            for _ in range(self.sub_number)]
 
-        object_list = [sorted(list(np.random.choice(range(0, self.table.shape[0]), self.object_subtables_size, replace=False))) for _ in
-                       range(self.sub_number)]
+        object_list = [
+            sorted(list(np.random.choice(range(0, self.table.shape[0]), self.object_subtables_size, replace=False))) for
+            _ in
+            range(self.sub_number)]
 
         attributes = [e[:] + [self.table.shape[1] - 1] for e in attributes_list]
         result = []
@@ -336,11 +344,12 @@ class SkowronDreamHeuristic:
         :param table:
         :return:
         """
+        # print broadcast_table.value[x[0],:][:,x[1]]
         ds_creator = DistniguishMatrixCreator(table)
         ds_table = ds_creator.create_distinguish_table()
         return Counter(e for attr in ds_table.values() for e in attr)
 
-    def second_stage(self, table, ranking, choosen_attributes):
+    def second_stage(self, table, ranking, choosen_attributes, up_reduct=False):
         """
         TODO
         :param table:
@@ -353,94 +362,95 @@ class SkowronDreamHeuristic:
 
         reduct_creator = ReductsCreator(table, sorted(ds_table.keys()), attr_rank=ranking)
         list_of_up_reducts = reduct_creator.compute_up_reduct(ds_table)
-        reducts = reduct_creator.check_if_reduct(table, list_of_up_reducts)
+
+        if up_reduct is False:
+            reducts = reduct_creator.check_if_reduct(table, list_of_up_reducts)
+        else:
+            reducts = list_of_up_reducts
+
         return ReductsCreator.renumerate_attributes_in_list_ofreducts(reducts,
                                                                       choosen_attributes=choosen_attributes)
 
-    def spark_driver(self):
+    def spark_driver(self, up_reducts=False):
         """
         TODO
         :return:
         """
-        dict()
+
         x = self.generate_attributes_for_subtables()
         x_rdd = Configuration.sc.parallelize(x)
+
         ranking = x_rdd \
-            .map(lambda x: SkowronDreamHeuristic.first_stage(table[x[0],:][:, x[1]])) \
+            .map(lambda x: SkowronDreamHeuristic.first_stage(broadcast_table.value[x[0], :][:, x[1]])) \
             .reduce(lambda x, y: x + y)
 
-        reducts = x_rdd.map(lambda x: self.second_stage(table[x[0],:][:, x[1]], ranking, choosen_attributes=x[1])).reduce(
+        reducts = x_rdd.map(lambda x: self.second_stage(broadcast_table.value[x[0], :][:, x[1]], ranking,
+                                                        choosen_attributes=x[1], up_reduct=up_reducts)).reduce(
             lambda x, y: x + y)
         return reducts
 
 
-if __name__ == "__main__":
-    table = np.array([
-        [1, 1, 0, 0, 0],  # 0
-        [1, 1, 0, 1, 0],  # 1
-        [2, 1, 0, 0, 1],  # 2
-        [0, 2, 0, 0, 1],  # 3
-        [0, 0, 1, 0, 1],  # 4
-        [0, 0, 1, 1, 0],  # 5
-        [2, 0, 1, 1, 1],  # 6
-        [1, 2, 0, 0, 0],  # 7
-        [1, 0, 1, 0, 1],  # 8
-        [0, 2, 1, 0, 1],  # 9
-        [1, 2, 1, 1, 1],  # 10
-        [2, 2, 0, 1, 1],  # 11
-    ])
-    # print Counter(e for a in r for e in a)
 
-    table = np.array([
-        [1, 1, 0, 0],
-        [1, 0, 1, 1],
-        [1, 1, 1, 0]
-    ])
-
-    import scipy.io as sio
-    # begin = time.time()
-    #
-    x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
-    #
+def traiin_full_tree():
+    global X_train, X_test, y_train, y_test
     X_train, X_test, y_train, y_test = train_test_split(
-         x['X'], x['Y'], test_size=0.2, random_state=42)
+        x['X'], x['Y'], test_size=0.2, random_state=42)
     clf = tree.DecisionTreeClassifier()
     clf.fit(X_train, y_train)
     print clf.score(X_test, y_test)
-    #X_train,  y_train = x['X'], x['Y']
-    table = np.append(x['X'], x['Y'], axis=1)
-    x = SkowronDreamHeuristic(table, 15000, 5, 500, size=10)
-    r = x.spark_driver()
 
+
+def load_data():
+    global x, table
+    x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
+    table = np.append(x['X'], x['Y'], axis=1)
+
+
+def scale_attributes():
+    global e
     res = Counter(e for a in r for e in a)
     all_occurence = sum(res.values())
     tmp = res.most_common()
-    res_scal =[]
+    res_scal = []
     for e in tmp:
-        res_scal.append((e[0], 1.0*e[1]/all_occurence))
+        res_scal.append((e[0], 1.0 * e[1] / all_occurence))
+    return res_scal
+
+def score_knn():
+    from sklearn.neighbors import KNeighborsClassifier
+    knn = KNeighborsClassifier()
+    knn.fit(X_train[:, sorted(sel)], ravel(y_train))
+    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
+                         metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+                         weights='uniform')
+    print i, knn.score(X_test[:, sorted(sel)], y_test)
 
 
+def score_tree():
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X_train[:, sorted(sel)], y_train)
+    print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
 
-    for i in range(1, 2500, 3):
+
+if __name__ == "__main__":
+
+    load_data()
+    traiin_full_tree()
+
+
+    heuristic = SkowronDreamHeuristic(table, 40, 500, 4550, size=600)
+    r = heuristic.spark_driver(up_reducts=True)
+
+    res_scal = scale_attributes()
+
+    for i in range(1, 1050, 3):
         sel = [e[0] for j, e in enumerate(res_scal) if j < i]
-        clf = tree.DecisionTreeClassifier()
-        clf.fit(X_train[:, sorted(sel)], y_train)
-        print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
+        # score_knn()
+        score_tree()
 
 
-    # print len(Counter(e for a in r for e in a))
-    # table = np.append(X_train, y_train, axis=1)
-    # table_v = np.append(X_test, y_test, axis=1)
-
-    # table = np.array([[randint(0, 5) for _ in range(7000)] for _ in range(500)])
-    # # X_train, X_test = table[:400, :-1], table[400:, :-1]
-    # # y_train, y_test = table[:400, -1], table[400:, -1]
-    #
-    # clf = tree.DecisionTreeClassifier()
-    # clf.fit(X_train, y_train)
-    # print clf.score(X_test, y_test)
-    # x = SkowronDreamHeuristic(table, 2500, 5, 15)
-    # r = x.spark_driver()
-    # print r
-    # print Counter(e for a in r for e in a)
-    #
+    """
+    26 minut 500, 4500, 150 ze skracaniem nadreduktów do reduktów
+    Najlepsze ustawienia
+    heuristic = SkowronDreamHeuristic(table, 200, 5, 50, size=1050)
+    """

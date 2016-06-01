@@ -6,17 +6,25 @@ import itertools
 import numpy as np
 from collections import Counter
 from operator import add
+from sklearn.cross_validation import train_test_split
+
+from reduct_feature_selection.abstraction_class.consistent import Consistent
 
 
 class GenerateRules:
     @staticmethod
     def generate_all_rules(br_decision_table, cut_rules=False, treshold=0.9):
         """TODO"""
+
+
+
         objects_number = br_decision_table.shape[0]
         rules = []
         for i in range(objects_number):
             rules.append(GenerateRules.engine(i, br_decision_table, cut_rules, treshold))
+            print i
         return reduce(add, rules)
+
 
     @staticmethod
     def engine(row_number, br_table=None, cut_rules=False, treshold=0.9):
@@ -177,7 +185,8 @@ if __name__ == "__main__":
                      [ 0 , 1 , 1 , 0 , 1],
                      [ 1 , 0,  0 , 1 , 1],
                      [ 0 , 0 , 1 , 1 , 1],
-                     [ 1  ,1,  1 , 0 , 1]])
+                     [ 1  ,1,  1 , 0 , 1],
+                    ])
     # table = np.array([[1, 1, 0, 0, 1],
     #                   [1, 1, 0, 0, 1],
     #                   [0, 0, 1, 1, 1],
@@ -192,5 +201,14 @@ if __name__ == "__main__":
 
     # np.savetxt("example_table.csv", table, delimiter=",")
     # table = np.genfromtxt('example_table.csv', delimiter=',')
-    x = GenerateRules.generate_all_rules(table, cut_rules=False, treshold=0.9)
+    import scipy.io as sio
+    x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        x['X'], x['Y'], test_size=0.3, random_state=42)
+
+    #X_train,  y_train = x['X'], x['Y']
+    # table = np.append(x['X'], x['Y'], axis=1)
+    table = np.append(X_train, y_train, axis=1)
+    x = GenerateRules.generate_all_rules(table[range(100), :], cut_rules=True, treshold=0.9)
     print (x)
