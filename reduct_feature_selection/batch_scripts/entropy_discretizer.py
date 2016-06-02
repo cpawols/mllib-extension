@@ -3,8 +3,10 @@ from collections import Counter
 import time
 import math
 import operator
+import pickle
 
 import numpy as np
+from numpy import genfromtxt
 
 from pyspark import SparkContext, SparkConf
 from sklearn import tree
@@ -366,7 +368,7 @@ def cross_val_score(X, y, k=10):
     return accuracy / float(k)
 
 if __name__ == "__main__":
-    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("entropy"))
+    conf = (SparkConf().setMaster("spark://green07:7077").setAppName("entropy"))
     sc = SparkContext(conf=conf)
 
     iris = load_iris()
@@ -376,15 +378,21 @@ if __name__ == "__main__":
     y = data['target']
     n = len(y)
 
+    data = genfromtxt("/home/students/mat/k/kr319379/Downloads/marrData.csv", delimiter=",")
+    X = data[:,:-1]
+    y = data[:,-1]
+
     X_ex = Eav.convert_to_proper_format(X)
 
     discretizer_ent = EntropyDiscretizer(X_ex, list(X_ex.dtype.names), y)
-    discretizer_r = OneRDiscretizer(X_ex, list(X_ex.dtype.names), y)
+    #discretizer_r = OneRDiscretizer(X_ex, list(X_ex.dtype.names), y)
     X_ent = discretizer_ent.discretize()
-    X_r = discretizer_r.discretize()
+    #X_r = discretizer_r.discretize()
     print "standard"
     print cross_val_score(X, y, 5)
     print "discretized entropy"
     print cross_val_score(X_ent, y, 5)
-    print "discretized r"
-    print cross_val_score(X_r, y, 5)
+    with open("/home/students/mat/k/kr319379/Downloads/discr", "w") as f:
+        pickle.dump(X_ent, file=f)
+    # print "discretized r"
+    # print cross_val_score(X_r, y, 5)

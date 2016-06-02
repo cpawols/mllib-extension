@@ -7,16 +7,19 @@ import math
 import numpy as np
 import time
 
+import scipy.io as sio
+from numpy import genfromtxt
+
 import operator
 from scipy.spatial.distance import squareform, pdist
-#from sklearn import tree, cross_validation
+from sklearn import tree#, cross_validation
 from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_iris, load_digits
 from sklearn.metrics import accuracy_score
 from numpy.lib import recfunctions as rfn
 
 from pyspark import SparkContext, SparkConf
-from sklearn.svm import LinearSVC
+#from sklearn.svm import LinearSVC
 
 
 def timeit(method):
@@ -289,7 +292,7 @@ class GeneticSearch(object):
         :return: list of tuples (objects, projection) projection of object to axis
         '''
         table = self.table_as_matrix[objects, :]
-        proj = [self.projection_axis[obj] for obj in objects]
+        proj = np.array([self.projection_axis[obj] for obj in objects])
         return zip(objects, proj - table.dot(individual))
 
     # TODO: add tests and docs
@@ -411,7 +414,7 @@ class GeneticSearch(object):
         return sorted_population
 
     # TODO: add stop criterion
-    #@timeit
+    @timeit
     def genetic_search(self, sc=None):
 
         #print "--------------------init population-------------------------------------------"
@@ -420,7 +423,7 @@ class GeneticSearch(object):
         current_best_award = 0
         the_same_awards = 0
         for i in range(self.max_iter):
-            #print "-----------------------------performing " + str(i) + " generation---------------"
+            print "-----------------------------performing " + str(i) + " generation---------------"
             if sc is not None:
                 rdd_population = sc.parallelize(population, self.population_size * 10)
                 awards = rdd_population.mapPartitions(self.count_award_for_chunk).collect()
@@ -522,7 +525,7 @@ class SimpleExtractor(object):
         :param dec: decision column
         :param cuts_limit_ratio: ratio of good cut
         '''
-        self.table = Eav.convert_to_proper_format(table)
+        self.table = table
         self.attrs_list = attrs_list
         self.dec = dec
         self.cuts_limit_ratio = cuts_limit_ratio
@@ -625,7 +628,6 @@ class HyperplaneExtractor(SimpleExtractor):
             table = np.array([self.table[i] for i in objects], dtype=self.table.dtype)
         else:
             table = self.table
-
         attr = best_hyperplane[0]
         axis_table = table[attr]
         other_attrs = [x for x in self.attrs_list if not x == attr]
@@ -645,25 +647,33 @@ class HyperplaneExtractor(SimpleExtractor):
 
     def _search_best_hyperplane_for_projection(self, attr, unconsistent_groups, sc=None):
 
-        projection_axis = self.table[attr]
-        other_axes = [x for x in self.attrs_list if not x == attr]
+        #print attr
+        #print self.table
+        atr = list(attr)[0]
+        projection_axis = self.table[atr]
+        other_axes = [x for x in self.attrs_list if not x == atr]
         new_table = self.table[other_axes]
 
         gen_search = GeneticSearch(len(other_axes), self.dec, new_table,
                                    projection_axis, unconsistent_groups)
         cand_hyperplane = gen_search.genetic_search(sc)
 
-        return attr, cand_hyperplane
+        return atr, cand_hyperplane
 
     def _search_best_hyperplane(self, unconsistent_groups, sc=None):
 
-        if sc is None:
+        if False:
             hyperplanes = map(lambda x: self._search_best_hyperplane_for_projection(x, unconsistent_groups, sc),
                               self.attrs_list)
         else:
-            rdd_attrs = sc.parallelize(self.attrs_list, len(self.attrs_list))
-            hyperplanes = rdd_attrs.map(
+            n = len(self.attrs_list)
+            atrs_list = range(n)
+            rdd_attrs = sc.parallelize(self.attrs_list, n)
+            hyperplanes = rdd_attrs.mapPartitions(
                 lambda x: self._search_best_hyperplane_for_projection(x, unconsistent_groups)).collect()
+
+            hyperp = [x for i, x in enumerate(hyperplanes) if i % 2 == 1]
+            hyperplanes = zip(self.attrs_list, hyperp)
 
         return max(hyperplanes, key=lambda x: x[1][0])
 
@@ -675,17 +685,18 @@ class HyperplaneExtractor(SimpleExtractor):
         while True:
             unconsistent_groups = ConsistentChecker.count_unconsistent_groups(extracted_table, self.dec, sc)
 
-            #print "--------------------unconsistent groups-----------------------------"
-            #print unconsistent_groups
+            print "--------------------unconsistent groups-----------------------------"
+            print unconsistent_groups
 
             unconsistent_groups = filter(lambda x: self.dpoints_strategy.decision(x) is None, unconsistent_groups)
-            #print "--------------------unconsistent regs after clustering-----------------------------"
-            #print unconsistent_groups
+            print "--------------------unconsistent regs after clustering-----------------------------"
+            print unconsistent_groups
             i += 1
             time_spent = time.time() - start
             if unconsistent_groups and time_spent < self.time_search_limit:
-                #print "-------------------performing " + str(i) + " iteration-----------------------"
+                print "-------------------performing " + str(i) + " iteration-----------------------"
                 best_hyperplane = self._search_best_hyperplane(unconsistent_groups, sc)
+                print best_hyperplane
                 extracted_table.append(self._count_objects_positions(best_hyperplane))
             else:
                 break
@@ -722,8 +733,8 @@ class HyperplaneExtractor(SimpleExtractor):
             decision = Counter([self.dec[i] for i in objects]).most_common()[0][0]
             return DecisionTree(decision, 0, 0)
 
-        return DecisionTree(best_hyperplane, self.count_decision_tree(left_son_objects, svm=svm),
-                            self.count_decision_tree(right_son_objects, svm=svm))
+        return DecisionTree(best_hyperplane, self.count_decision_tree(left_son_objects, sc = sc, svm=svm),
+                            self.count_decision_tree(right_son_objects, sc=sc, svm=svm))
 
 
 def cross_val_score(X, y, k=10):
@@ -767,28 +778,38 @@ def cross_val_score_gen_dec_tree(X, y, k=10, sc=None, svm=False):
         X_ex = Eav.convert_to_proper_format(X_train)
         md = MinDistDoubtfulPointsStrategy(X_ex, y_train, 3)
 
-        extractor = HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y_train, md, 3000)
+        extractor = HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y_train, md, 1500)
 
         dec_tree = extractor.count_decision_tree(range(len(y_train)), sc=sc, svm=svm)
         res = dec_tree.predict_list(X_test, svm=svm)
         accuracy += (sum(res == y_test) / float(len(res)))
         i += 1
+        print "result len: " + str(len(res))
+        print "all set len: " + str(len(y))
         print "performed " + str(i) + " cv, result: " + str((sum(res == y_test) / float(len(res))))
 
     return accuracy / float(k)
 
 if __name__ == "__main__":
-    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("extractor"))
+    conf = (SparkConf().setMaster("spark://green07:7077").setAppName("extractor"))
     sc = SparkContext(conf=conf)
     logger = sc._jvm.org.apache.log4j
     logger.LogManager.getLogger("org").setLevel(logger.Level.ERROR)
     logger.LogManager.getLogger("akka").setLevel(logger.Level.ERROR)
 
     ################ prepare data #############################
-    data = load_digits(4)
+    data = load_iris()
     X = data['data']
     y = data['target']
     n = len(y)
+
+    # data = sio.loadmat("/home/students/mat/k/kr319379/Downloads/BASEHOCK.mat")
+    #
+    # X = data['X']
+    # y = y = np.array(map(lambda x: x[0], data['Y']))
+    data = genfromtxt("/home/students/mat/k/kr319379/Downloads/marrData.csv", delimiter=",")
+    X = data[:,:-1]
+    y = data[:,-1]
 
     train_ids = random.sample(range(0, n), int(0.66 * n))
     test_ids = [x for x in range(0, n) if x not in train_ids]
@@ -805,23 +826,23 @@ if __name__ == "__main__":
     ####################################################################################
 
     ###################### extract table ###############################################
-    #new_table = np.column_stack((Eav.convert_to_proper_array(X_ex), extractor.extract()))
+    new_table = np.column_stack((X, extractor.extract(sc)))
 
-    # new_X_train = new_table[train_ids, ]
-    # new_X_test = new_table[test_ids, ]
-    #
-    # standard_tree = tree.DecisionTreeClassifier()
-    # standard_tree_newt = tree.DecisionTreeClassifier()
-    #
-    # standard_tree.fit(X_train, y_train)
-    # results_standard = standard_tree.predict(X_test)
-    #
-    # standard_tree_newt.fit(new_X_train, y_train)
-    # results_standard_newt = standard_tree_newt.predict(new_X_test)
-    # print "standard"
-    # print accuracy_score(results_standard, y_test)
-    # print "standard new table"
-    # print accuracy_score(results_standard_newt, y_test)
+    new_X_train = new_table[train_ids, ]
+    new_X_test = new_table[test_ids, ]
+
+    standard_tree = tree.DecisionTreeClassifier()
+    standard_tree_newt = tree.DecisionTreeClassifier()
+
+    standard_tree.fit(X_train, y_train)
+    results_standard = standard_tree.predict(X_test)
+
+    standard_tree_newt.fit(new_X_train, y_train)
+    results_standard_newt = standard_tree_newt.predict(new_X_test)
+    print "standard"
+    print accuracy_score(results_standard, y_test)
+    print "standard new table"
+    print accuracy_score(results_standard_newt, y_test)
 
     # print "standard"
     # print cross_val_score(X, y, 5)
@@ -830,7 +851,8 @@ if __name__ == "__main__":
 
     ######################## decision tree #######################################
     # print "genetic"
-    # print cross_val_score_gen_dec_tree(X, y, 5)
-    print "svm"
-    print cross_val_score_gen_dec_tree(X, y, 5, svm=True)
-
+    # print cross_val_score_gen_dec_tree(X, y, 5, sc)
+    # print "svm"
+    # print cross_val_score_gen_dec_tree(X, y, 5, sc, svm=True)
+    # print "standar"
+    # print cross_val_score(X, y, 5)

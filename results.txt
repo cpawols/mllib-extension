@@ -1,0 +1,376 @@
+discretization (entropy):
+dla BASEHOCK:
+time:
+stand:
+30 comps, 124 cores: 100 sec
+accuracy:
+not_disc: 0.83
+disc: 0.84
+
+'discretize' ((<__main__.EntropyDiscretizer object at 0x24f5610>, <pyspark.context.SparkContext object at 0x24e0550>), {}) 100.18806 sec
+standard
+performed 1 cv, result: 0.947368421053
+performed 2 cv, result: 0.815789473684
+performed 3 cv, result: 0.789473684211
+performed 4 cv, result: 0.789473684211
+performed 5 cv, result: 0.842105263158
+0.836842105263
+discretized entropy
+performed 1 cv, result: 0.789473684211
+performed 2 cv, result: 0.815789473684
+performed 3 cv, result: 0.894736842105
+performed 4 cv, result: 0.921052631579
+performed 5 cv, result: 0.815789473684
+0.847368421053
+
+extractor:
+dla digits(4):
+standalone: 830 sek
+dla 27 kompow (96 corow):76 sek
+
+'extract' 68.31047 sec
+standard
+0.922448979592
+standard new table
+0.934693877551
+
+'extract' 67.83276 sec
+standard
+0.930612244898
+standard new table
+0.967346938776
+
+iris():
+'extract' 12.38569 sec
+standard
+0.941176470588
+standard new table
+0.960784313725
+
+'extract' 15.28640 sec
+standard
+0.960784313725
+standard new table
+0.980392156863
+
+46 kompow:
+iris:
+'extract' 20.68044 sec
+standard
+0.960784313725
+standard new table
+1.0
+
+digits:
+'extract' 54.51782 sec
+standard
+0.938775510204
+standard new table
+0.942857142857
+
+'extract' 98.58282 sec
+standard
+0.910204081633
+standard new table
+0.942857142857
+
+Tree:
+digits:
+genetic
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.51747 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.69229 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 11.96256 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.44155 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 1.04327 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 3.09895 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.39926 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.48616 sec
+'count_decision_tree' 9.40663 sec
+'count_decision_tree' 33.94939 sec
+result len: 144
+all set len: 720
+performed 1 cv, result: 0.944444444444
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.89699 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 2.10851 sec
+'count_decision_tree' 6.66629 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.43022 sec
+'count_decision_tree' 2.67877 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.33215 sec
+'count_decision_tree' 0.68888 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.78820 sec
+'count_decision_tree' 9.30985 sec
+'count_decision_tree' 23.21400 sec
+result len: 144
+all set len: 720
+performed 2 cv, result: 0.895833333333
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.32801 sec
+'count_decision_tree' 0.69367 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 2.94749 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.33469 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.32852 sec
+'count_decision_tree' 1.03228 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 3.15045 sec
+'count_decision_tree' 9.96243 sec
+'count_decision_tree' 0.00009 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 1.35352 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.47605 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.55623 sec
+'count_decision_tree' 7.71344 sec
+'count_decision_tree' 25.19831 sec
+result len: 144
+all set len: 720
+performed 3 cv, result: 0.958333333333
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.35353 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.36359 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.77025 sec
+'count_decision_tree' 1.64638 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 1.02644 sec
+'count_decision_tree' 4.89192 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.36699 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.72886 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.68679 sec
+'count_decision_tree' 11.41726 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.36682 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.31274 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 1.67106 sec
+'count_decision_tree' 7.95350 sec
+'count_decision_tree' 27.80414 sec
+result len: 144
+all set len: 720
+performed 4 cv, result: 0.944444444444
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 1.08060 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 1.03024 sec
+'count_decision_tree' 5.78966 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.31284 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.34446 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.77410 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 1.19491 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 3.23223 sec
+'count_decision_tree' 9.48853 sec
+'count_decision_tree' 22.51335 sec
+result len: 144
+all set len: 720
+performed 5 cv, result: 0.951388888889
+0.938888888889
+
+svm
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.03259 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.08836 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.16459 sec
+result len: 144
+all set len: 720
+performed 1 cv, result: 1.0
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.03365 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.09096 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.16868 sec
+result len: 144
+all set len: 720
+performed 2 cv, result: 1.0
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.03358 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.09026 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.16817 sec
+result len: 144
+all set len: 720
+performed 3 cv, result: 0.986111111111
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.03129 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.08621 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.17090 sec
+result len: 144
+all set len: 720
+performed 4 cv, result: 0.979166666667
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.03844 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.10587 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.18375 sec
+result len: 144
+all set len: 720
+performed 5 cv, result: 0.979166666667
+0.988888888889
+standar
+performed 1 cv, result: 0.9375
+performed 2 cv, result: 0.909722222222
+performed 3 cv, result: 0.944444444444
+performed 4 cv, result: 0.972222222222
+performed 5 cv, result: 0.916666666667
+0.936111111111
+
+iris:
+svm
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00175 sec
+'count_decision_tree' 0.00464 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.01388 sec
+result len: 30
+all set len: 150
+performed 1 cv, result: 0.966666666667
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00190 sec
+'count_decision_tree' 0.00508 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.01345 sec
+result len: 30
+all set len: 150
+performed 2 cv, result: 0.933333333333
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00028 sec
+'count_decision_tree' 0.00307 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.01207 sec
+result len: 30
+all set len: 150
+performed 3 cv, result: 0.966666666667
+'count_decision_tree' 0.00027 sec
+'count_decision_tree' 0.00179 sec
+'count_decision_tree' 0.00514 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.01348 sec
+result len: 30
+all set len: 150
+performed 4 cv, result: 1.0
+'count_decision_tree' 0.00024 sec
+'count_decision_tree' 0.00155 sec
+'count_decision_tree' 0.00475 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.01292 sec
+result len: 30
+all set len: 150
+performed 5 cv, result: 0.966666666667
+0.966666666667
+standar
+performed 1 cv, result: 0.933333333333
+performed 2 cv, result: 0.9
+performed 3 cv, result: 1.0
+performed 4 cv, result: 0.933333333333
+performed 5 cv, result: 0.933333333333
+0.94
+
+genetic
+'count_decision_tree' 0.00091 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 1.86893 sec
+'count_decision_tree' 5.02693 sec
+result len: 30
+all set len: 150
+performed 1 cv, result: 0.966666666667
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00029 sec
+'count_decision_tree' 2.80787 sec
+'count_decision_tree' 4.73715 sec
+result len: 30
+all set len: 150
+performed 2 cv, result: 0.933333333333
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00018 sec
+'count_decision_tree' 0.44794 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 3.60448 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 5.58879 sec
+result len: 30
+all set len: 150
+performed 3 cv, result: 0.933333333333
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00016 sec
+'count_decision_tree' 2.58726 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 2.71845 sec
+'count_decision_tree' 8.39917 sec
+result len: 30
+all set len: 150
+performed 4 cv, result: 0.9
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00016 sec
+'count_decision_tree' 2.61367 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 2.98559 sec
+'count_decision_tree' 6.57962 sec
+result len: 30
+all set len: 150
+performed 5 cv, result: 0.933333333333
+0.933333333333
