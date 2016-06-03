@@ -374,3 +374,216 @@ result len: 30
 all set len: 150
 performed 5 cv, result: 0.933333333333
 0.933333333333
+
+most decision strategy digits:
+'extract' 62.16836 sec
+standard
+0.914285714286
+standard new table
+0.971428571429
+
+tree:
+'count_decision_tree' 67.64578 sec
+result len: 144
+all set len: 720
+performed 5 cv, result: 0.951388888889
+0.940277777778
+
+############################################# WAVEFORM DATASET ##############
+waveform:
+most decision 0.7
+'extract' 90.43062 sec
+standard
+0.767346938776
+standard new table
+0.795918367347
+
+most_decision 0.8
+'extract' 852.42484 sec
+standard
+0.738775510204
+standard new table
+0.775510204082
+
+decision tree:
+
+genetic
+'count_decision_tree' 0.00020 sec
+'count_decision_tree' 0.00015 sec
+'count_decision_tree' 6.15935 sec
+'count_decision_tree' 0.00012 sec
+'count_decision_tree' 0.00006 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.34246 sec
+'count_decision_tree' 2.96934 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.38645 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 1.89916 sec
+'count_decision_tree' 11.12989 sec
+'count_decision_tree' 16.07506 sec
+'count_decision_tree' 29.28176 sec
+result len: 1000
+all set len: 5000
+performed 1 cv, result: 0.801
+'count_decision_tree' 0.00009 sec
+'count_decision_tree' 0.00011 sec
+'count_decision_tree' 3.20984 sec
+'count_decision_tree' 0.00013 sec
+'count_decision_tree' 0.00007 sec
+'count_decision_tree' 0.00006 sec
+'count_decision_tree' 0.00002 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.39564 sec
+'count_decision_tree' 1.08453 sec
+'count_decision_tree' 2.18658 sec
+'count_decision_tree' 5.16466 sec
+'count_decision_tree' 14.21210 sec
+result len: 1000
+all set len: 5000
+performed 2 cv, result: 0.828
+'count_decision_tree' 0.00011 sec
+'count_decision_tree' 0.00010 sec
+'count_decision_tree' 8.44054 sec
+'count_decision_tree' 0.00012 sec
+'count_decision_tree' 0.00006 sec
+'count_decision_tree' 0.00009 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00005 sec
+'count_decision_tree' 0.94771 sec
+'count_decision_tree' 2.31406 sec
+'count_decision_tree' 5.34576 sec
+'count_decision_tree' 12.66815 sec
+'count_decision_tree' 33.44876 sec
+result len: 1000
+all set len: 5000
+performed 3 cv, result: 0.83
+'count_decision_tree' 0.00011 sec
+'count_decision_tree' 0.00011 sec
+'count_decision_tree' 6.10269 sec
+'count_decision_tree' 0.00020 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00004 sec
+'count_decision_tree' 0.81135 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 2.42234 sec
+'count_decision_tree' 0.00005 sec
+'count_decision_tree' 5.67480 sec
+'count_decision_tree' 13.06350 sec
+'count_decision_tree' 35.58484 sec
+result len: 1000
+all set len: 5000
+performed 4 cv, result: 0.826
+'count_decision_tree' 0.00011 sec
+'count_decision_tree' 0.00011 sec
+'count_decision_tree' 8.46453 sec
+'count_decision_tree' 0.00016 sec
+'count_decision_tree' 0.00014 sec
+'count_decision_tree' 0.00006 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.39430 sec
+'count_decision_tree' 1.04180 sec
+'count_decision_tree' 2.12212 sec
+'count_decision_tree' 7.08753 sec
+'count_decision_tree' 31.39924 sec
+result len: 1000
+all set len: 5000
+performed 5 cv, result: 0.791
+0.8152
+
+svm
+'count_decision_tree' 0.04010 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00061 sec
+'count_decision_tree' 0.08263 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00037 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00163 sec
+'count_decision_tree' 0.12900 sec
+'count_decision_tree' 0.02491 sec
+'count_decision_tree' 0.23291 sec
+result len: 1000
+all set len: 5000
+performed 1 cv, result: 0.556
+'count_decision_tree' 0.03849 sec
+'count_decision_tree' 0.00003 sec
+'count_decision_tree' 0.07742 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00039 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00170 sec
+'count_decision_tree' 0.12222 sec
+'count_decision_tree' 0.00014 sec
+'count_decision_tree' 0.19970 sec
+result len: 1000
+all set len: 5000
+performed 2 cv, result: 0.557
+'count_decision_tree' 0.03762 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.07513 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00119 sec
+'count_decision_tree' 0.12054 sec
+'count_decision_tree' 0.00014 sec
+'count_decision_tree' 0.20051 sec
+result len: 1000
+all set len: 5000
+performed 3 cv, result: 0.561
+'count_decision_tree' 0.03432 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.07169 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00035 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00128 sec
+'count_decision_tree' 0.11643 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00052 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00049 sec
+'count_decision_tree' 0.00015 sec
+'count_decision_tree' 0.02477 sec
+'count_decision_tree' 0.04976 sec
+'count_decision_tree' 0.07599 sec
+'count_decision_tree' 0.10223 sec
+'count_decision_tree' 0.12777 sec
+'count_decision_tree' 0.32190 sec
+result len: 1000
+all set len: 5000
+performed 4 cv, result: 0.552
+'count_decision_tree' 0.03578 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.07391 sec
+'count_decision_tree' 0.00001 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00033 sec
+'count_decision_tree' 0.00000 sec
+'count_decision_tree' 0.00126 sec
+'count_decision_tree' 0.11416 sec
+'count_decision_tree' 0.00013 sec
+'count_decision_tree' 0.19163 sec
+result len: 1000
+all set len: 5000
+performed 5 cv, result: 0.583
+0.5618
+standar
+performed 1 cv, result: 0.731
+performed 2 cv, result: 0.725
+performed 3 cv, result: 0.75
+performed 4 cv, result: 0.741
+performed 5 cv, result: 0.741
+0.7376
