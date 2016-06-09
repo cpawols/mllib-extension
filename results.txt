@@ -405,6 +405,19 @@ standard
 standard new table
 0.775510204082
 
+18 iterations
+time spent: 571.421725988
+'extract' 571.42500 sec
+standard accuracy
+0.755102040816
+standard new table accuracy
+0.808163265306
+
+standard precison
+0.755624651555
+standard new table precison
+0.814918251161
+
 decision tree:
 
 genetic
