@@ -5,6 +5,8 @@ import math
 import operator
 import pickle
 
+import scipy.io as sio
+
 import numpy as np
 from numpy import genfromtxt
 
@@ -12,6 +14,7 @@ from pyspark import SparkContext, SparkConf
 from sklearn import tree
 
 from sklearn.datasets import load_iris
+from sklearn.cross_validation import cross_val_score
 
 
 def timeit(method):
@@ -175,9 +178,12 @@ class SimpleDiscretizer(object):
     def discretize(self, sc=None):
         div_list = lambda lst, size: [lst[i:i + size] for i in range(0, len(lst), size)]
         eav = Eav(Eav.convert_to_eav(self.table[self.attrs_list]))
+        print "sorting..."
         eav.sort(sc)
         eav_table = eav.eav
+        print "discretize..."
         if sc is not None:
+            print "discrrrrr..."
             eav_rdd_part = sc.parallelize(eav_table, len(self.attrs_list))
             eav_disc = eav_rdd_part.mapPartitions(self.discretize_column).collect()
         else:
@@ -344,34 +350,38 @@ class OneRDiscretizer(SimpleDiscretizer):
             yield (elem[0], elem[1], dis)
 
 
-def cross_val_score(X, y, k=10):
-    div_list = lambda lst, size: [lst[i:i + size] for i in range(0, len(lst), size)]
-    l = range(len(y))
-    random.shuffle(l)
-    folds = div_list(l, int(len(y) / k))
-    accuracy = 0
-    i = 0
-    for test_ids in folds:
-        train_ids = [x for x in range(0, n) if x not in test_ids]
-        X_train = X[train_ids, ]
-        X_test = X[test_ids, ]
-        y_train = y[train_ids]
-        y_test = y[test_ids]
-
-        clf = tree.DecisionTreeClassifier()
-        clf.fit(X_train, y_train)
-        res = clf.predict(X_test)
-        accuracy += (sum(res == y_test) / float(len(res)))
-        i += 1
-        print "performed " + str(i) + " cv, result: " + str((sum(res == y_test) / float(len(res))))
-
-    return accuracy / float(k)
+# def cross_val_score(X, y, k=10):
+#     div_list = lambda lst, size: [lst[i:i + size] for i in range(0, len(lst), size)]
+#     l = range(len(y))
+#     random.shuffle(l)
+#     folds = div_list(l, int(len(y) / k))
+#     accuracy = 0
+#     i = 0
+#     for test_ids in folds:
+#         train_ids = [x for x in range(0, n) if x not in test_ids]
+#         X_train = X[train_ids, ]
+#         X_test = X[test_ids, ]
+#         y_train = y[train_ids]
+#         y_test = y[test_ids]
+#
+#         clf = tree.DecisionTreeClassifier()
+#         clf.fit(X_train, y_train)
+#         res = clf.predict(X_test)
+#         accuracy += (sum(res == y_test) / float(len(res)))
+#         i += 1
+#         print "performed " + str(i) + " cv, result: " + str((sum(res == y_test) / float(len(res))))
+#
+#     return accuracy / float(k)
 
 if __name__ == "__main__":
     conf = (SparkConf().setMaster("spark://green07:7077").setAppName("entropy"))
     sc = SparkContext(conf=conf)
 
-    iris = load_iris()
+    logger = sc._jvm.org.apache.log4j
+    logger.LogManager.getLogger("org").setLevel(logger.Level.ERROR)
+    logger.LogManager.getLogger("akka").setLevel(logger.Level.ERROR)
+
+    #iris = load_iris()
 
     data = load_iris()
     X = data['data']
@@ -382,17 +392,37 @@ if __name__ == "__main__":
     X = data[:,:-1]
     y = data[:,-1]
 
+    # data = sio.loadmat("/home/students/mat/k/kr319379/Downloads/BASEHOCK.mat")
+    # X = data['X']
+    # y = y = np.array(map(lambda x: x[0], data['Y']))
+
+    # data = genfromtxt("/home/students/mat/k/kr319379/Downloads/waveform.data", delimiter=",")
+    # X = data[:,:-1]
+    # y = data[:,-1]
+
     X_ex = Eav.convert_to_proper_format(X)
 
+    print "table prepared..."
     discretizer_ent = EntropyDiscretizer(X_ex, list(X_ex.dtype.names), y)
-    #discretizer_r = OneRDiscretizer(X_ex, list(X_ex.dtype.names), y)
-    X_ent = discretizer_ent.discretize()
-    #X_r = discretizer_r.discretize()
+    discretizer_r = OneRDiscretizer(X_ex, list(X_ex.dtype.names), y)
+    # discretizer_s = SimpleDiscretizer(X_ex, list(X_ex.dtype.names), y)
+
+    print "discretization.."
+    #X_ent = discretizer_ent.discretize()
+    #X_r = discretizer_r.discretize(sc)
+    # X_s = discretizer_s.discretize(sc)
+
+    clf = tree.DecisionTreeClassifier()
+
     print "standard"
-    print cross_val_score(X, y, 5)
-    print "discretized entropy"
-    print cross_val_score(X_ent, y, 5)
-    with open("/home/students/mat/k/kr319379/Downloads/discr", "w") as f:
-        pickle.dump(X_ent, file=f)
+    print np.mean(cross_val_score(clf, X, y, scoring="accuracy", cv=10))
+    print "discretized simple"
+    print map(lambda x: np.mean(cross_val_score(clf, OneRDiscretizer(X_ex, list(X_ex.dtype.names), y, x).discretize(sc), y, scoring="accuracy", cv=10)), range(5,20,5))
+    # print "discretized r"
+    # print cross_val_score(X_r, y, 5)
+    # print "discretized s"
+    # print cross_val_score(X_s, y, 5)
+    # with open("/home/students/mat/k/kr319379/Downloads/discr", "w") as f:
+    #     pickle.dump(X_ent, file=f)
     # print "discretized r"
     # print cross_val_score(X_r, y, 5)
