@@ -20,11 +20,12 @@ from sklearn.metrics import accuracy_score
 from numpy.lib import recfunctions as rfn
 
 from pyspark import SparkContext, SparkConf
-#from sklearn.svm import LinearSVC
+
+
+# from sklearn.svm import LinearSVC
 
 
 def timeit(method):
-
     def timed(*args, **kw):
         ts = time.time()
         result = method(*args, **kw)
@@ -128,7 +129,7 @@ class Eav:
     def sort(self, sc=None):
         if sc is not None:
             eav_rdd = sc.parallelize(self.eav, 1000)
-            self.eav = eav_rdd.map(lambda x: ((x[1], x[2], x[0]), 1)).sortByKey()\
+            self.eav = eav_rdd.map(lambda x: ((x[1], x[2], x[0]), 1)).sortByKey() \
                 .map(lambda (k, v): (k[2], k[0], k[1])).collect()
         else:
             self.eav = sorted(self.eav, key=lambda x: (x[1], x[2], x[0]))
@@ -142,7 +143,7 @@ class Eav:
     def merge_sort(self, sc):
         num_chunks = 1000
         eav_rdd_part = sc.parallelize(self.eav, num_chunks)
-        self.eav = eav_rdd_part.mapPartitions(Eav._compare)\
+        self.eav = eav_rdd_part.mapPartitions(Eav._compare) \
             .reduce(lambda x, y: sorted(x + y, key=lambda x: (x[1], x[2], x[0])))
         self.update_index(0)
         self.update_index(1)
@@ -214,19 +215,19 @@ class ConsistentChecker(object):
 
 
 class BaseDoubtfulPointsStrategy(object):
-
     def __init__(self, table, dec):
         self.table = table
         self.dec = dec
 
     def extract_points_matrix(self, objects):
-        return np.array([list(self.table[obj, ]) for obj in objects])
+        return np.array([list(self.table[obj,]) for obj in objects])
 
     def decision(self, objects):
         dec_set = set([self.dec[obj] for obj in objects])
         if len(dec_set) == 1:
             return self.dec[objects[0]]
         return None
+
 
 class MostDecisionStrategy(BaseDoubtfulPointsStrategy):
     def __init__(self, table, dec, max_ratio):
@@ -242,6 +243,7 @@ class MostDecisionStrategy(BaseDoubtfulPointsStrategy):
         if most_common_len / float(len(ob_dec)) > self.max_ratio or len(ob_dec) < 3:
             return dec_hist.most_common(1)[0][0]
         return None
+
 
 class MinDistDoubtfulPointsStrategy(BaseDoubtfulPointsStrategy):
     def __init__(self, table, dec, min_dist):
@@ -263,7 +265,6 @@ class MinDistDoubtfulPointsStrategy(BaseDoubtfulPointsStrategy):
 
 
 class GeneticSearch(object):
-
     def __init__(self, k, dec, table, projection_axis, unconsistent_groups,
                  b=50,
                  first_generation_size=200,
@@ -299,7 +300,7 @@ class GeneticSearch(object):
     def _get_subtable_as_matrix(self, table, objects):
         return np.array([table[obj] for obj in objects])
 
-    #@timeit
+    # @timeit
     def count_projections(self, individual, objects):
         '''
         :param individual: hyperplane
@@ -349,7 +350,7 @@ class GeneticSearch(object):
 
         return max_award, individual, good_proj
 
-    #@timeit
+    # @timeit
     def count_local_award(self, individual):
         valid_objects = self.unconsistent_groups[0]
         projections = self.count_projections(individual, valid_objects)
@@ -432,7 +433,7 @@ class GeneticSearch(object):
     @timeit
     def genetic_search(self, sc=None):
 
-        #print "--------------------init population-------------------------------------------"
+        # print "--------------------init population-------------------------------------------"
         population = self.init_generation()
 
         current_best_award = 0
@@ -474,7 +475,6 @@ class GeneticSearch(object):
 
 
 class DecisionTree:
-
     def __init__(self, value, left, right):
         self.value = value
         self.left = left
@@ -515,7 +515,6 @@ class DecisionTree:
 
 
 class DiscMeasureCalculator(object):
-
     @staticmethod
     def prepare_hist(decisions):
         return {k: (0, v) for k, v in Counter(decisions).iteritems()}
@@ -532,7 +531,6 @@ class DiscMeasureCalculator(object):
 
 
 class SimpleExtractor(object):
-
     def __init__(self, table, attrs_list, dec, cuts_limit_ratio=0.1):
         '''
         :param table: decision table
@@ -601,7 +599,7 @@ class SimpleExtractor(object):
         else:
             eav_div = div_list(eav_table, len(eav_table) / len(self.attrs_list))
             new_col_set = reduce(lambda x, y: x + y,
-                              map(lambda col: list(self.extract_cuts_column(col)), eav_div))
+                                 map(lambda col: list(self.extract_cuts_column(col)), eav_div))
         return self.add_to_table(new_col_set)
 
     def eval(self, table, clf):
@@ -624,7 +622,15 @@ class SimpleExtractor(object):
 
 
 class HyperplaneExtractor(SimpleExtractor):
-    def __init__(self, table, attrs_list, dec, dpoints_strategy, time_search_limit=1000, max_iter=20):
+    def __init__(self, table, attrs_list, dec, dpoints_strategy, time_search_limit=1000,
+                 b=50,
+                 first_generation_size=200,
+                 population_size=50,
+                 max_iter=20,
+                 cross_chance=0.4,
+                 mutation_chance=0.01,
+                 stop_treshold=5
+                 ):
         '''
         :param table: decision table
         :param attrs_list: list of attrbibutes to process
@@ -635,7 +641,13 @@ class HyperplaneExtractor(SimpleExtractor):
         super(HyperplaneExtractor, self).__init__(table, attrs_list, dec)
         self.dpoints_strategy = dpoints_strategy
         self.time_search_limit = time_search_limit
+        self.b = b
+        self.stop_treshold = stop_treshold
+        self.first_generation_size = first_generation_size
+        self.population_size = population_size
         self.max_iter = max_iter
+        self.cross_chance = cross_chance
+        self.mutation_chance = mutation_chance
 
     # TODO: add tests and docs
     def _count_objects_positions(self, best_hyperplane, objects=None):
@@ -663,16 +675,22 @@ class HyperplaneExtractor(SimpleExtractor):
 
     def _search_best_hyperplane_for_projection(self, attr, unconsistent_groups, sc=None):
 
-        #print attr
-        #print self.table
+        # print attr
+        # print self.table
         atr = list(attr)[0]
-        #atr = attr
+        # atr = attr
         projection_axis = self.table[atr]
         other_axes = [x for x in self.attrs_list if not x == atr]
         new_table = self.table[other_axes]
 
         gen_search = GeneticSearch(len(other_axes), self.dec, new_table,
-                                   projection_axis, unconsistent_groups, max_iter=self.max_iter)
+                                   projection_axis, unconsistent_groups,
+                                   max_iter=self.max_iter,
+                                   stop_treshold=self.stop_treshold,
+                                   first_generation_size=self.first_generation_size,
+                                   population_size=self.population_size,
+                                   cross_chance=self.cross_chance,
+                                   mutation_chance=self.mutation_chance)
         cand_hyperplane = gen_search.genetic_search(sc)
 
         return atr, cand_hyperplane
@@ -686,7 +704,7 @@ class HyperplaneExtractor(SimpleExtractor):
             n = len(self.attrs_list)
             atrs_list = range(n)
             rdd_attrs = sc.parallelize(self.attrs_list, n)
-	           # TODO: check if .map is better and less chunks
+            # TODO: check if .map is better and less chunks
             hyperplanes = rdd_attrs.mapPartitions(
                 lambda x: self._search_best_hyperplane_for_projection(x, unconsistent_groups)).collect()
 
@@ -737,13 +755,16 @@ class HyperplaneExtractor(SimpleExtractor):
             inters = svm.intercept_[0]
             best_hyperplane = (inters, coefs)
             hyperplane_indicator = map(lambda r: (np.dot(list(r), coefs) + inters > 0), X)
-            left_son_objects = map(lambda x: x[1], filter(lambda (i, x): not hyperplane_indicator[i], enumerate(objects)))
+            left_son_objects = map(lambda x: x[1],
+                                   filter(lambda (i, x): not hyperplane_indicator[i], enumerate(objects)))
             right_son_objects = map(lambda x: x[1], filter(lambda (i, x): hyperplane_indicator[i], enumerate(objects)))
         else:
             best_hyperplane = self._search_best_hyperplane([objects], sc)
             hyperplane_indicator = self._count_objects_positions(best_hyperplane, objects)
-            left_son_objects = map(lambda x: x[1], filter(lambda (i, x): hyperplane_indicator[i] == 0, enumerate(objects)))
-            right_son_objects = map(lambda x: x[1], filter(lambda (i, x): hyperplane_indicator[i] == 1, enumerate(objects)))
+            left_son_objects = map(lambda x: x[1],
+                                   filter(lambda (i, x): hyperplane_indicator[i] == 0, enumerate(objects)))
+            right_son_objects = map(lambda x: x[1],
+                                    filter(lambda (i, x): hyperplane_indicator[i] == 1, enumerate(objects)))
 
         # print "podzial zbioru przez node"
         # print left_son_objects
@@ -752,7 +773,7 @@ class HyperplaneExtractor(SimpleExtractor):
             decision = Counter([self.dec[i] for i in objects]).most_common()[0][0]
             return DecisionTree(decision, 0, 0)
 
-        return DecisionTree(best_hyperplane, self.count_decision_tree(left_son_objects, sc = sc, svm=svm),
+        return DecisionTree(best_hyperplane, self.count_decision_tree(left_son_objects, sc=sc, svm=svm),
                             self.count_decision_tree(right_son_objects, sc=sc, svm=svm))
 
 
@@ -789,8 +810,8 @@ def cross_val_score_gen_dec_tree(X, y, k=10, sc=None, svm=False):
     i = 0
     for test_ids in folds:
         train_ids = [x for x in range(0, n) if x not in test_ids]
-        X_train = X[train_ids, ]
-        X_test = X[test_ids, ]
+        X_train = X[train_ids,]
+        X_test = X[test_ids,]
         y_train = y[train_ids]
         y_test = y[test_ids]
 
@@ -809,8 +830,9 @@ def cross_val_score_gen_dec_tree(X, y, k=10, sc=None, svm=False):
 
     return accuracy / float(k)
 
+
 if __name__ == "__main__":
-    conf = (SparkConf().setMaster("spark://localhost:7077").setAppName("extractor"))
+    conf = (SparkConf().setMaster("spark://green07:7077").setAppName("extractor"))
     sc = SparkContext(conf=conf)
     logger = sc._jvm.org.apache.log4j
     logger.LogManager.getLogger("org").setLevel(logger.Level.ERROR)
@@ -831,13 +853,13 @@ if __name__ == "__main__":
     # y = data[:,-1]
 
     data = genfromtxt("/home/students/mat/k/kr319379/Downloads/waveform.data", delimiter=",")
-    X = data[:,:-1]
-    y = data[:,-1]
+    X = data[:, :-1]
+    y = data[:, -1]
 
     train_ids = random.sample(range(0, n), int(0.66 * n))
     test_ids = [x for x in range(0, n) if x not in train_ids]
-    X_train = X[train_ids, ]
-    X_test = X[test_ids, ]
+    X_train = X[train_ids,]
+    X_test = X[test_ids,]
     y_train = y[train_ids]
     y_test = y[test_ids]
 
@@ -873,20 +895,47 @@ if __name__ == "__main__":
     print "standard new table"
     scores = []
     times = []
-    for x in [18, 23, 28]:
-        print "score for " + str(x) + "max_iter"
-        start = time.time()
-        scores.append(np.mean(cross_val_score(clf, np.column_stack((X, HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y, md, 3000, max_iter=x).extract(sc))), y, scoring="accuracy", cv=5)))
-        times.append(time.time() - start)
+    params = {'max_iter': [10, 15, 20, 25], 'population_size': [20, 35, 50], 'b': [20, 35, 40]}
+    count = 0
+    for mi in params['max_iter']:
+        for ps in params['population_size']:
+            for bs in params['b']:
+                count += 1
+                #print "score for " + str(pi) + "max_iter"
+                start = time.time()
+                scores = np.mean(cross_val_score(clf, np.column_stack(
+                    (X, HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y, md, 3000,
+                    max_iter=mi, population_size=ps, b=bs).extract(sc))), y, scoring="accuracy", cv=5))
+                times = time.time() - start
+                res = {'pop': ps, 'mi': mi, 'score': scores, 'time': times, 'b': bs}
+                fn = "scores" + str(count) + ".pickle"
+                with open(fn, "wb") as f:
+                    pickle.dump(res, file=f)
+                print "results " + str(count)
+                with open(fn, "rb") as f:
+                    print pickle.load(file=f)
+    # for x in [18, 23, 28]:
+    #     print "score for " + str(x) + "max_iter"
+    #     start = time.time()
+    #     scores.append(np.mean(cross_val_score(clf, np.column_stack(
+    #         (X, HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y, md, 3000, max_iter=x).extract(sc))), y,
+    #                                           scoring="accuracy", cv=5)))
+    #     times.append(time.time() - start)
 
-    with open("scores.pickle", "wb") as f:
-        pickle.dump(scores, file=f)
-    with open("times.pickle", "wb") as f:
-        pickle.dump(times, file=f)
-    ######################## decision tree #######################################
-    # print "genetic"
-    # print cross_val_score_gen_dec_tree(X, y, 5, sc)
-    # print "svm"
-    # print cross_val_score_gen_dec_tree(X, y, 5, sc, svm=True)
-    # print "standar"
-    # print cross_val_score(X, y, 5)
+    # with open("scores.pickle", "wb") as f:
+    #     pickle.dump(scores, file=f)
+    # with open("times.pickle", "wb") as f:
+    #     pickle.dump(times, file=f)
+    #
+    # print "results:"
+    # with open("scores.pickle", "rb") as f:
+    #     print pickle.load(file=f)
+    # with open("times.pickle", "rb") as f:
+    #     print pickle.load(file=f)
+        ######################## decision tree #######################################
+        # print "genetic"
+        # print cross_val_score_gen_dec_tree(X, y, 5, sc)
+        # print "svm"
+        # print cross_val_score_gen_dec_tree(X, y, 5, sc, svm=True)
+        # print "standar"
+        # print cross_val_score(X, y, 5)
