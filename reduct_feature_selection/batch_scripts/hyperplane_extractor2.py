@@ -277,7 +277,7 @@ class GeneticSearch(object):
         self.k = k
         self.stop_treshold = stop_treshold
         self.first_generation_size = first_generation_size
-        self.population_size = population_size
+        self.population_size = population_size if population_size % 2 == 0 else population_size + 1
         self.max_iter = max_iter
         self.cross_chance = cross_chance
         self.mutation_chance = mutation_chance
@@ -733,7 +733,7 @@ class HyperplaneExtractor(SimpleExtractor):
             if unconsistent_groups and time_spent < self.time_search_limit:
                 print "-------------------performing " + str(i) + " iteration-----------------------"
                 best_hyperplane = self._search_best_hyperplane(unconsistent_groups, sc)
-                print best_hyperplane
+                #print best_hyperplane
                 extracted_table.append(self._count_objects_positions(best_hyperplane))
             else:
                 break
@@ -908,7 +908,7 @@ if __name__ == "__main__":
                     max_iter=mi, population_size=ps, b=bs).extract(sc))), y, scoring="accuracy", cv=5))
                 times = time.time() - start
                 res = {'pop': ps, 'mi': mi, 'score': scores, 'time': times, 'b': bs}
-                fn = "scores" + str(count) + ".pickle"
+                fn = "/home/students/mat/k/kr319379/mgr/results/scores" + str(count) + ".pickle"
                 with open(fn, "wb") as f:
                     pickle.dump(res, file=f)
                 print "results " + str(count)
