@@ -801,7 +801,7 @@ class HyperplaneExtractor(SimpleExtractor):
 #     return accuracy / float(k)
 
 
-def cross_val_score_gen_dec_tree(X, y, k=10, sc=None, svm=False):
+def cross_val_score_gen_dec_tree(X, y, k=10, sc=None, svm=False, mi=40, ps=50, bs=40, mdr=0.8):
     div_list = lambda lst, size: [lst[i:i + size] for i in range(0, len(lst), size)]
     l = range(len(y))
     random.shuffle(l)
@@ -816,9 +816,10 @@ def cross_val_score_gen_dec_tree(X, y, k=10, sc=None, svm=False):
         y_test = y[test_ids]
 
         X_ex = Eav.convert_to_proper_format(X_train)
-        md = MostDecisionStrategy(X_ex, y_train)
+        md = MostDecisionStrategy(X_ex, y_train, mdr)
 
-        extractor = HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y_train, md, 1500)
+        extractor = HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y, md, 3000,
+                                            max_iter=mi, population_size=ps, b=bs)
 
         dec_tree = extractor.count_decision_tree(range(len(y_train)), sc=sc, svm=svm)
         res = dec_tree.predict_list(X_test, svm=svm)
@@ -852,9 +853,9 @@ if __name__ == "__main__":
     # X = data[:,:-1]
     # y = data[:,-1]
 
-    data = genfromtxt("/home/students/mat/k/kr319379/Downloads/waveform.data", delimiter=",")
-    X = data[:, :-1]
-    y = data[:, -1]
+    # data = genfromtxt("/home/students/mat/k/kr319379/Downloads/waveform.data", delimiter=",")
+    # X = data[:, :-1]
+    # y = data[:, -1]
 
     train_ids = random.sample(range(0, n), int(0.66 * n))
     test_ids = [x for x in range(0, n) if x not in train_ids]
@@ -889,31 +890,32 @@ if __name__ == "__main__":
     # print "standard new table"
     # print accuracy_score(results_standard_newt, y_test)
 
-    clf = tree.DecisionTreeClassifier()
-    print "standard"
-    print np.mean(cross_val_score(clf, X, y, scoring="accuracy", cv=5))
-    print "standard new table"
-    scores = []
-    times = []
-    params = {'max_iter': [10, 15, 20, 25], 'population_size': [20, 35, 50], 'b': [20, 35, 40]}
-    count = 0
-    for mi in params['max_iter']:
-        for ps in params['population_size']:
-            for bs in params['b']:
-                count += 1
-                #print "score for " + str(pi) + "max_iter"
-                start = time.time()
-                scores = np.mean(cross_val_score(clf, np.column_stack(
-                    (X, HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y, md, 3000,
-                    max_iter=mi, population_size=ps, b=bs).extract(sc))), y, scoring="accuracy", cv=5))
-                times = time.time() - start
-                res = {'pop': ps, 'mi': mi, 'score': scores, 'time': times, 'b': bs}
-                fn = "/home/students/mat/k/kr319379/mgr/results/scores" + str(count) + ".pickle"
-                with open(fn, "wb") as f:
-                    pickle.dump(res, file=f)
-                print "results " + str(count)
-                with open(fn, "rb") as f:
-                    print pickle.load(file=f)
+    # clf = tree.DecisionTreeClassifier()
+    # print "standard"
+    # print np.mean(cross_val_score(clf, X, y, scoring="accuracy", cv=5))
+    # print "standard new table"
+    # scores = []
+    # times = []
+    # params = {'max_iter': [10, 17, 25], 'population_size': [20, 35, 50], 'b': [35]}
+    # count = 0
+    # for mi in params['max_iter']:
+    #     for ps in params['population_size']:
+    #         for bs in params['b']:
+    #             count += 1
+    #             #print "score for " + str(pi) + "max_iter"
+    #             start = time.time()
+    #             scores = np.mean(cross_val_score(clf, np.column_stack(
+    #                 (X, HyperplaneExtractor(X_ex, list(X_ex.dtype.names), y, md, 3000,
+    #                 max_iter=mi, population_size=ps, b=bs).extract(sc))), y, scoring="accuracy", cv=5))
+    #             times = time.time() - start
+    #             res = {'pop': ps, 'mi': mi, 'score': scores, 'time': times, 'b': bs}
+    #             fn = "/home/students/mat/k/kr319379/mgr/results/scores" + str(count) + ".pickle"
+    #             with open(fn, "wb") as f:
+    #                 pickle.dump(res, file=f)
+    #             print "results " + str(count)
+    #             with open(fn, "rb") as f:
+    #                 print pickle.load(file=f)
+
     # for x in [18, 23, 28]:
     #     print "score for " + str(x) + "max_iter"
     #     start = time.time()
@@ -932,10 +934,29 @@ if __name__ == "__main__":
     #     print pickle.load(file=f)
     # with open("times.pickle", "rb") as f:
     #     print pickle.load(file=f)
-        ######################## decision tree #######################################
-        # print "genetic"
-        # print cross_val_score_gen_dec_tree(X, y, 5, sc)
-        # print "svm"
-        # print cross_val_score_gen_dec_tree(X, y, 5, sc, svm=True)
-        # print "standar"
-        # print cross_val_score(X, y, 5)
+    ####################### decision tree #######################################
+    print "standard"
+    print np.mean(cross_val_score(tree.DecisionTreeClassifier, X, y, scoring="accuracy", cv=5))
+    print "standard new table"
+    scores = []
+    times = []
+    params = {'max_iter': [10, 17, 25], 'population_size': [20, 35, 50], 'b': [35], 'mdr': [0.8, 0.9]}
+    count = 0
+    for mi in params['max_iter']:
+        for ps in params['population_size']:
+            for bs in params['b']:
+                for mdr in params['mdr']:
+                    count += 1
+                    # print "score for " + str(pi) + "max_iter"
+                    start = time.time()
+                    tree = cross_val_score_gen_dec_tree(X, y, k=5, sc=sc, mi=mi, ps=ps, bs=bs, mdr=mdr)
+                    times = time.time() - start
+                    res = {'pop': ps, 'mi': mi, 'score': scores, 'time': times, 'b': bs}
+                    fn = "/home/students/mat/k/kr319379/mgr/results/tree_scores" + str(count) + ".pickle"
+                    with open(fn, "wb") as f:
+                        pickle.dump(res, file=f)
+                    print "results " + str(count)
+                    with open(fn, "rb") as f:
+                        print pickle.load(file=f)
+    # print "svm"
+    # print cross_val_score_gen_dec_tree(X, y, 5, sc, svm=True)
