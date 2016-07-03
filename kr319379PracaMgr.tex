@@ -15,6 +15,7 @@
 \usepackage{amsthm}
 \usepackage{textcomp}
 \usepackage{tikz}
+\usepackage{hyperref}
 
 \usepackage{t1enc}
 \usepackage{a4wide}
@@ -104,7 +105,6 @@ bindingoffset=0mm, top=1in, bottom=1in}
 
 % koniec definicji
 
-
 \author{Krzysztof Rutkowski}
 
 \nralbumu{319379}
@@ -132,6 +132,7 @@ bindingoffset=0mm, top=1in, bottom=1in}
 \keywords{discretization, feature extraction, decision system, mapreduce}
 
 \begin{document}
+\maketitle
 
 %tu idzie streszczenie na strone poczatkowa
 \begin{abstract}
@@ -398,6 +399,45 @@ nie występuje w Hadoop MapReduce zwiększa szybkość działania.
  \caption{porównanie szybkości działania Hadoop MapReduce i Spark na przykładzie regresji logistycznej}
  \includegraphics[scale=0.8]{spark-hadoop.png}
 \end{figure}
+
+\section{Metryki}
+Do oceniania jakości skalowalnych algorytmów wykorzystywanych jest kilka metry
+ ocenić czy dany algorytm skaluje się w odpowiedni sposób. W tej sekcji zaprezentowane zostały
+ metryki pozwalające ocenić skalowalność algorytmów.
+ 
+\textbf{Speed-up}
+ 
+Jedną z metryk mierzącą ile razy obliczenia na jednej maszynie są większe od
+obliczeń wykonywanych na \emph{n} maszynach jest metryka zdefiniowana następująco:
+ 
+\begin{align*}
+ speed-up(n) = \frac{t_1}{t_n}
+\end{align*}
+gdzie $t_j$ jest czasem obliczeń wykonywanym na $j$ maszynach.
+ 
+\textbf{Scale-up}
+ 
+Ta metryka z kolei opisuje jak zmienia się czas obliczeń podczas gdy
+liczba komputerów oraz wielkość zbioru danych rosną taką samą liczbę razy.
+ 
+\begin{align*}
+ scale-up(n) = \frac{t_{D_n}}{t_{D_1}}
+\end{align*}
+$t_{D_1}$ -- czas obliczeń dla ustalonego zbioru danych na jednym komputerze,
+$t_{D_n}$ -- czas obliczeń dla $n$ --razy większego zbioru danych na $n$ komputerach.
+
+\chapter{Biblioteka mllib-extensions}
+Algorytmy użyte w dalsze części pracy zostały zaimplementowane w bibliotece \textbf{mllib-extensions},
+umieszczonej w repozytorium, które znajduje się pod adresem: \url{https://github.com/cpawols/mllib-extension}.
+Biblioteka została napisana w języku python,
+jest skalowalna, wszystkie obliczenia mogą być wykonywane na wielu maszynach, bądź w zwyczajnym trybie, 
+na jednym procesorze, zostały zaimplementowane następujące moduły:
+  \begin{itemize}
+   \item \textbf{discretization}: moduł do wykonywania dyskretyzacji
+   \item \textbf{feature-extraction}: moduł do generowania nowych cech
+   \item \textbf{decision-tree}: moduł do indukcji drzew decyzyjnych
+   \item \textbf{reduct-feature-selection}: moduł do selekcji atrybutów (autor: Paweł Olszewski)
+  \end{itemize}
 
 
 \chapter{Skalowalne algorytmy dyskretyzacji}
@@ -710,6 +750,54 @@ mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgotność):
 \end{center}
 \end{przyklad}
 \section{Wyniki eksperymentów}
+Do wykonywania eksperymentów wykorzystałem komputery z laboratorium MIMUW. Maksymalnie obliczenia wykonywałem 
+na 48 komputerach o następujących parametrach:
+  \begin{itemize}
+   \item \textbf{pamięć RAM}: 32 komputery 4 GB RAM, 16 komputerów 8 GB RAM
+   \item \textbf{liczba jednostek CPU}: 8
+   \item \textbf{taktowanie pojedyńczego CPU}: 16 komputerów 3.1 GHz, 16 komputerów 3.4 GHz, 16 komputerów 2.8 GHz
+  \end{itemize}
+Do eksperymentów wykorzystałem zbiór danych WAVEFORM zawierający informacje % TODO: dodać info o datasecie.%
+Oto jak prezentowały się wyniki predykcji dla tego zbioru danych w zależności od parametrów:
+  \begin{itemize}
+   \item dla metody simple jest to liczba obiektów dla pojedyńczego cięcia
+   \item dla metody OneR jest to minimalna liczba obiektów dla pojedyńczego cięcia
+  \end{itemize}
+
+Predykcja została wykonana za pomocą drzewa decyzyjnego z pythonowej biblioteki sklearn za pomocą 10-krotnej
+kroswalidacji metodą accuracy. Brązową kreską został zaznaczony wynik bez wykonywania dyskretyzacji.
+
+\begin{figure}
+ \caption{Wyniki dyskretyzacji}
+ \includegraphics[scale=1.0, keepaspectratio=true]{./wykresy/disc_scores.png}
+\end{figure}
+
+Widzimy, że wyniki dla dyskretyzacji są lepsze od baseline-u, zaś najlepsze dla metody prostej i parametru $m = 15$, lecz 
+średnio najlepsza jest metoda entropii.
+\subsection{Skalowalność}
+Zobaczmy jak wypadły eksperymenty pod kątem skalowalności. Wykonałem eksperymenty dla następujących liczb komputerów: 1, 5, 10, 20, 30, 40.
+Zbadałem jak rozkładają się poszczególne metryki w zależności od liczby komputerów i użytej metody.
+
+\begin{figure}
+ \caption{Czas wykonania metody w sekundach}
+ \includegraphics[scale=1.0]{./wykresy/disc_time_identity.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Metryka speed-up}
+ \includegraphics[scale=1.0]{./wykresy/disc_time_speed_up.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Metryka scale-up}
+ \includegraphics[scale=1.0]{./wykresy/disc_time_scale_up.png}
+\end{figure}
+
+Widzimy, że zarówno speed-up jak i scale-up wraz ze zwiększaniem liczby komputerów odbiega coraz bardziej od idealnej sytuacji 
+(zaznaczonej na wykresie na brązowo). Jest to zgodne z prawem Gustafsona. Gdy liczba komputerów wzrasta, jest coraz większy narzut czasowy
+ze względu na przesyłanie danych po sieci. Widzimy jednak, że dopiero od ok 20 komputerów speed-up zaczyna mieć coraz wolniejszy przyrost,
+który zbiega do logarytmu. Powyższe algorytmy są więc całkiem dobrze skalowalne.
+
 
 
 \chapter{Generowanie nowych cech na podstawie algorytmów genetycznych}
@@ -1196,6 +1284,111 @@ def decision(objects, ratio):
 
 
 \section{Wyniki eksperymentów}
+Eksperymenty dla tej części również wykonywałem w laboratorium MIMUW przy użyciu takiego samego zestawu komputerów
+oraz dla zestawu danych WAVEFORM używanym wcześniej przy dyskretyzacji.
+\subsection{Generowanie nowych cech}
+Przetestowałem jak skuteczność oraz czas trwania algorytmu genetycznego w zależności od parametrów, którymi są:
+  \begin{itemize}
+   \item rozmiar genomu
+   \item rozmiar populacji
+   \item maksymalna liczba iteracji
+  \end{itemize}
+Jako strategię klasyfikacji bliskich punktów o różnej decyzji wybrałem zatrzymanie przeszukiwania w momencie gdy mamy 
+0.8 całości obiektów o jednej decyzji.
+Wyniki można zobaczyć na wykresach:
+\begin{figure}
+ \caption{Score w zależności od rozmiaru populacji}
+ \centering\includegraphics[scale=0.7]{./wykresy/fe_score_pop.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Score w zależnosci od maksymalnej liczby iteracji}
+ \centering\includegraphics[scale=0.7]{./wykresy/fe_score_mi.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Score w zależności od rozmiaru genomu}
+ \centering\includegraphics[scale=0.7]{./wykresy/fe_score_b.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od rozmiaru populacji}
+ \centering\includegraphics[scale=0.7]{./wykresy/fe_time_pop.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od maksymalnej liczby iteracji}
+ \centering\includegraphics[scale=0.7]{./wykresy/fe_time_mi.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od rozmiaru genomu}
+ \centering\includegraphics[scale=0.7]{./wykresy/fe_time_b.png}
+\end{figure}
+
+Widzimy, że zwiększając liczbę populacji uzyskujemy lepsze wyniki, jednak odbywa się to kosztem
+czasu przetwarzania. Jeśli chodzi o maksymalną liczbę iteracji, już przy 15 iteracjach algorytm zbiega do 
+dobrego rozwiązania, zwiększając liczbe iteracji, uciekamy od rozwiązania optymalnego, zwiększając jeszcze 
+czas przetwarzania. Również rozmiar genomu wpływa na czas przetwarzania, im większy tym szybciej
+uzyskujemy rozwiązanie, a więc lepiej ustalić większy rozmiar genomu. Podsumowując wyniki eksperymentów, najlepsze
+wyniki uzyskaliśmy dla dużych rozmiarów genomów - 20, małej liczby iteracji - 15 i dużego rozmiaru populacji - 50.
+
+\subsection{Generowanie drzewa decyzyjnego}
+Podobne eksperymenty przeprowadziłem dla generowania drzewa decyzyjnego przez cięcia hiperpłaszczyznami.
+Ustaliłem rozmiar genomu na 35 i wprowadziłem parametr mówiący o tym, w którym momencie odcinamy przeszukiwania 
+dla danego węzła: gdy 0.8 obiektów ma taką samą decyzję lub gdy tych obiektów jest 0.9.
+Brązową kreską został zaznaczony wynik jaki uzyskałem drzewem decyzyjnym z biblioteki sklearn.
+Otrzymałem nastepujące wyniki:
+
+%TODO: wycentrować obrazki
+  
+\begin{figure}
+ \caption{Score w zależności od rozmiaru populacji}
+ \centering\includegraphics[scale=0.7]{./wykresy/tree_score_pop.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Score w zależnosci od maksymalnej liczby iteracji}
+ \centering\includegraphics[scale=0.7]{./wykresy/tree_score_mi.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Score w zależności od warunku stopu}
+ \centering\includegraphics[scale=0.7]{./wykresy/tree_score_mdr.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od rozmiaru populacji}
+ \centering\includegraphics[scale=0.7]{./wykresy/tree_time_pop.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od maksymalnej liczby iteracji}
+ \centering\includegraphics[scale=0.7]{./wykresy/tree_time_mi.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od warunku stopu}
+ \centering\includegraphics[scale=0.7]{./wykresy/tree_time_mdr.png}
+\end{figure}
+Widzimy, że zarówno wyniki jak i czas pogarszają się gdy zwiększymy parametr warunku stopu.
+W przeciwieństwie do algorytmu generowania nowych cech, tutaj zwiększając liczbę iteracji uzyskujemy lepsze wyniki,
+zaś optymalnym rozmiarem populacji będzie w tym przypadku 30. W przypadku generowania drzewa mamy prostszą funkcję
+oceny niż w przypadku generowania nowych cech, dlatego prawdopodobnie potrzebujemy mniejszego rozmiaru populacji.
+% TODO: dodać skalowalność
+
+\subsection{Porównanie wyników}
+Oto porównanie najlepszych wyników jakie uzyskałem dla zbioru WAVEFORM:
+% TODO: dodac SVM
+
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} | P{2.5cm} | P{2.5cm} | P{2.5cm}}
+  Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie & Drzewo decyzyjne + nowe cechy \\ 
+  \hline
+  Score (accuracy) & 0.7376     & ??      & 0.758          & 0.790 \\
+  Czas (s) & 0.12     & ??      & 6.04    & 191.00 \\
+ \end{tabular}
+\end{center}
 
 \begin{thebibliography}{9}
 
