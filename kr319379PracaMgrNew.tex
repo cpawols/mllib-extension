@@ -1,0 +1,1394 @@
+\documentclass[magisterska]{pracamgr}
+\usepackage[usenames,dvipsnames]{xcolor}
+
+\usepackage[MeX,plmath]{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{enumerate}
+\usepackage{color}
+\usepackage{amsfonts}
+\usepackage{fancyhdr}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{textcomp}
+\usepackage{tikz}
+\usepackage{hyperref}
+
+\usepackage{t1enc}
+\usepackage{a4wide}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{enumerate}
+\usepackage{verbatim}
+\usepackage{geometry}
+\geometry{left=1in,right=1in,%
+bindingoffset=0mm, top=1in, bottom=1in}
+\usepackage{amssymb, latexsym}
+\usepackage{amsthm}
+\usepackage{palatino}
+\usepackage{array}
+\usepackage[]{algorithm2e}
+%\usepackage{pstricks}
+\usepackage{enumitem}
+\setlist[enumerate]{label*=\arabic*.}
+\usepackage{textcomp}
+\usepackage{listings}
+\usepackage[export]{adjustbox}
+\lstset{language=Python}
+
+\usepackage[]{algorithm2e} %Algorytm czy Algorithm?
+\renewcommand{\listalgorithmcfname}{Lista algorytmów}%
+\renewcommand{\algorithmcfname}{Algorytm}%
+\renewcommand{\algorithmautorefname}{algorytm}%
+\renewcommand{\algorithmcflinename}{linia}%
+\makeatletter
+\renewcommand{\algocf@typo}{}%
+\renewcommand{\@algocf@procname}{Procedura}%
+\renewcommand{\@algocf@funcname}{Funkcja}%
+\makeatother
+\renewcommand{\procedureautorefname}{procedura}%
+\renewcommand{\functionautorefname}{funkcja}%
+
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=python,
+  showstringspaces=true,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+}
+
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+}
+
+\lstset{escapechar=@,style=customc}
+
+% Tu jest dobre miejsce na Twoje wżasne makra i~żrodowiska:
+\newtheorem{thm}{Thm}[chapter]
+\theoremstyle{plain}
+\newtheorem{twierdzenie}[thm]{Twierdzenie}
+\newtheorem{stwierdzenie}[thm]{Stwierdzenie}
+\newtheorem{wniosek}[thm]{Wniosek}
+\newtheorem{lemat}[thm]{Lemat}
+\newtheorem{przyklad}[thm]{Przykład}
+
+\theoremstyle{definition}
+\newtheorem{definicja}[thm]{Definicja}
+
+\theoremstyle{remark}
+\newtheorem{uwaga}[thm]{Uwaga}
+\newtheorem{zadanie}{Zadanie}
+
+\renewcommand{\Re}{\mathrm{Re}}
+\renewcommand{\Im}{\mathrm{Im}}
+\newcommand{\wek}{\begin{pmatrix} k \\
+		l \end{pmatrix}}
+
+\newcommand{\wekx}{\begin{pmatrix} x \\
+		y \end{pmatrix}}		
+
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+
+% koniec definicji
+
+\author{Krzysztof Rutkowski}
+
+\nralbumu{319379}
+
+\title{Wybrane metody dyskretyzacji i generowania nowych cech z zastosowaniem paradygmatu MapReduce}
+
+\tytulang{Discretization and feature extraction methods with application of MapReduce paradigm}
+
+\kierunek{Matematyka}
+
+
+\opiekun{prof.dr.hab Andrzej Skowron\\
+  Zakład Logiki Matematycznej\\
+  }
+
+\date{Czerwiec 2016}
+
+\dziedzina{ 
+11.1 Matematyka\\ 
+}
+
+%Klasyfikacja tematyczna wedlug AMS (matematyka) lub ACM (informatyka)
+\klasyfikacja{sztuczna inteligencja, systemy decyzyjne}
+
+\keywords{discretization, feature extraction, decision system, mapreduce}
+
+\begin{document}
+\maketitle
+
+%tu idzie streszczenie na strone poczatkowa
+\begin{abstract}
+TODO
+\end{abstract}
+
+\tableofcontents
+%\listoffigures
+%\listoftables
+
+
+%\chapter{Wprowadzenie}
+\chapter{Podstawowe informacje}\label{r:pojecia}
+
+\begin{definicja}
+Systemem decyzyjnym ($ang. \ Decision \ System$) nazwiemy następującą
+trójkę obiektów $\mathbb{S} = (U, A \cup d)$, gdzie
+\begin{itemize}
+ \item U jest skończonym zbiorem, którego elementami są obiekty:
+    \begin{align*}
+	    U = \{u_1, \ldots, u_n \}  
+    \end{align*}
+
+ \item A jest skończonym zbiorem atrybutów warunkowych (cech) takim, że dla każdego $ a \in A$ istnieje funkja
+    \begin{align*}
+	  a:U \rightarrow V^{a}
+    \end{align*}
+    gdzie przez $V^{a}$ oznaczamy zbiór wartości atrybutów,
+    
+ \item d jest skończonym zbiorem atrybutów, które nazywamy atrybutami decyzyjnymi.
+    \begin{align*}
+     d: U \rightarrow \{d_1, \ldots d_k\},
+    \end{align*}
+  gdzie zbiór $\{d_1, \ldots d_k\}$, jest to zbiór wszystkich możliwych decyzji.
+\end{itemize}
+
+\end{definicja}
+
+Jedną z możliwości reprezentacji systemu decyzyjnego  \ref{SystemDecyzyjny:1.1} jest dwuwymiarowa tabela.
+W poszczególnych wierszach tabeli znajdują się obiekty $\{u_1, \ldots, u_n \}$,
+natomiast w kolumnach znajdują się wartości atrybutów $\{a_{11}, \ldots, a_{nn} \}$.
+Dokładniej mówiąc w $i$-tym wierszu znajduje się wartość  $j$-tego atrybutu ($a_{i}$) dla obiektu $u_{i}$.
+W ostatniej kolumnie umieszczony jest atrybut decyzyjny $d_{i}$ dla obiektu $u_i$
+
+\begin{center}
+  \begin{tabular}{  l || l l l | r }
+  \label{SystemDecyzyjny:1.1}
+    $U$ & $a_1$ & $\ldots$ & $a_n$ & $dec$ \\ 
+    \hline
+  
+    $u_1$ & $a_{11}$ & $\ldots $ & $a_{1n} $ & $d_{1}$ \\
+    $u_2$ & $a_{21}$ & $\ldots $ & $a_{2n} $ & $d_{2}$ \\ 
+    \ \ $\vdots$ & \ \ $\vdots$ & \ \ $\vdots$ & \   $\vdots$ & $\vdots$ \\ 
+    $u_n$ & $a_{n1}$ & $\ldots $ & $a_{nn} $ & $d_{n}$ \\     
+  \end{tabular}\par
+  \bigskip 
+  \ref{SystemDecyzyjny:1.1} : System decyzyjny
+
+\end{center}
+
+Obiektami tablicy decyzyjnej mogą być takie rzeczy jak szeregi czasowe, ludzie,
+papiery wartościowe i inne. \newline Dla przykładu rozważmy tablicę decyzyjną,
+której obiektami są ludzie. Rozważmy pacjentów, którzy zostali przebadani pod kątem białaczki.
+Każdemu pacjentowi zbadano kilkanaście genów. Wynikiem tego padania jest kilkanaście 
+liczb rzeczywistych opisujących poszczególne geny. Na podstawie wyników badań lekarz diagnozował pacjentów.
+\newline
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $Pacjent$     & gen 1 & gen 2 & gen 3 & Chory \\ 
+  \hline
+  $pacjent_{1}$ & 0.02       & 0.12       & 1.2    & Tak \\
+  $pacjent_{2}$ & -0.45      & 4.56       & 2.3    & Nie \\
+  $pacjent_{3}$ & 1.32       & 2.3        & 0.01   & Tak \\
+  $pacjent_{4}$ & 1.23       & 1.2        & 2.12   & Nie \\
+ \end{tabular}
+\end{center}
+W powyższej sytuacji obiekt (pacjent) tablicy decyzyjnej zawiera ciąg liczb (każda traktowana jako
+jeden atrybut), które zostały uzyskane podczas przeprowadzonego badnia. Ostatnim elementem wiersza
+jest atrybut decyzyjny(decyzja), stwierdzająca czy pacjent jest chory.
+\newline
+Często zdarza się tak, że w tabeli występują wartości rzeczywiste, np w powyższych danych medycznych, gdzie 
+wyniki badań mają wartości z pewnego przedziału bądź gdy mamy podane pewne ciągłe wielkości fizyczne, np
+temperaturę. Z różnych względów, np wymagają tego niektóre klasyfikatory, chcieliśmy mieć tabelę z wartościami
+nominalnymi. I tak, np poniższą tabelę:
+
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temparatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Nie \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Tak \\
+  $u_{4}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+
+Moglibyśmy zastąpić tabelą:
+
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temparatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & niska      & mała      & słabe          & Nie \\
+  $u_{2}$ & średnia    & duża      & umiarkowane    & Nie \\
+  $u_{3}$ & wysoka     & mała      & słabe   	    & Tak \\
+  $u_{4}$ & średnia    & mała      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+
+\newpage
+Wprowadzę teraz wstępne pojęcia dotyczące dyskretyzacji atrybutów rzeczywistych.
+
+
+\begin{definicja}[Niesprzeczna tabela decyzyjna]
+Tabela  $\mathbb{S} =(U, A, \{d\} )$  jest niesprzeczna, jeśli dla dowolnych dwóch obiektów $u_{1}$ i $u_{2}$:
+  \begin{align*}
+     (a_{1}(u_{1}), a_{2}(u_{1}), ..., a_{k}(u_{1})) = (a_{1}(u_{2}), a_{2}(u_{2}), ..., a_{k}(u_{2})) \Rightarrow 
+     d(u_{1}) = d(u_{2})
+  \end{align*}.
+Tj jeśli mamy te same wartości na atrybutach musimy mieć te same decyzje.
+\end{definicja}
+
+\begin{definicja}[Podział atrubutu]
+Dla tabeli  $\mathbb{S} =(U, A, \{d\} )$  i zbioru cięć dla atrubutu $a$:
+\begin{align*}
+     c_{0}^{a} < c_{1}^{a} < ... < c_{k_{a}}^{a} < c_{k_{a} + 1}^{a}
+  \end{align*}
+definiujemy podział (dyskretyzacje) atrubutu $a$ jako:
+  \begin{align*}
+     P_{a} = {[c_{0}^{a}, c_{1}^{a}], ... , [c_{k_{a}}^{a}, c_{k_{a} + 1}^{a}]}
+  \end{align*}
+Zaś podział całego uniwersum jako:
+  \begin{align*}
+     P = \cup_{a \in A} P_{a}
+  \end{align*}
+\end{definicja}
+
+\begin{uwaga}
+Szukanie niesprzecznego zbioru cięć o najmniejszej mocy jest $NP$-zupełny.
+Dowód poprzez sprowadzenie do problemu \textbf{SET COVER}.
+\end{uwaga}
+
+
+\chapter{Skalowalność}
+
+Większość algorytmów została zaimplementowana w sposób skalowalny za pomocą frameworku 
+do obliczeń równoległych \textbf{Apache Spark} bazującego na paradygmacie MapReduce.
+Na wstępie przytoczę kilka definicji przydatnych w dalszej części omawiania Sparka.
+
+\section{Wstępne definicje}
+\begin{definicja}[Programowanie funkcyjne]
+Filozofia i metodyka programowania będąca odmianą programowania deklaratywnego, 
+w której funkcje należą do wartości podstawowych, a nacisk kładzie się na wartościowanie 
+(często rekurencyjnych) funkcji, a nie na wykonywanie poleceń.
+W czystym programowaniu funkcyjnym, raz zdefiniowana funkcja zwraca zawsze 
+tę samą wartość dla danych wartości argumentów, tak jak funkcje matematyczne.
+W czystych językach funkcyjnych nie występują zmienne ani efekty uboczne, 
+a wartościowanie jest leniwe, tj wykonywanie obliczenia następuje tylko w momencie, gdy jest to potrzebne.
+\end{definicja}
+
+\begin{definicja}[Klaster]
+Grupa połączonych jednostek komputerowych, które współpracują ze sobą w celu udostępnienia zintegrowanego środowiska pracy.
+Komputery wchodzące w skład klastra (będące członkami klastra) nazywamy węzłami (ang. node).
+\end{definicja}
+
+\begin{definicja}[HDFS]
+Hadoop Distributed File System, rozproszony, skalowalny, spójny system plików używany przez framework Apache Spark.
+\end{definicja}
+
+\begin{definicja}[RDD]
+Resilent Distributed Dataset, podstawowa struktura danych w Sparku. RDD jest kolekcją elementów dystrybuowaną pomiędzy 
+węzły klastra, na których operacje mogą być wykonywane równolegle. Po zakończenie operacji na RDD można je dalej 
+przechowywać w pamięci RAM, co umożliwia szybsze dostęp do następnych obliczeń. 
+\end{definicja}
+
+
+\section{Paradygmat MapReduce}
+
+Paradygmat MapReduce został wprowadzony przez firmę \textbf{Google} i służy do równoległego przetwarzania
+dużych danych przy użyciu klastra.
+Rozproszenie obliczeń pomaga w istotny sposób zmniejszyć czas wykonywanych zadań.
+Apache Spark jest niejako rozszerzeniem wprowadzonego paradygmatu. 
+Jak każdy framework do obliczeń na klastrze posiada pod sobą rozproszony system plików (HDFS), 
+a także oprogramowanie (dla workerów i mastera), które odpowiada za zarządzanie awariami, przydzielanie 
+zadań i organizację. 
+\newpage
+
+\begin{figure}
+ \caption{architektura Sparka}
+ \includegraphics[scale=0.8]{spark-architecture.png}
+\end{figure}
+
+Spark jest dedykowany dla języka funkcyjnego - Scali, algorytmy zostały jednak napisane w pythonie, który 
+mimo, iż językiem funkcyjnym nie jest, posiada jednak cechy języków funkcyjnych. 
+
+Typowy potok obliczeń w Sparku polega na:
+\begin{itemize}
+ \item Stworzeniu RDD bazującego na kolekcji utrzymywanej w programie
+ \item Wykonaniu transformacji na RDD
+ \item Wykonaniu akcji
+\end{itemize}
+
+Funkcje w Sparku dzielą się na transformacje i akcje. 
+\begin{itemize}
+ \item \textbf{Transformacja} jest funkcją działającą na RDD i zwracającą RDD
+ \item \textbf{Akcja} jest funkcją działającą na RDD i zwracającą kolekcję do programu po zakończeniu obliczeń
+\end{itemize}
+Zarówno akcje, jak i transformacje wykonywane są leniwie. Przykłady transformacji:
+\begin{itemize}
+ \item \textbf{map(f)} - zwraca nowy RDD aplikując funkcję $f$ do każdego elementu RDD
+ \item \textbf{filter(f)} - zwraca nowy RDD składający się tylko z tych elementów, dla których funkcja $f$ zwróci True
+ \item \textbf{reduceByKey(f)} - dla RDD postaci (klucz, wartość), grupuje według kluczy i zwraca RDD z agregacją wartości 
+ za pomocą funkcji $f$ dla zgrupowanych kluczy
+\end{itemize}
+
+Przykłady akcji:
+\begin{itemize}
+ \item \textbf{reduce(f)} - zwraca kolekcję będą agregacją RDD za pomocą funkcji $f$, która przyjmuje dwa 
+ argumenty i zwraca jeden
+ \item \textbf{collect()} - zwraca kolekcję elementów do programu
+\end{itemize}
+
+W powyższych przykładach zamiast funkcji $f$ można użyć wyrażeń lambda (funkcji anonimowych).
+
+Przykład, zliczanie słów w języku python:
+\begin{lstlisting}
+#ustawiamy kontekst i konfiguracje
+conf = (SparkConf().setMaster("spark://localhost:7077").
+		    setAppName("entropy"))
+sc = SparkContext(conf=conf)
+words = ["ala", "ma", "ala", "kota", "ma"]
+#tworzenie rdd na podstawie listy
+words_rdd = sc.paralellize(words)  
+words_counts =  words_rdd.
+		map(lambda x: (x, 1)).
+		reduceByKey(lambda x, y: x+y)
+\end{lstlisting}
+
+W powyższym, jak i w następnych listingach algorytmów w języku python, sc zawsze będzie obiektem klasy $SparkContext$, który inicjuje
+RDD na podstawie konfiguracji klastrowego środowiska dla Sparka. Konfigurację tworzymy na podstawie obiektu klasy $SparkConf$, bądź
+ustawiamy parametry klastra, takie jak:
+\begin{itemize}
+ \item liczba komputerów
+ \item liczba procesorów
+ \item pamięć RAM na jednostkę obliczeniową
+ \item nazwa aplikacji
+\end{itemize}
+w odpowiednim pliku konfiguracyjnym. 
+
+
+Obliczenia wykonywane w Sparku są nie tylko skalowalne, ale również szybkie ze względu na:
+\begin{itemize}
+ \item leniwość wykonywanych operacji, obliczenia wykonywane są tylko wtedy gdy są potrzebne (ważna cecha
+ języków funkcyjnych)
+ \item możliwość przechowywania rozproszonych struktur danych (RDD) w pamięci RAM, co powoduje szybszy dostęp do danych
+ podczas ponownego przetwarzania (np w Hadoop MapReduce musieliśmy dane wczytywać z HDFS)
+\end{itemize}
+
+\newpage
+
+Na rysunku 2.2 widzimy porównanie szybkości działania Hadoop MapReduce i Sparka. Widzimy jak bardzo idea RDD, która 
+nie występuje w Hadoop MapReduce zwiększa szybkość działania.
+\begin{figure}
+ \caption{porównanie szybkości działania Hadoop MapReduce i Spark na przykładzie regresji logistycznej}
+ \includegraphics[scale=0.8]{spark-hadoop.png}
+\end{figure}
+
+\section{Metryki}
+Do oceniania jakości skalowalnych algorytmów wykorzystywanych jest kilka metry
+ ocenić czy dany algorytm skaluje się w odpowiedni sposób. W tej sekcji zaprezentowane zostały
+ metryki pozwalające ocenić skalowalność algorytmów.
+ 
+\textbf{Speed-up}
+ 
+Jedną z metryk mierzącą ile razy obliczenia na jednej maszynie są większe od
+obliczeń wykonywanych na \emph{n} maszynach jest metryka zdefiniowana następująco:
+ 
+\begin{align*}
+ speed-up(n) = \frac{t_1}{t_n}
+\end{align*}
+gdzie $t_j$ jest czasem obliczeń wykonywanym na $j$ maszynach.
+ 
+\textbf{Scale-up}
+ 
+Ta metryka z kolei opisuje jak zmienia się czas obliczeń podczas gdy
+liczba komputerów oraz wielkość zbioru danych rosną taką samą liczbę razy.
+ 
+\begin{align*}
+ scale-up(n) = \frac{t_{D_n}}{t_{D_1}}
+\end{align*}
+$t_{D_1}$ -- czas obliczeń dla ustalonego zbioru danych na jednym komputerze,
+$t_{D_n}$ -- czas obliczeń dla $n$ --razy większego zbioru danych na $n$ komputerach.
+
+\chapter{Biblioteka mllib-extensions}
+Algorytmy użyte w dalsze części pracy zostały zaimplementowane w bibliotece \textbf{mllib-extensions},
+umieszczonej w repozytorium, które znajduje się pod adresem: \url{https://github.com/cpawols/mllib-extension}.
+Biblioteka została napisana w języku python,
+jest skalowalna, wszystkie obliczenia mogą być wykonywane na wielu maszynach, bądź w zwyczajnym trybie, 
+na jednym procesorze, zostały zaimplementowane następujące moduły:
+  \begin{itemize}
+   \item \textbf{discretization}: moduł do wykonywania dyskretyzacji
+   \item \textbf{feature-extraction}: moduł do generowania nowych cech
+   \item \textbf{decision-tree}: moduł do indukcji drzew decyzyjnych
+   \item \textbf{reduct-feature-selection}: moduł do selekcji atrybutów (autor: Paweł Olszewski)
+  \end{itemize}
+
+
+\chapter{Skalowalne algorytmy dyskretyzacji}
+
+W tym rozdziale omówię zaimplementowane algorytmy dyskretyzacji, jak i przedstawię wyniki eksperymentów i obliczeń.
+Algorytmy dyskretyzacji dzielimy na:
+\begin{itemize}
+ \item \textbf{globalne} - szukają cięć na podstawie całej tabeli
+ \item \textbf{lokalne} - szukają cięć na podstawie każdego atrubutu niezależnie
+\end{itemize}
+Będziemy tu analizować algorytmy lokalne, gdyż
+w naturalny sposób łatwo je zrównoleglić, zgodnie ze schematem:
+\begin{lstlisting}
+# tworzymy RDD na podstawie listy kolumn i 
+# dzielimy na $numer_of_columns$ kawalkow
+columns_rdd = sc.paralellize(table, numer_of_columns)
+# wykonujemy algorytm dyskretyzacyjny rownolegle dla kazdej kolumny
+discretized_columns = columns_rdd.
+		      mapPartitions(discretizeColumn).
+		      collect()
+\end{lstlisting}
+Gdzie funkcja discretizeColumn przyjmuje kolumnę liczb rzeczywistych tabeli decyzyjnej i zwraca
+jej dyskretyzację.
+Metody globalne szukają zbioru cięć dla całej tabeli, przez co trudniej je zrównoleglić.
+Niżej przedstawię 3 lokalne algorytmy dyskretyzacji.
+
+\section{Sprawdzanie spójności tabeli}
+By dyskretyzacja miała sens, potrzebujemy sprawdzić czy tabela jest spójna, w Sparku możemy 
+to w prosty sposób zrobić za pomocą poniższego algorytmu:
+\begin{lstlisting}
+# funkcja agregujaca, zwraca tuple skladajaca sie z roznych decyzji
+# dla danej kombinacji atrybutow
+def get_unique_dec(x, y):
+  return tuple(set(x + y))
+# rows_rdd = (row, (dec,))
+rows_rdd = sc.paralellize(table, numer_of_rows)
+one_dec = rows_rdd.
+	  reduceByKey(get_unique_dec).
+	  map(lambda k, v: len(v) == 1).
+	  collect()
+# tabela jest spojna jesli dla kazdej kombinacji atrybutow
+# mamy jedna decyzje
+is_consistent = all(one_dec)
+\end{lstlisting}
+\section{Opis algorytmów}
+Wszystkie z poniższych algorytmów są zrównoleglane ze względu na kolumnę, tak 
+jak było to napisane we wstępie. Różnią się metodą \textbf{discretize\_column}.
+\subsection{Sortowanie}
+Wszystkie niżej wymienione algorytmy operują na posortowanych kolumnach. By posortować całą tabelę najpierw
+sprowadzam ją do postaci EAV, tj listy trójek (Obiekt, Atrybut, Wartość), a następnie sortuję tę listę 
+najpierw względem wartości, potem obiektów, a następnie atrybutów, otrzymująć listę posortowanych wartości
+zgrupowanych względem atrybutów. W Sparku wykonujemy sortowanie równoległe, za pomocą poniższego algorytmu,
+będącego uogólnieniem mergesort:
+\begin{itemize}
+ \item dzielę listę na $numchunks$ kawałków
+ \item sortuję każdy kawałek niezależnie
+ \item scalam posortowane kawałki
+\end{itemize}
+Kod algorytmu w języku python:
+\begin{lstlisting}
+# funkcja porownujaca
+# wzgledem atrybutu, potem wartosci, a nastepnie nazwy obiektu
+def compare(iterator):
+  yield sorted(iterator, key=lambda x: (x[1], x[2], x[0]))
+
+def merge_sort():
+  numChunks = 10
+  eav_rdd_part = Configuration.sc.parallelize(eav, numChunks)
+  self.eav =  eav_rdd_part.
+	      mapPartitions(compare).
+	      reduce(lambda x, y: 
+	      sorted(x+y, key=lambda x: (x[1], x[2], x[0])))
+\end{lstlisting}
+
+Dla podziału na $k$ kawałków algorytm ma złożoność czasową 
+$O(\underbrace{\frac{n}{k} \cdot log(\frac{n}{k})}_{\text{ dzielenie }} + \underbrace{\frac{n}{k} \cdot k)}_{\text{ scalanie }}$,
+	    czyli $O(\frac{n}{k} \cdot log(\frac{n}{k}) + n)$
+a więc dla dostatecznie dużych $k$ otrzymujemy algorytm liniowy.
+	      
+	      
+
+\subsection{Algorytm bazowy}
+Jest to prosty algorytm polegający na wykonywania cięć w równych odstępach, co $m$ obiektów, gdzie
+$m$ jest parametrem.
+Jego zaletą jest prostota, jednak wogóle nie patrzymy na decyzję.
+Kod algorytmu:
+\begin{lstlisting} 
+def discretizeColumn(column, m):
+  for ind, row in enumerate(column):
+    yield (row[0], row[1], ind / m)
+\end{lstlisting}
+
+\begin{przyklad}[Przykładowa dyskretyzacja]
+Dla tabeli:
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Nie \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Tak \\
+  $u_{4}$ & 15     & 50      & deszcz         & Nie \\
+  $u_{5}$ & 15     & 30      & deszcz         & Nie \\
+  $u_{6}$ & 30     & 70      & deszcz         & Nie \\
+  $u_{7}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+Oraz $m$ = 3, mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgotność):
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0     & 0      & słabe          & Nie \\
+  $u_{2}$ & 0     & 2      & umiarkowane    & Nie \\
+  $u_{3}$ & 1     & 0      & słabe   	    & Tak \\
+  $u_{4}$ & 0     & 1      & deszcz         & Nie \\
+  $u_{5}$ & 1     & 0      & deszcz         & Nie \\
+  $u_{6}$ & 2     & 1      & deszcz         & Nie \\
+  $u_{7}$ & 1     & 1      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+\end{przyklad}
+\subsection{OneR Discretizer}
+W tym algorytmie wykonujemy cięcie w momencie, gdy
+jednej z decyzji jest więcej niż innych, przy czym dany przedział musi zawierać więcej niżej
+$m$ elementów, gdzie $m$ jest ustalonym parametrem.
+Algorytm:
+\begin{lstlisting}
+def discretize_column(column, m):
+        new_dec = 0
+        block_elements = 0
+        dec_histogram_block = Counter()
+        for elem in column:
+
+            if block_elements > m and
+	       most_common(dec_histogram_block) > block_elements / 2:
+                block_elements = 0
+                new_dec += 1
+                dec_histogram_block = Counter()
+            dec_histogram_block[decision(elem)] += 1
+            block_elements += 1
+
+            yield (elem[0], elem[1], new_dec)
+\end{lstlisting}
+\begin{przyklad}[Przykładowa dyskretyzacja]
+Dla tabeli:
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Nie \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Tak \\
+  $u_{4}$ & 15     & 50      & deszcz         & Nie \\
+  $u_{5}$ & 15     & 30      & deszcz         & Tak \\
+  $u_{6}$ & 30     & 70      & deszcz         & Nie \\
+  $u_{7}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+Oraz $m$ = 4, mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgotność):
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0     & 0      & słabe          & Nie \\
+  $u_{2}$ & 0     & 1      & umiarkowane    & Nie \\
+  $u_{3}$ & 1     & 0      & słabe   	    & Tak \\
+  $u_{4}$ & 0     & 0      & deszcz         & Nie \\
+  $u_{5}$ & 0     & 0      & deszcz         & Tak \\
+  $u_{6}$ & 1     & 1      & deszcz         & Nie \\
+  $u_{7}$ & 1     & 0      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+\end{przyklad}
+\subsection{Dyskretyzacja za pomocą entropii}
+Entropię dla zbioru obiektów $U$ definiujemy jako:
+\begin{align*}
+  Ent(U) = - \sum_{d \in dec(U)} p_d \cdot log(p_d)
+\end{align*}
+Gdzie $dec(U)$ to zbiór decyzji obiektów ze zbioru $U$, oraz $p_d$ jest 
+empirycznym prawdopodobieństwem decyzji $d$, liczonym z wzoru:
+\begin{align*}
+  p_d = \frac{|\{u \in U: dec(u) = d\}|}{|U|}
+\end{align*}
+Entropia jest miarą informacji jaką mamy o danym zbiorze obiektów.
+Jest ona zerowa, gdy w danym zbiorze obiektów mamy jedną decyzję, a więc 
+mamy pełną informację, zaś największa gdy wszystkich decyzji jest po równo. 
+Entropię dla danego cięcia $c$ na danym atrybucie $a$ możemy zdefiniować jako:
+\begin{align*}
+  E(a, c, U) = \frac{U_1}{n}Ent(U_1) + \frac{U_2}{n}Ent(U_2)
+\end{align*}
+Gdzie $n$ jest liczbą obiektów w $u$ oraz $U_1$ i $U_2$ powstają z $U$ na podstawie cięcia $c$.
+Dla danego cięcia możemy więc zdefniować miarę przyrostu informacji:
+\begin{align*}
+ Gain(a, c, U) = Ent(U) - E(a, c, U)
+\end{align*}
+Wybieramy takie cięcie, by zmaksymalizować zysk informacji. Cięcia wykonujemy rekurencyjnie,
+dopóki nie spełniony zostanie pewien warunek stopu, tj gdy zysk informacji, który osiągamy
+dla danego optymalnego cięcia jest mniejszy niż jakaś wielkość.
+\subsubsection{Szukanie optymalnego cięcia - algorytm liniowy}
+Możemy łatwo znależć optymalne cięcie dla danego zbioru obiektów w czasie $O(n^2)$ gdzie $n$ jest
+liczbą obiektów za pomocą algorytmu (gdzie Ent(U) jest funkcją obliczającą entropię obiektów ze zbioru U):
+\begin{lstlisting}
+min_cut = 1
+# mozliwe ciecia - pomiedzy obiektami od 1 do n
+possible_cuts = range(1, n)
+# ustawiamy wartosc minimalnego ciecia na nieskonczonosc
+min_cut_value = INFINITY
+for cut in possible_cuts:
+  cut_value = cut / n * Ent(U[cut:]) + 
+	      (n - cut) / n * Ent(U[:cut])
+  if cut_value < min_cut_value:
+    min_cut_value = cut_value
+    min_cut = cut	      
+\end{lstlisting}
+Możemy jednak nie obliczać za każdym razem entropii, lecz liczyć ją na podstawie 
+wcześniejszych wyników w czasie stałym, otrzymując algorytm liniowy ze względu na liczbę 
+obiektów. Algorytm opiera się na obserwacji (zakładamy, że dla obiektów $1, ..., k-1$ mamy już obliczone 
+częstości poszczególnych decyzji (słownik \textbf{decHist} w którym trzymamy histogram decyzji, za pomocą którego w czasie stałym
+liczymy $p_d$):
+\begin{align*}
+  Ent(U_k) = Ent(U_{k-1}) + log(p_{dec(u_k)}) \cdot p_{dec(u_k)} \\
+  decHist[dec(u_k)] += 1 \\
+  Ent(U_k) = Ent(U_{k-1}) - log(p_{dec(u_k)}) \cdot p_{dec(u_k)}
+\end{align*}
+Analogicznie trzymamy histogram dla drugiej obiektów $k, ..., n$ aktualizując entropię drugiej połowy.
+Otrzymujemy więc następujący algorytm liniowy:
+\begin{lstlisting}
+def find_cut(U):
+  # decHist1 -> histogram dla 1 połowy
+  # decHist2 -> histogram dla 2 połowy
+  # p1 -> prawdopodobieństwo liczone na podstawie decHist1
+  # p2 -> prawdopodobieństwo liczone na podstawie decHist2
+  def updateEnt(U, k):
+    Ent[U[k:]] = Ent([[k-1:]] - (-log(p1[dec(u_k)])*p1[dec(u_k)])
+    Ent[U[:k]] = Ent[U[:k+1]] - (-log(p2[dec(u_k)])*p2[dec(u_k)])
+    decHist1[dec(U[k])] += 1    
+    decHist2[dec(U[k])] -= 1
+    Ent[U[k:]] = Ent[U[k-1:]] - (-log(p1[dec(u_k)])*p1[dec(u_k)])
+    Ent[U[:k]] = Ent[U[:k+1]] - (-log(p2[dec(u_k)])*p2[dec(u_k)])
+    return Ent[U[k:]], Ent[U[:k]]
+    
+  min_cut = 1
+  # mozliwe ciecia - pomiedzy obiektami od 1 do n
+  possible_cuts = range(1, n)
+  # ustawiamy wartosc minimalnego ciecia na nieskonczonosc
+  min_cut_value = INFINITY
+  Ent[0] = 0
+  for cut in possible_cuts:
+    Ent1, Ent2 = updateEnt(U, cut)
+    cut_value = cut / n * Ent1 + 
+		(n - cut) / n * Ent2
+    if cut_value < min_cut_value:
+      min_cut_value = cut_value
+      min_cut = cut	
+  # jesli nie jest spelnione kryterium stopu zwracamy minimalne ciecie
+  # oraz ciecia dla odpowiednich podzbiorow obiektow
+  if not stop_criterion_satisfied(U, min_cut_value):
+    yield min_cut
+    
+    for cut in find_cut(U[k:]):
+      yield cut 
+    for cut in find_cut(U[:k]):
+      yield cut
+\end{lstlisting}
+Koncowy Algorytm:
+\begin{lstlisting}
+# zwracamy tabele z odpowiednimi wartosciami disc_value
+def discretize_column(column):
+  disc_value = 0
+  cuts_set = sorted(find_cut_lin(column))
+  cur_cut = cuts_set[0]
+
+  for i, elem in enumerate(column):
+    if cur_cut == i:
+      disc_value += 1
+    if len(cuts_set) > disc_value:
+      cur_cut = cuts_set[disc_value]
+
+    yield (elem[0], elem[1], dis_value)
+\end{lstlisting}
+\begin{przyklad}[Przykładowa dyskretyzacja]
+Dla tabeli:
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0      & 30      & słabe          & Tak \\
+  $u_{2}$ & 10     & 90      & umiarkowane    & Nie \\
+  $u_{3}$ & 20     & 30      & słabe   	      & Nie \\
+  $u_{4}$ & 15     & 50      & deszcz         & Tak \\
+  $u_{5}$ & 15     & 30      & deszcz         & Nie \\
+  $u_{6}$ & 30     & 70      & deszcz         & Nie \\
+  $u_{7}$ & 15     & 30      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+mamy następującą dyskretyzację (dla kolumn Temperatura i Wilgotność):
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} P{2.5cm} P{2.5cm} | P{1.5cm}}
+  $U$     & Temperatura & Wilgotność & Zachmurzenie & Gra \\ 
+  \hline
+  $u_{1}$ & 0     & 0      & słabe          & Tak \\
+  $u_{2}$ & 0     & 2      & umiarkowane    & Nie \\
+  $u_{3}$ & 1     & 1      & słabe   	    & Nie \\
+  $u_{4}$ & 0     & 2      & deszcz         & Tak \\
+  $u_{5}$ & 1     & 1      & deszcz         & Nie \\
+  $u_{6}$ & 1     & 2      & deszcz         & Nie \\
+  $u_{7}$ & 1     & 1      & deszcz         & Nie \\
+ \end{tabular}
+\end{center}
+\end{przyklad}
+
+\section{Wyniki eksperymentów}
+Do wykonywania eksperymentów wykorzystałem komputery z laboratorium MIMUW. Maksymalnie obliczenia wykonywałem 
+na 48 komputerach o następujących parametrach:
+  \begin{itemize}
+   \item \textbf{pamięć RAM}: 32 komputery 4 GB RAM, 16 komputerów 8 GB RAM
+   \item \textbf{liczba jednostek CPU}: 8
+   \item \textbf{taktowanie pojedyńczego CPU}: 16 komputerów 3.1 GHz, 16 komputerów 3.4 GHz, 16 komputerów 2.8 GHz
+  \end{itemize}
+Do eksperymentów wykorzystałem zbiór danych WAVEFORM z UCI Machine Learning Repository 
+zawierający informacje na temat parametrów fal dźwiękowych.
+Zbiór ten zawiera 5000 obiektów i 40 atrybutów oraz 3 wartości decyzyjne - rodzaj fali.
+Oto jak prezentowały się wyniki predykcji dla tego zbioru danych w zależności od parametrów:
+  \begin{itemize}
+   \item dla metody simple jest to liczba obiektów dla pojedyńczego cięcia
+   \item dla metody OneR jest to minimalna liczba obiektów dla pojedyńczego cięcia
+  \end{itemize}
+
+Predykcja została wykonana za pomocą drzewa decyzyjnego z pythonowej biblioteki sklearn za pomocą 10-krotnej
+kroswalidacji metodą accuracy. Brązową kreską został zaznaczony wynik bez wykonywania dyskretyzacji.
+
+\begin{figure}
+ \caption{Wyniki dyskretyzacji}
+ \centering\includegraphics[scale=0.7]{./wykresy/disc_scores.png}
+\end{figure}
+
+\newpage
+Widzimy, że wyniki dla dyskretyzacji są lepsze od baseline-u, zaś najlepsze dla metody prostej i parametru $m = 15$, lecz 
+średnio najlepsza jest metoda entropii.
+\subsection{Skalowalność}
+Zobaczmy jak wypadły eksperymenty pod kątem skalowalności. Wykonałem eksperymenty dla następujących liczb komputerów: 1, 5, 10, 20, 30, 40.
+Zbadałem jak rozkładają się poszczególne metryki w zależności od liczby komputerów i użytej metody.
+
+\begin{figure}
+ \caption{Metryki skalowalności dla różnych liczb komputerów}
+ \centering\includegraphics[scale=0.7]{./wykresy/disc_time.png}
+\end{figure}
+
+Widzimy, że zarówno speed-up jak i scale-up wraz ze zwiększaniem liczby komputerów odbiega coraz bardziej od idealnej sytuacji 
+(zaznaczonej na wykresie na brązowo). Jest to zgodne z prawem Gustafsona. Gdy liczba komputerów wzrasta, jest coraz większy narzut czasowy
+ze względu na przesyłanie danych po sieci. Widzimy jednak, że dopiero od ok 20 komputerów speed-up zaczyna mieć coraz wolniejszy przyrost,
+który zbiega do logarytmu. Powyższe algorytmy są więc całkiem dobrze skalowalne.
+
+
+
+\chapter{Generowanie nowych cech na podstawie algorytmów genetycznych}
+
+W tym rozdziale omówię uogólnienie pojęcia dyskretyzacji jako generowanie nowych cech i omówię
+znajdowanie nowych cech za pomocą hiperpłaszczyzn i algorytmu genetycznego.
+
+\section{Dyskretyzacja jako generowanie nowych cech oraz generowanie nowych cech przez hiperpłaszczyzny}
+Na dyskretyzację, a konkretnie na cięcie na pewnym atrybucie rzeczywistym możemy też patrzeć
+jak na nową cechę zdefiniowaną przez funkcję charakterystyczną odpowiedniej półprzestrzeni. Na cięcie cięcia o wartości
+$c$ na atrybucie $a_k$ możemy patrzeć jak na cechę:
+\begin{align*}
+v(a_1(u), a_2(u), ..., a_n(u)) = \begin{cases} 1 \text{ dla } a_k(u) \leq c \\ 0 \text{ dla } a_k(u) > c \end{cases}
+\end{align*}
+Dyskretyzacja na danym atrybucie definiuje nam jedynie hiperpłaszczyzny równoległe do odpowiednich osi. 
+Możemy zdefiniować nowe cechy jako funkcje charakterystyczne ogólnych półprzestrzeni:
+\begin{align*}
+v(a_1(u), a_2(u), ..., a_n(u)) = \begin{cases} 1 \text{ dla } w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) \leq c 
+\\ 0 \text{ dla } w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) > c \end{cases}
+\end{align*}
+Ogólne półprzestrzenie mają o wiele większą moc wyrazu i zwykle wystarczy ich mniej by znależć minimalny zbiór cięć dla
+danej przestrzeni, tj tak podzielić przestrzeń, aby otrzymać spójną tabelę.
+Jednak przestrzeń poszukiwań odpowiednich parametrów, tj wag $w_k$ jest nieskończona. Dla danego zbioru wag, tj dla danej półprzestrzeni,
+możemy jednak ocenić jak dobre jest dane cięcie na podstawie funkcji oceny. Jedną z popularniejszych miar jest miara rozróżnialności, 
+zdefiniujmy $C_i^R$ oraz $C_i^L$ jako liczbę obiektów o decyzji $i$ należących do odpowiednich półprzestrzeni:
+\begin{align*}
+C_i^R(H) = |\{u \in U: dec(u) = i \wedge w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) > c\}| \\
+C_i^L(H) = |\{u \in U: dec(u) = i \wedge w_1 \cdot a_1(u) + w_2 \cdot a_2(u) + ... + w_n \cdot a_n(u) \leq c\}|
+\end{align*}
+Na podstawie tych wielkości definiujemy miarę rozróżnialności dla hiperpłaszczyzny $H$:
+\begin{align*}
+discMeasure(H) = \sum_{i \neq j} C_i^R(h) \cdot C_j^L(H)
+\end{align*}
+Mając funkcję oceny możemy więc z powodzeniem stosować pewne heurystyki doboru wag i algorytmy genetyczne. Konkretny algorytm omówię w następnym
+rozdziale.
+\section{Algorytmy ewolucyjne}
+Algorytmy ewolucyjne są jedną popularniejszych metod heurystycznych metod optymalizacji, jak np symulowane wyżarzanie. Sprawdzają się,
+gdy mamy dobrze określoną funkcję celu oraz potrafimy odpowiednio zamodelować nasze uniwersum. Algorytm genetyczny polega na iteracyjnym 
+poprawianiu wyniku poprzez dobieranie do następnej fazy tych osobników, które osiągają najlepsze wartośc funkcji celu. Podstawowym
+pojęciem jest tu populacji i osobnik. Osobnik jest pewnym obiektem matematycznym, najczęściej wektorem zerojedynkowym, który modeluje
+wielkości, które chcemy optymalizować. W przypadku problemu szukania optymalnej hiperpłaszczyzny będzie to wektor reprezentujący wagi $w_i$.
+Populacja zaś jest zbiorem osobników. Algorytm genetyczny można podzielić na następujące etapy:
+\begin{enumerate}
+ \item Inicjowanie populacji początkowej
+ \begin{enumerate}
+  \item Inicjowanie losowe
+  \item Inicjowanie wg wcześniej ustalonego schematu
+ \end{enumerate}
+ \item W pętli, aż do spełnienia pewnego warunku stopu wykonuj:
+ \begin{enumerate}
+  \item Liczymy funkcję oceny każdego osobnika w populacji. Najlepsze osobniki poddajemy reprodukcji.
+  \item Proces repropdukcji najlepszych osobników:
+  \begin{enumerate}
+   \item Krzyżowanie - łączenie genotypów rodziców
+   \item Mutacja - wprowadzanie losowych zmian
+  \end{enumerate}
+  \item Po procesie reprodukcji wybieramy najlepsze osobniki.
+  \item Jeśli został spełniony warunek stopu wybieramy i zwracamy najlepszego osobnika w populacji.
+ \end{enumerate}
+\end{enumerate}
+Podstawowymi zadaniami przy projektowaniu algorytmu genetycznego są:
+\begin{itemize}
+ \item ustalenie genomu osobnika jako reprezentanta wyniku
+ \item ustalenie funkcji oceny
+ \item dobór parametrów (warunek stopu, prawdopodobieństwo krzyżowania, mutacji, rozmiar populacji)
+\end{itemize}
+Dla problemu znajdowania optymalnej hiperpłaszczyzny funkcją oceny będzie wspomniana wcześniej miara \textbf{discMeasure}.
+Pozostaje ustalić genom osobnika (hiperpłaszczyzny). Będziemy reprezentować hiperpłaszczyznę w przestrzeni $\mathbb{R}^n$
+jako zbiór $n-1$ liniowo niezależnych wektorów i przesunięcia. 
+\subsection{Reprezentacja hiperpłaszczyzny}
+Ustalmy jedną z osi, niech to będzie $x_1$ odpowiadająca atrybutowi $a_1$ i liczbę naturalną $b$, będzie to parametr odpowiadający
+za zbiór, z którego inicjujemy populację początkową. Z każdej dwu-wymiarowej płaszczyzny $L(x_1, x_i)$ wybieramy wektory 
+$v_1^i, v_2^i, ..., v_{2^b}^i$ (nierównoległe do $x_1$) zdefiniowane przez:
+\begin{align*}
+v_j^i = [\alpha_j^i, 0, ..., 0, \underbrace{1}_{\text{i-ta pozycja}} , 0, ..., 0] \text{ dla } i=2, ..., n \text{ oraz } j=1, ..., 2^b 
+\end{align*}
+Wektory te będziemy inicjować przez losowy dobór $2^b$ liczb: $\alpha_1^i, \alpha_2^i, ..., \alpha_{2^b}^i$.
+Każdy z wektorów $v_j^i$ może być reprezentowany przez $b$ bitów odpowiadających reprezentacji
+binarnej liczby $j$. Rozważmy zbiór $n-1$ wektorów $\{v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n\}$:
+\begin{align*}
+ v_{j_2}^2 = [\alpha_{j_2}^2, 1, 0, 0,  ..., 0] \\
+ v_{j_3}^3 = [\alpha_{j_3}^3, 0, 1, 0,  ..., 0] \\
+ ..... \\
+ v_{j_n}^n = [\alpha_{j_n}^n, 0, 0, 0,  ..., 1]
+\end{align*}
+Łatwo widać, że wektory dla dowolnego doboru indeksów $j_2, j_3, ..., j_n$ wektory $\{v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n\}$ 
+są liniowo niezależne. Wybierając przesunięcie $P_1 = (p, 0, ..., 0)$ na osi $x_1$, możemy zdefiniować 
+hiperpłaszczyznę $(P_1, v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n)$ przez:
+\begin{align*}
+ H = \{(x_1, x_2, ..., x_n\} \in \mathbb{R}^n : x_1 - \alpha_{j_2}^2 x_2 - \alpha_{j_3}^3 x_3 - ... - \alpha_{j_n}^n x_n - p = 0\}
+\end{align*}
+Osobniki będziemy reprezentować przez $n-1$ liczb b-bitowych $\alpha_1, \alpha_2, ..., \alpha_{n-1}$, które będą 
+reprezentować wektory (dla osi $x_1$):
+\begin{align*}
+ v_1 = [\alpha_1, 1, 0, 0,  ..., 0] \\
+ v_2 = [\alpha_2, 0, 1, 0,  ..., 0] \\
+ ..... \\
+ v_{n-1} = [\alpha_{n-1}, 0, 0, 0,  ..., 1]
+\end{align*}
+Są one liniowo niezależne i rozpinają $n-1$ wymiarową podprzestrzeń liniową.
+Taka reprezentacja umożliwia nam sprawdzenie w czasie $O(n)$ po której stronie hiperpłaszczyzny znajduje się dany obiekt $u \in U$ oraz 
+policzyć w czasie $O(n)$ rzut wektora $u$ na $x_1$ równoległy do $L = lin(v_{j_2}^2, v_{j_3}^3, ..., v_{j_n}^n)$. Odpowiednie funkcje, $Test(u)$
+licząca, po której stronie hiperpłaszczyzny jest obiekt $u$:
+\begin{align*}
+ Test(u) = \begin{cases} 1 \text{ jeśli } a_1(u) - \alpha_{j_2}^2 a_2(u) - \alpha_{j_3}^3 a_3(u) - 
+ ... - \alpha_{j_n}^n a_n(u) \geq p \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Oraz $Projection(u)$ licząca rzut obiektu $u$ na odpowiednią oś (tu $x_1$):
+\begin{align*}
+ Projection(u) = a_1(u) - \alpha_{j_2}^2 a_2(u) - \alpha_{j_3}^3 a_3(u) - ... - \alpha_{j_n}^n a_n(u)
+\end{align*}
+\subsection{Szukanie optymalnej hiperpłaszczyzny za pomocą algorytmu genetycznego}
+Za pomocą algorytmu genetycznego będziemy chcieli szukać optymalnej hiperłpaszczyzny dla danej osi. Dla każdego osobnika liczymy rzut obiektów na 
+odpowiednią oś za pomocą funkcji \textbf{Projection}, a następnie wybieramy najlepszą hiperpłaszczyznę równoległą do podprzestrzeni liniowej 
+reprezentowanej przez osobnika za pomocą funkcji oceny. Na rysunku 4.1 widzimy to dla przestrzeni dwuwymiarowej.
+\begin{figure}
+ \caption{Interpretacja szukania optymalnej hiperpłaszczyzny w przestrzeni dwuwymiarowej}
+ \includegraphics[scale=0.8]{hiperp.png}
+\end{figure}
+Powtarzając algorytm dla każdej z osi,
+wybierzemy najlepszą hiperpłaszczyznę. Hiperpłaszczyzny szukamy do momentu, w którym tabela otrzymana z nowych cech indykatorów odpowiednich 
+półprzestrzeni będzie spójna, bądź spełniony zostanie warunek stopu, o którym opowiem w następnych rozdziałach. Na rysunku 4.2 widac 
+przykładowy podział obiektów
+w przestrzeni dwuwymiarowej po znalezieniu dwóch hiperpłaszczyzn.
+\begin{figure}
+ \caption{Podział obiektów przez hiperpłaszczyzny}
+ \includegraphics[scale=0.8]{obszary.png}
+\end{figure}
+Po znalezieniu kolejnych hiperpłaszczyzn grupy obszarów niespójnych będą się stale zmniejszać. Funkcję liczę jedynie dla obszarów
+niespójnych, które nie są jeszcze podzielone. Funkcję celu dla listy obszarów niespójnych wyliczam z wzoru (kod w języku python):
+\begin{lstlisting}
+# unconsistent_groups jest lista niespojnych grup obiektow
+award = sum([discMeasure(H, U) for U in unconsistent_groups])
+\end{lstlisting}
+Kod algorytmu w języku python:
+\begin{lstlisting}
+# dla wszyskich funkcji:
+
+# dec <- lista decyzji
+# table <- tabela 
+# attrs_list <- lista atrybutow
+
+# ekstracja nowych cech, generowanie nowej tabeli
+def extract_features(sc=None):
+        extracted_table = []
+        while True:
+            unconsistent_groups = ConsistentChecker.
+				  count_unconsistent_groups(
+				  extracted_table, dec, sc)
+# kompresja niespojnych obszarow, np wyrzucanie 
+# bliskch punktow o roznych decyzjach
+            unconsistent_groups = filter(
+				  lambda x: 
+				  dpoints_strategy.decision(x) is None, 
+				  unconsistent_groups)
+# jesli sa jeszcze jakies niespojne grupy szukamy hiperplaszczyzn
+            if unconsistent_groups:
+            
+                best_hyperplane = search_best_hyperplane(
+				  unconsistent_groups, sc)
+                extracted_table.append(
+				count_objects_positions(best_hyperplane))
+            else:
+                break
+
+        return np.transpose(np.array(extracted_table))
+
+# szukanie optymalnej hiperplaszczyzny
+def search_best_hyperplane(unconsistent_groups, sc=None):
+
+            rdd_attributes = sc.parallelize(attrs_list)
+# zrownoleglamy ze wzgledu na osie (atrybuty)
+# i liczymy optymalne hiperplaszczyzny dla rzutow
+            hyperplanes = rdd_attributes.map(
+			  lambda x: 
+			  search_best_hyperplane_for_projection(
+			  x, unconsistent_groups)).collect()
+	
+# zwracamy najlepsza
+        return max(hyperplanes, key=lambda x: x[1][0])
+
+# szukanie optymalnej hiperplaszczyzny dla rzutu
+def search_best_hyperplane_for_projection(
+    attr, unconsistent_groups, sc=None):
+
+        projection_axis = table[attr]
+        other_axes = [x for x in attrs_list if not x == attr]
+        new_table = table[other_axes]
+	
+	# szukamy optymalnej hiperplaszczyzny algorytmem genetycznym
+        gen_search = GeneticSearch(len(other_axes), dec, new_table,
+                                   projection_axis, unconsistent_groups)
+        cand_hyperplane = gen_search.genetic_search(sc)
+
+        return attr, cand_hyperplane
+
+# unconsistent_groups <- lista niespojnych grup
+# population_size <- rozmiar populacji
+# przeszukiwanie genetyczne
+def genetic_search(sc=None):
+
+# inicjowanie populacji
+        population = init_generation()
+
+        current_best_award = 0
+        the_same_awards = 0
+        for i in range(max_iter):
+# liczymy funkcje celu dla populacji
+            rdd_population = sc.parallelize(population, 
+					    population_size * 10)
+            awards = rdd_population.mapPartitions(
+				    count_award_for_chunk).collect()
+	    
+# wybieramy najlepszych osobników
+            population_awards = select_best_individuals(awards)
+
+            best_individual = population_awards[0]
+
+            population = map(lambda x: x[1], population_awards)
+
+            new_generation = count_new_generation(
+			     copy.deepcopy(population))
+
+            population = new_generation + population
+
+        return best_individual
+        
+def count_award_for_chunk(self, population):
+        for individual in population:
+            yield self.count_award(individual)
+            
+def count_award(individual):
+        all_objects = reduce(add, unconsistent_groups)
+# liczymy rzuty wszystkich obiektow
+        projections = count_projections(individual, all_objects)
+# sortujemy po wartosci rzutu
+        objects = sorted(projections, key=lambda x: x[1])
+
+# liczenie funkcji oceny (discMeasure) dla posortowanych obiektow
+        object_group_dict = {}
+        group_fqs_dict = {}
+        act_left_sum = {}
+        act_right_sum = {}
+
+        for ind, group in enumerate(unconsistent_groups):
+            group_decisions = []
+            for obj in group:
+                group_decisions.append(self.dec[obj])
+                object_group_dict[obj] = ind
+            act_left_sum[ind] = 0
+            act_right_sum[ind] = len(group_decisions)
+            group_fqs_dict[ind] = DiscMeasureCalculator.
+				 prepare_hist(group_decisions)
+
+        act_award = 0
+        max_award = 0
+        for obj, proj in objects:
+            group_id = object_group_dict[obj]
+            dec = self.dec[obj]
+            act_left_sum[group_id], act_right_sum[group_id], act_award = \
+                DiscMeasureCalculator.
+	        update_award(dec, act_left_sum[group_id], 
+			     act_right_sum[group_id],
+                             group_fqs_dict[group_id], act_award)
+            if act_award > max_award:
+                max_award = act_award
+                good_proj = proj
+                
+# zwracamy wartosc najlepszego wyniku, osobnika (wektory) i przesuniecie
+        return max_award, individual, good_proj  
+
+# wyliczanie rzutu dla osobnika i grupy obiektow 
+def count_projections(individual, objects):
+        table = table_as_matrix[objects, :]
+        proj = [projection_axis[obj] for obj in objects]
+        return zip(objects, proj - table.dot(individual))
+\end{lstlisting}
+
+\subsection{Analiza złożoności czasowej algorytmu}
+W skócie algorytm można przedstawić za pomocą pseudokodu: \\
+
+\begin{algorithm}[H]
+ \KwData{Tabela decyzyjna $\mathbb{S}$ \\
+         Zbiór obiektów $\mathbb{U}$ \\
+	 Zbiór atrybutów $\mathbb{A}$ \\
+         Lista niespójnych grup obiektów $UncGroups$ \\
+         Nowa tabela $\mathbb{B}$}
+ \KwResult{Nowa tabela $\mathbb{B}$ z nowymi cechami}
+  $ B = \emptyset$\;
+  $ UncGroups = \mathbb{U}$\;
+  $ H = \emptyset$\;
+ \While{$UncGroups$ $\neg$ $\emptyset$}{
+  \For{$atr$ in $\mathbb{A}$}{
+      $H$ = $H$ $\cup$ najlepsza hiperpłaszczyzna znaleziona za pomocą algorytmu genetycznego 
+            dla osi odpowiadającej atrybutowi $atr$ i grupom obiektów z $UncGroups$
+  }
+ }
+ $OptH$ = najlepsza hiperpłaszczyzna z zbioru $H$. \\
+ $B$ = $B$ $\cup$ cecha wyznaczona przez $OptH$. \\
+ Aktualizuj $UncGroups$ na podstawie $B$
+\end{algorithm} 
+
+Koszt czasowy zewnętrznej pętli while ciężko jest oszacować, gdyż płaszczyzna wybierana jest w sposób niedeterministyczny. Możemy ustalić pewien 
+próg czasowy, w którym algorytm musi się zatrzymać jeśli $UncGroups$ wciąż jest niepuste. Koszt czasowy pętli wewnętrznej wynosi
+$O(n \cdot gen)$, gdzie $gen$ to koszt czasowy algorytmu genetycznego. Przyjrzyjmy się pseudokodowi algorytmu genetycznego oraz
+wyznaczania funkcji oceny: \\
+\begin{algorithm}[H]
+ \KwData{Populacja $P$}
+ {maksymalna liczba iteracji $max\_iter$}
+  $ i = 0 $\;
+  $ P = init\_generation $\;
+ \While{$i \leq max\_iter$}{
+  i = i+1 \\
+  \For{$Osobnik \in P$}{
+  $Oceny$ = $Oceny$ $\cup$ wartość oceny dla $Osobnik$
+  }
+ Wybierz najlepszych osobników. \\
+ Skrzyżuj i mutuj najlepsze osobniki. \\
+ $P$ = Zainicjuj nowe pokolenie. 
+ }
+ zwróć najlepszego osobnika. \
+ \caption{przeszukiwanie genetyczne}
+\end{algorithm}
+
+\begin{algorithm}
+ \KwData{Osobnik $o$}
+	{Niespójne grupy obiektow $UncGroups$} \\
+  rzuty = oblicz rzuty obiektów z $UncGroups$ na odpowiednią oś równolegle do podprzestrzeni wyznaczonej przez $o$.\\
+  sortuj rzuty. \\
+  oceny = licz wartośc $DiscMeasure$ dla wszystkich rzutów. \\
+  zwróć najlepszą ocenę. \
+  \caption{wyznaczanie funkcji oceny}
+\end{algorithm}
+
+Złożonośc czasowa wyznaczania rzutu dla obiektu wynosi $O(n)$, zaś liczenia funkcji oceny dla wszystkich rzutów $O(k)$, gdzie $k$ jest liczbą 
+obiektów (dla posortowanych obiektów aktualizujemy w czasie stałym wartość \textbf{DiscMeasure}). A więc koszt czasowy wyznaczania funkcji oceny wynosi
+$O(n \cdot k + k \cdot log(k) + k) = O(k(log(k) + n))$. Koszt czasowy algorytmu genetycznego wynosi więc 
+$O(max\_iter \cdot |P| \cdot k(log(k) + n))$. A więc koszt szukania pojedyńczej hiperplaszczyzny wynosi 
+$O(n \cdot max\_iter \cdot |P| \cdot k(log(k) + n))$ i zależy od doboru parametrów $|P|$ i $max\_iter$. W idealnym modelu obliczeń 
+   równoległych, gdy mamy do dyspozycji $K$ komputerów koszt czasowy wyniesie:
+$O(\frac{n}{K} \cdot max\_iter \cdot \frac{|P|}{K} \cdot k(log(k) + n))$, a więc dla dostatecznie dużych $K$ dostajemy:
+$O(max\_iter \cdot k(log(k) + n))$.
+   
+\section{Indukcja drzewa decyzyjnego na podstawie cięć przez hiperpłaszczyzny}
+Optymalne hiperpłaszczyzny mogą być użyte nie tylko ekstracji nowych cech, ale również do indukcji drzewa
+decyzyjnego. W standardowym drzewie, w węźle mamy funkcję $test$ odpowiadającą atrybutom, dla wartości ciągłych zwykle
+jest to:
+\begin{align*}
+test(x) = \begin{cases} 1 \text{ jeśli } a_i(x) > c \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Możemy jednak użyć funkcji testu opartej o hiperplaszczyzny, wtedy drzewo będzie miało zwykle mniejszą głębokośc
+(hiperpłaszczyzny mogą mieć wyższą wartośc funkcji oceny na danym węźle), ale większy jest koszt czasowy predykcji
+(funkcja testu działa w czasie $O(n)$ gdzie $n$ jest liczbą atrybutów) oraz szukania drzewa. Funkcja testu dla 
+uogólnionego drzewa (dla wag $w_i$):
+  \begin{align*}
+test(x) = \begin{cases} 1 \text{ jeśli } w_1 a_1(x) + ... + w_n a_n(x) > c \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Oraz funkcja dla testu dla reprezentacji hiperplaszczyzny z algorytmu genetycznego (gdy $x_1$ jest najlepszą osią):
+\begin{align*}
+ test(x) = \begin{cases} 1 \text{ jeśli } a_1(x) - \alpha_{j_2}^2 a_2(x) - \alpha_{j_3}^3 a_3(x) - 
+ ... - \alpha_{j_n}^n a_n(x) \geq p \\ 0 \text{ wpp } \end{cases}
+\end{align*}
+Algorytm znajdowania drzewa przez algorytm genetyczny w języku python:
+\begin{lstlisting}
+def count_decision_tree(objects, sc=None):
+# jesli mozemy podjac decyzje dla danego zbioru obiektow
+# zwracamy koncowy wezel
+        decision = dpoints_strategy.decision(objects)
+        if decision is not None:
+            return DecisionTree(decision, 0, 0)
+
+# szukamy najlepszej hiperplaszczyzny algorytmem genetycznym
+# (tak jak dla ekstrakcji cech)
+        best_hyperplane = search_best_hyperplane([objects], sc)
+        hyperplane_indicator = count_objects_positions(
+			       best_hyperplane, objects)
+        left_son_objects = map(
+			   lambda x: x[1], 
+			   filter(
+			   lambda (i, x): 
+			   hyperplane_indicator[i] == 0, 
+			   enumerate(objects)))
+        right_son_objects = map(
+			    lambda x: x[1], 
+			    filter(
+			    lambda (i, x): 
+			    hyperplane_indicator[i] == 1, 
+			    enumerate(objects)))
+
+        return DecisionTree(best_hyperplane, 
+			    count_decision_tree(left_son_objects),
+                            count_decision_tree(right_son_objects))
+\end{lstlisting}
+
+\subsection{Generowanie lasu losowego}
+Jako, że w algrytmie genetycznym początkowe wartości wektorów dobierane są w sposób losowy, 
+drzewa decyzyjne generowane kilkukrotnie przez algorytm genetyczny mogą się od siebie różnić.
+Przy jednokrotnym generowaniu drzewa istnieje prawdopodobieństwo utknięcia w lokalnym maksimum funkcji celu.
+Możemy więc stworzyć wiele drzew i podjąć decyzję na podstawie głosowania, tworząc coś na kształt lasu losowego.
+Algorytm w języku python:
+\begin{lstlisting}
+# objects <- lista wszyskich obiektow w tabeli
+def count_random_forest(size=50):	
+	return [count_decision_tree(objects) for _ in range(size)]
+      
+def predict(object):
+	forest = count_random_forest()
+# liczymy predykcje dla kazdego drzewa
+	decisions = map(lambda tree: tree.predict(object), forest)
+# zwracamy najczesciej wystpujaca decyzje
+	return most_common(Counter(decisions))		
+\end{lstlisting}
+
+\section{Drzewo SVM}
+Dla celów analizy porównawczej możemy stworzyć drzewo, w którym funkcją testu
+również będzie funkcja charakterystyczna półprzestrzeni, ale odpowiednią hiperpłaszczyznę
+będziemy szukać nie za pomocą algorytmu genetycznego, ale algorytmu SVM, szukającego 
+hiperpłaszczyzny maksymalizującej sumę odległości od obiektów. Rysunek 4.3 ilustruje działanie
+algorytmu SVM.
+\begin{figure}
+ \caption{Podział obiektów przez hiperpłaszczyznę SVM}
+ \includegraphics[scale=0.7]{svm_hiperp.png}
+\end{figure}
+Kod algorytmu w języku python:
+\begin{lstlisting}
+def count_decision_tree(objects, sc=None):
+        decision = dpoints_strategy.decision(objects)
+        if decision is not None:
+            return DecisionTree(decision, 0, 0)
+
+        X = [self.table[i] for i in objects]
+        y = [self.dec[i] for i in objects]
+        svm = LinearSVC()
+# wyliczanie SVM z zewnetrznej biblioteki
+        svm.fit(X, y)
+# wybieranie wspolczynnikow optymalnej hiperplaszczyzny
+        coefs = svm.coef_[0]
+        intercept = svm.intercept_[0]
+        best_hyperplane = (intercept, coefs)
+        hyperplane_indicator = map(
+			       lambda r: 
+			       (np.dot(
+			       list(r), coefs) + intercept > 0),
+			       X)
+        left_son_objects = map(
+			   lambda x: x[1], 
+			   filter(
+			   lambda (i, x): 
+			   not hyperplane_indicator[i], 
+			   enumerate(objects)))
+        right_son_objects = map(
+		            lambda x: x[1], 
+		            filter(lambda (i, x): 
+		            hyperplane_indicator[i], 
+		            enumerate(objects)))
+
+        return DecisionTree(best_hyperplane, 
+			    count_decision_tree(left_son_objects),
+                            count_decision_tree(right_son_objects))
+\end{lstlisting}
+
+\section{Strategie klasyfikacji bliskich punktów o różnej decyzji oraz warunek oraz przycinanie}
+Zarówno w algorytmie indukcji drzewa decyzyjnego jak i w algorytmie szukania 
+nowych cech pojawiła się funkcja \textbf{dpoints\_strategy.decison(objects)}. W przypadku
+gdy pojawią się punkty będące ``blisko'' siebie mające różne decyzje algorytmowi genetycznemu ciężko
+będzie ``wcisnąć'' się pomiędzy te punkty przy losowej optymalizacji. Dlatego w przypadku indukcji drzewa 
+wyliczamy decyzję dla takich punktów w inny, deterministyczny sposób, natomiast przy generowaniu cech
+takie punkty ignorujemy. Pytanie jakie się nasuwają są dwa:
+\begin{enumerate}
+ \item Kiedy uznawać, że punkty są bliskie?
+ \item W jaki sposób podejmować decyzję dla takich punktów?
+\end{enumerate}
+W swojej pracy uznaję punkty za bliskie, gdy średnica zbioru jest mniejsza niż pewien procent 
+średnicy całego zbioru (problem pojawia się gdy występują outliery, wtedy można liczyć średnicę
+bez outlierów). Decyzją zaś jest najczęściej występująca decyzja w danym zbiorze. Kod algorytmu w języku python:
+\begin{lstlisting}
+# max_dist <- srednia calego zbioru obiektow
+def decision(objects, ratio):
+	max_dist_objects = count_max_dist(objects)
+	if max_dist_objects / max_dist < ratio:
+	  return most_common(Counter(decisions(objects)))
+	return None
+\end{lstlisting}
+Dodatkowo, nawet jeśli punkty nie będą blisko siebie i algorytm genetyczny wyszuka optymalne płaszczyzny może
+wystąpić ryzyko nadmiernego dopasowania do danych i przeuczenia. Jedną ze momentu stopu użytych w pracy 
+jest odcięcie w momencie, gdy najliczniejsza decyzja stanowi więcej niż pewien ustalony odsetek. 
+W eksperymentach dla generowania nowych cech użyłem właśnie tej strategii odcięcia.
+
+\section{Wyniki eksperymentów}
+Eksperymenty dla tej części również wykonywałem w laboratorium MIMUW przy użyciu takiego samego zestawu komputerów
+oraz dla zestawu danych WAVEFORM używanym wcześniej przy dyskretyzacji.
+\subsection{Generowanie nowych cech}
+Przetestowałem jak skuteczność oraz czas trwania algorytmu genetycznego w zależności od parametrów, którymi są:
+  \begin{itemize}
+   \item rozmiar genomu
+   \item rozmiar populacji
+   \item maksymalna liczba iteracji
+  \end{itemize}
+Jako strategię klasyfikacji bliskich punktów o różnej decyzji wybrałem zatrzymanie przeszukiwania w momencie gdy mamy 
+0.8 całości obiektów o jednej decyzji.
+Wyniki można zobaczyć na wykresach:
+\newpage
+
+\begin{figure}
+ \caption{Score w zależności od parametrów algorytmu genetycznego}
+ \centering\includegraphics[scale=0.5]{./wykresy/fe_score.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od parametrów algorytmu genetycznego}
+ \centering\includegraphics[scale=0.5]{./wykresy/fe_time.png}
+\end{figure}
+
+Widzimy, że zwiększając liczbę populacji uzyskujemy lepsze wyniki, jednak odbywa się to kosztem
+czasu przetwarzania. Jeśli chodzi o maksymalną liczbę iteracji, już przy 15 iteracjach algorytm zbiega do 
+dobrego rozwiązania, zwiększając liczbe iteracji, uciekamy od rozwiązania optymalnego, zwiększając jeszcze 
+czas przetwarzania. Również rozmiar genomu wpływa na czas przetwarzania, im większy tym szybciej
+uzyskujemy rozwiązanie, a więc lepiej ustalić większy rozmiar genomu. Podsumowując wyniki eksperymentów, najlepsze
+wyniki uzyskaliśmy dla dużych rozmiarów genomów - 20, małej liczby iteracji - 15 i dużego rozmiaru populacji - 50.
+
+\subsection{Generowanie drzewa decyzyjnego}
+Podobne eksperymenty przeprowadziłem dla generowania drzewa decyzyjnego przez cięcia hiperpłaszczyznami.
+Ustaliłem rozmiar genomu na 35 i wprowadziłem parametr mówiący o tym, w którym momencie odcinamy przeszukiwania 
+dla danego węzła: gdy 0.8 obiektów ma taką samą decyzję lub gdy tych obiektów jest 0.9.
+Brązową kreską został zaznaczony wynik jaki uzyskałem drzewem decyzyjnym z biblioteki sklearn.
+Otrzymałem nastepujące wyniki:
+
+  
+\begin{figure}
+ \caption{Score w zależności od parametrów algorytmu genetycznego}
+ \centering\includegraphics[scale=0.5]{./wykresy/tree_score.png}
+\end{figure}
+
+\begin{figure}
+ \caption{Czas w zależności od parametrów algorytmu genetycznego}
+ \centering\includegraphics[scale=0.5]{./wykresy/tree_time.png}
+\end{figure}
+
+Widzimy, że zarówno wyniki jak i czas pogarszają się gdy zwiększymy parametr warunku stopu. Przy zbyt dużym parametrze, 
+szukamy płaszczyzn dłużej, co może prowadzić do nadmiernego dopasowania do danych, i w efekcie przeuczenia.
+W przeciwieństwie do algorytmu generowania nowych cech, tutaj zwiększając liczbę iteracji uzyskujemy lepsze wyniki,
+zaś optymalnym rozmiarem populacji będzie w tym przypadku 30. W przypadku generowania drzewa mamy prostszą funkcję
+oceny niż w przypadku generowania nowych cech, dlatego prawdopodobnie potrzebujemy mniejszego rozmiaru populacji.
+% TODO: dodać skalowalność
+
+\subsection{Porównanie wyników}
+Oto porównanie najlepszych wyników jakie uzyskałem dla zbioru WAVEFORM przy zastosowaniu 5-krotnej kroswalidacji.
+Wyszukiwanie genetyczne odbywało się na 40 komputerach.
+% TODO: dodac ew las losowy
+
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} | P{2.5cm} | P{2.5cm} | P{2.5cm}}
+  Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie & Drzewo decyzyjne + nowe cechy \\ 
+  \hline
+  Score (accuracy) & 0.7376     & 0.7482     & 0.758          & 0.790 \\
+  Czas (s) & 0.012     & 0.041      & 6.04    & 191.00 \\
+ \end{tabular}
+\end{center}
+
+Widzimy, że najlepsze wyniki uzyskujemy generując nowe cechy. Drzewa decyzyjne uzyskują niewiele lepsze wyniki niż zwykłe 
+drzewo decyzyjne z biblioteki sklearn. Jednak drzewa wygenerowane metodą SVM lub algorytmem genetycznym ze względu na cięcia hiperpłaszczyznami
+mają mniejsze głębokości, spójrzmy jak wyglądały średnie głębokości dla drzew wygenerowanych przy kroswalidacji.
+
+\begin{center}
+ \begin{tabular}{l || P{2.5cm} | P{2.5cm} | P{2.5cm}}
+  Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie \\ 
+  \hline
+  średnia głębokość drzewa & 6.4     & 3.0     & 2.4  \\
+ \end{tabular}
+\end{center}
+
+Drzewa decyzyjne wygenerowane algorytmem genetycznym pozwalają więc osiągnąć najlepszą skuteczność przy jednoczesnej największej prostocie
+drzewa. Odbywa się to jednak kosztem złożności czasowej, jednak dzięki użyciu Sparka czas generowania drzewa nie jest wiele większy niż
+w przypadku zwykłych drzew. Zdecydowanie najlepsze wyniki uzyskujemy poprzez dodanie nowych cech. Czas wyszukiwania jest zdecydowanie najdłuższy,
+jednak ustalając parametr stopu, możemy decydować o kompromisie pomiędzy niedouczeniem/mniejszym czasem wykonania a przeuczeniem. 
+\begin{thebibliography}{9}
+
+\bibitem{Discretization}
+  Hun Son Nguyen,
+  \emph{Approximate Boolean Reasoning: Foundations and Applications in Data Mining}.
+  Institute of Mathematics, Warsaw University,
+  1998.
+\bibitem{Hyperplanes}
+  Hun Son Nguyen,
+  \emph{From Optimal Hyperplanes to Optimal Decision Trees}.
+  Institute of Mathematics, Warsaw University,
+  1998.
+\bibitem{BooleanGenetic}
+  Srilatha Chebrolu, Sriram G Sanjeevi,
+  \emph{Rough set theory for discretization based on boolean reasoning and 
+  genetic algorithm}.
+  Department of Computer Science and Engineering, NIT Warangal, India,
+  2012.
+\bibitem{SparkDocumentation}
+ Spark Documentation,
+ \emph{http://spark.apache.org/docs/latest/programming-guide.html}
+
+\end{thebibliography}
+ 
+\end{document}
