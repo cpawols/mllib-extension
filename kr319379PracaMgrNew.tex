@@ -136,7 +136,9 @@ bindingoffset=0mm, top=1in, bottom=1in}
 
 %tu idzie streszczenie na strone poczatkowa
 \begin{abstract}
-TODO
+W swojej pracy przedstawię przegląd metod dyskretyzacji oraz generowania nowych cech i indukcji drzew decyzyjnych
+za pomocą cięć przestrzeni parametrów przez hiperpłaszczyzny. Zaimplementowane algorytmy zbadam pod kątem 
+skuteczności oraz skalowalności. Do obliczeń równoległych wykorzystam paradygmat obliczeniowy MapReduce.
 \end{abstract}
 
 \tableofcontents
@@ -492,7 +494,7 @@ najpierw względem wartości, potem obiektów, a następnie atrybutów, otrzymuj
 zgrupowanych względem atrybutów. W Sparku wykonujemy sortowanie równoległe, za pomocą poniższego algorytmu,
 będącego uogólnieniem mergesort:
 \begin{itemize}
- \item dzielę listę na $numchunks$ kawałków
+ \item dzielę listę na \textbf{numChunks} kawałków
  \item sortuję każdy kawałek niezależnie
  \item scalam posortowane kawałki
 \end{itemize}
@@ -658,11 +660,11 @@ wcześniejszych wyników w czasie stałym, otrzymując algorytm liniowy ze wzgl�
 obiektów. Algorytm opiera się na obserwacji (zakładamy, że dla obiektów $1, ..., k-1$ mamy już obliczone 
 częstości poszczególnych decyzji (słownik \textbf{decHist} w którym trzymamy histogram decyzji, za pomocą którego w czasie stałym
 liczymy $p_d$):
-\begin{align*}
-  Ent(U_k) = Ent(U_{k-1}) + log(p_{dec(u_k)}) \cdot p_{dec(u_k)} \\
-  decHist[dec(u_k)] += 1 \\
-  Ent(U_k) = Ent(U_{k-1}) - log(p_{dec(u_k)}) \cdot p_{dec(u_k)}
-\end{align*}
+\begin{enumerate}
+ \item $Ent(U_k) = Ent(U_{k-1}) + log(p_{dec(u_k)}) \cdot p_{dec(u_k)}$
+ \item decHist[dec($u_k$)] += 1
+ \item $Ent(U_k) = Ent(U_{k-1}) - log(p_{dec(u_k)}) \cdot p_{dec(u_k)}$
+\end{enumerate}
 Analogicznie trzymamy histogram dla drugiej obiektów $k, ..., n$ aktualizując entropię drugiej połowy.
 Otrzymujemy więc następujący algorytm liniowy:
 \begin{lstlisting}
@@ -784,13 +786,14 @@ Zbadałem jak rozkładają się poszczególne metryki w zależności od liczby k
 
 \begin{figure}
  \caption{Metryki skalowalności dla różnych liczb komputerów}
- \centering\includegraphics[scale=0.7]{./wykresy/disc_time.png}
+ \centering\includegraphics[scale=0.7]{./wykresy/sc_disc.png}
 \end{figure}
 
 Widzimy, że zarówno speed-up jak i scale-up wraz ze zwiększaniem liczby komputerów odbiega coraz bardziej od idealnej sytuacji 
 (zaznaczonej na wykresie na brązowo). Jest to zgodne z prawem Gustafsona. Gdy liczba komputerów wzrasta, jest coraz większy narzut czasowy
-ze względu na przesyłanie danych po sieci. Widzimy jednak, że dopiero od ok 20 komputerów speed-up zaczyna mieć coraz wolniejszy przyrost,
-który zbiega do logarytmu. Powyższe algorytmy są więc całkiem dobrze skalowalne.
+ze względu na przesyłanie danych po sieci. Widzimy jednak, że gdy liczba komputerów zaczyna przekraczać 10, obie 
+metryki zachowują się coraz gorzej, przyrost jest coraz wolniejszy lub zerowy. Do 10 jednostek algorytmy skalują się więc dobrze, 
+zaś stosowanie większej liczby komputerów jest już nieopłacalne.
 
 
 
@@ -1335,25 +1338,41 @@ szukamy płaszczyzn dłużej, co może prowadzić do nadmiernego dopasowania do 
 W przeciwieństwie do algorytmu generowania nowych cech, tutaj zwiększając liczbę iteracji uzyskujemy lepsze wyniki,
 zaś optymalnym rozmiarem populacji będzie w tym przypadku 30. W przypadku generowania drzewa mamy prostszą funkcję
 oceny niż w przypadku generowania nowych cech, dlatego prawdopodobnie potrzebujemy mniejszego rozmiaru populacji.
-% TODO: dodać skalowalność
+\newpage
+
+\subsection{skalowalność}
+Tak samo jak dla dyskretyzacji zbadałem jak zachowują się metryki opisujące skalowalność dla szukania nowych cech i generowania
+drzewa decyzyjnego przez hiperpłaszczyzny za pomocą algorytmu genetycznego. Tak samo jak wcześniej eksperymenty
+przeprowadziłem dla: 1, 5, 10, 20, 30 i 40 komputerów. Oto jak przedstawiały się wyniki:
+
+\begin{figure}
+ \caption{Metryki skalowalności dla wyszukiwania genetycznego}
+ \centering\includegraphics[scale=0.5]{./wykresy/sc_fe.png}
+\end{figure}
+
+Podobnie jak dla dyskretyzacji widzimy, że powyżej 10 komputerów przyrosty są coraz mniejsze, jeszcze mniejsze niż w przypadku
+dyskretyzacji. W przypadku wyszukiwania genetycznego warto więc przeprowadzać obliczenia na mocniejszych jednostkach obliczeniowych
+rozpraszając na nie więcej niż 20 komputerów.
+\newpage
 
 \subsection{Porównanie wyników}
 Oto porównanie najlepszych wyników jakie uzyskałem dla zbioru WAVEFORM przy zastosowaniu 5-krotnej kroswalidacji.
-Wyszukiwanie genetyczne odbywało się na 40 komputerach.
+Wyszukiwanie genetyczne odbywało się na 20 komputerach.
 % TODO: dodac ew las losowy
 
 \begin{center}
  \begin{tabular}{l || P{2.5cm} | P{2.5cm} | P{2.5cm} | P{2.5cm}}
   Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie & Drzewo decyzyjne + nowe cechy \\ 
   \hline
-  Score (accuracy) & 0.7376     & 0.7482     & 0.758          & 0.790 \\
-  Czas (s) & 0.012     & 0.041      & 6.04    & 191.00 \\
+  Score (accuracy) & 0.7576     & 0.7482     & 0.8231          & 0.793 \\
+  Czas (s) & 0.012     & 0.041      & 53.04    & 191.00 \\
  \end{tabular}
 \end{center}
 
-Widzimy, że najlepsze wyniki uzyskujemy generując nowe cechy. Drzewa decyzyjne uzyskują niewiele lepsze wyniki niż zwykłe 
-drzewo decyzyjne z biblioteki sklearn. Jednak drzewa wygenerowane metodą SVM lub algorytmem genetycznym ze względu na cięcia hiperpłaszczyznami
-mają mniejsze głębokości, spójrzmy jak wyglądały średnie głębokości dla drzew wygenerowanych przy kroswalidacji.
+Widzimy, że najlepsze wyniki uzyskujemy za pomocą drzewa wygenerowanego przez algorytm genetyczny. Drzewa SVM uzyskują zbliżone do zwykłego
+drzewo decyzyjne z biblioteki sklearn. Dobre wynik uzyskaliśmy również dodając nowe cechy. Metody korzystające z cięć przez hiperplaszczyzny
+uzyskują więc bardzo dobre wyniki, odbywa się to jednak kosztem złożności czasowej. Ponadto drzewa wygenerowane metodą SVM lub algorytmem genetycznym ze względu na cięcia hiperpłaszczyznami
+mają mniejsze głębokości, więc są łatwiejsze w opisie i szybsze w klasyfikacji. Spójrzmy jak wyglądały średnie głębokości dla drzew wygenerowanych przy kroswalidacji.
 
 \begin{center}
  \begin{tabular}{l || P{2.5cm} | P{2.5cm} | P{2.5cm}}
@@ -1364,9 +1383,8 @@ mają mniejsze głębokości, spójrzmy jak wyglądały średnie głębokości d
 \end{center}
 
 Drzewa decyzyjne wygenerowane algorytmem genetycznym pozwalają więc osiągnąć najlepszą skuteczność przy jednoczesnej największej prostocie
-drzewa. Odbywa się to jednak kosztem złożności czasowej, jednak dzięki użyciu Sparka czas generowania drzewa nie jest wiele większy niż
-w przypadku zwykłych drzew. Zdecydowanie najlepsze wyniki uzyskujemy poprzez dodanie nowych cech. Czas wyszukiwania jest zdecydowanie najdłuższy,
-jednak ustalając parametr stopu, możemy decydować o kompromisie pomiędzy niedouczeniem/mniejszym czasem wykonania a przeuczeniem. 
+drzewa. Odbywa się to jednak kosztem złożności czasowej, jednak dzięki użyciu Sparka czas generowania drzewa znacząco spada. 
+Również sterując parametrami stopu (przycinania), możemy decydować o kompromisie pomiędzy niedouczeniem/mniejszym czasem wykonania a przeuczeniem. 
 \begin{thebibliography}{9}
 
 \bibitem{Discretization}
