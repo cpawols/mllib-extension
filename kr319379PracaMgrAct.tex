@@ -422,8 +422,8 @@ Obliczenia wykonywane w Sparku są nie tylko skalowalne, ale również szybkie z
 \end{itemize}
 
 
-\begin{figure}\label{fig:hadoop_spark}
- \caption{porównanie szybkości działania Hadoop MapReduce i Spark na przykładzie regresji logistycznej}
+\begin{figure}
+ \caption{porównanie szybkości działania Hadoop MapReduce i Spark na przykładzie regresji logistycznej}\label{fig:hadoop_spark}
  \includegraphics[scale=1.0]{./wykresy/hadoop_spark.png}
 \end{figure}
 
@@ -816,8 +816,8 @@ Przeanalizowałem wyniki predykcji dla zbioru danych WAVEFORM w zależności od 
 Predykcja została wykonana za pomocą drzewa decyzyjnego z biblioteki sklearn za pomocą 10-krotnej
 kroswalidacji metodą accuracy.
 
-\begin{figure}\label{fig:disc_scores}
- \caption{Accuracy score dla zbioru danych WAVEFORM dla wybranych metod dyskretyzacji w zależności od parametrów}
+\begin{figure}
+ \caption{Accuracy score dla zbioru danych WAVEFORM dla wybranych metod dyskretyzacji w zależności od parametrów}\label{fig:disc_scores}
  \centering\includegraphics[scale=0.8]{./wykresy/disc_scores2.png}
 \end{figure}
 
@@ -828,8 +828,8 @@ zaś najlepsze dla metody prostej i parametru $m = 15$, lecz
 Zobaczmy jak wypadły eksperymenty pod kątem skalowalności. Wykonałem eksperymenty z następującą liczbą komputerów: 1, 5, 10, 20, 30, 40.
 Zbadałem jak rozkładają się poszczególne metryki w zależności od liczby komputerów i użytej metody.
 
-\begin{figure}\label{fig:sc_disc}
- \caption{Metryki skalowalności dla różnych liczb komputerów oraz wybranych metod dyskretyzacji}
+\begin{figure}
+ \caption{Metryki skalowalności dla różnych liczb komputerów oraz wybranych metod dyskretyzacji}\label{fig:sc_disc}
  \centering\includegraphics[scale=0.8]{./wykresy/sc_disc2.png}
 \end{figure}
 
@@ -956,17 +956,17 @@ Oraz $Projection(u)$ licząca rzut obiektu $u$ na odpowiednią oś (tu $x_1$):
 Za pomocą algorytmu genetycznego będziemy chcieli szukać optymalnej hiperłpaszczyzny dla danej osi. Dla każdego osobnika liczymy rzut obiektów na 
 odpowiednią oś za pomocą funkcji \textbf{Projection}, a następnie wybieramy najlepszą hiperpłaszczyznę równoległą do podprzestrzeni liniowej 
 reprezentowanej przez osobnika za pomocą funkcji oceny. Na rysunku \ref{fig:hiperp} widzimy przykład dla przestrzeni dwuwymiarowej.
-\begin{figure}\label{fig:hiperp}
- \caption{Interpretacja szukania optymalnej hiperpłaszczyzny w przestrzeni dwuwymiarowej}
+\begin{figure}
+ \caption{Interpretacja szukania optymalnej hiperpłaszczyzny w przestrzeni dwuwymiarowej}\label{fig:hiperp}
  \includegraphics[scale=0.8]{hiperp.png}
 \end{figure}
 Powtarzając algorytm dla każdej z osi,
 wybierzemy najlepszą hiperpłaszczyznę. Hiperpłaszczyzny szukamy do momentu, w którym tabela otrzymana z nowych cech indykatorów odpowiednich 
 półprzestrzeni będzie spójna, bądź spełniony zostanie warunek stopu, o którym opowiem w następnych rozdziałach. Na rysunku \ref{fig:obszary}
 widać przykładowy podział obiektów w przestrzeni dwuwymiarowej po znalezieniu dwóch hiperpłaszczyzn.
-\begin{figure}\label{fig:obszary}
+\begin{figure}
  \caption{Przykładowy podział obiektów przez hiperpłaszczyzny. Na rysunku widzimy podział na 3 obszary, 2 z nich zawierają obiekty
- o różnych decyzjach (różne kształy oznaczają różne decyzje).}
+ o różnych decyzjach (różne kształy oznaczają różne decyzje).}\label{fig:obszary}
  \includegraphics[scale=0.8]{./wykresy/obszary.png}
 \end{figure}
 Po znalezieniu kolejnych hiperpłaszczyzn grupy obszarów niespójnych będą się stale zmniejszać. Funkcję liczę jedynie dla obszarów
@@ -1202,13 +1202,13 @@ Jako strategię klasyfikacji bliskich punktów o różnej decyzji wybrałem zatr
 wyniki predykcji drzewem decyzyjnym z biblioteki sklearn z zastosowaniem 10-krotnej kroswalidacji.
 Wyniki można zobaczyć na wykresach \ref{fig:fe_score} oraz \ref{fig:fe_time}.
 
-\begin{figure}\label{fig:fe_score}
- \caption{Accuracy score dla zbioru danych WAVEFORM z nowymi cechami w zależności od parametrów algorytmu genetycznego}
+\begin{figure}
+ \caption{Accuracy score dla zbioru danych WAVEFORM z nowymi cechami w zależności od parametrów algorytmu genetycznego}\label{fig:fe_score}
  \centering\includegraphics[scale=0.8]{./wykresy/fe_score2.png}
 \end{figure}
 
-\begin{figure}\label{fig:fe_time}
- \caption{Czas generowania nowych cech dla zbioru danych WAVEFORM w zależności od parametrów algorytmu genetycznego}
+\begin{figure}
+ \caption{Czas generowania nowych cech dla zbioru danych WAVEFORM w zależności od parametrów algorytmu genetycznego}\label{fig:fe_time}
  \centering\includegraphics[scale=0.8]{./wykresy/fe_time2.png}
 \end{figure}
 
@@ -1227,13 +1227,13 @@ Poziomą kreską został zaznaczony wynik jaki uzyskałem drzewem decyzyjnym z b
 Wyniki można zaobserować na wykresach \ref{fig:tree_score} oraz \ref{fig:tree_time}.
 
   
-\begin{figure}\label{fig:tree_score}
- \caption{Accuracy score dla zbioru danych WAVEFORM dla drzewa decyzyjnego wygenerowanego za pomocą algorytmu genetycznego}
+\begin{figure}
+ \caption{Accuracy score dla zbioru danych WAVEFORM dla drzewa decyzyjnego wygenerowanego za pomocą algorytmu genetycznego}\label{fig:tree_score}
  \centering\includegraphics[scale=0.8]{./wykresy/tree_score2.png}
 \end{figure}
 
-\begin{figure}\label{fig:tree_time}
- \caption{Czas generowania drzewa decyzyjnego dla zbioru danych WAVEFORM w zależności od parametrów algorytmu genetycznego}
+\begin{figure}
+ \caption{Czas generowania drzewa decyzyjnego dla zbioru danych WAVEFORM w zależności od parametrów algorytmu genetycznego}\label{fig:tree_time}
  \centering\includegraphics[scale=0.8]{./wykresy/tree_time2.png}
 \end{figure}
 
@@ -1250,8 +1250,8 @@ Tak samo jak dla dyskretyzacji zbadałem jak zachowują się metryki opisujące 
 drzewa decyzyjnego przez hiperpłaszczyzny za pomocą algorytmu genetycznego. Tak samo jak wcześniej eksperymenty
 przeprowadziłem dla: 1, 5, 10, 20, 30 i 40 komputerów. Wyniki możemy zaobserować na wykresie \ref{fig:sc_fe}.
 
-\begin{figure}\label{fig:sc_fe}
- \caption{Wskaźniki metryki skalowalności dla wyszkukiwania nowych cech i indukcji drzewa decyzyjnego algorytmem genetycznym}
+\begin{figure}
+ \caption{Wskaźniki metryki skalowalności dla wyszkukiwania nowych cech i indukcji drzewa decyzyjnego algorytmem genetycznym}\label{fig:sc_fe}
  \centering\includegraphics[scale=0.8]{./wykresy/sc_fe2.png}
 \end{figure}
 
@@ -1271,8 +1271,8 @@ Wyszukiwanie algorytmem genetycznym odbywało się na 20 komputerach. Parametry 
  \item liczba drzew w lesie losowym: 10
 \end{itemize}
 
-\begin{table}\label{tab:res_wav}
-\caption{Wyniki dla zbioru danych WAVEFORM}
+\begin{table}
+\caption{Wyniki dla zbioru danych WAVEFORM}\label{tab:res_wav}
  \begin{tabular}{l || P{2cm} | P{2cm} | P{2cm} | P{2cm} | P{2cm}}
   Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie & Drzewo decyzyjne + nowe cechy & Las losowy gentycznie\\ 
   \hline
@@ -1284,8 +1284,8 @@ Wyszukiwanie algorytmem genetycznym odbywało się na 20 komputerach. Parametry 
  \end{tabular}
 \end{table}
 
-\begin{table}\label{tab:res_dig}
-\caption{Wyniki dla zbioru danych digits}
+\begin{table}
+\caption{Wyniki dla zbioru danych digits}\label{tab:res_dig}
  \begin{tabular}{l || P{2cm} | P{2cm} | P{2cm} | P{2cm} | P{2cm}}
   Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie & Drzewo decyzyjne + nowe cechy & Las losowy gentycznie\\ 
   \hline
@@ -1306,8 +1306,8 @@ uzyskują więc bardzo dobre wyniki, odbywa się to jednak kosztem złożności 
 mają mniejsze głębokości, więc są łatwiejsze w opisie i szybsze w klasyfikacji. 
 W tabelach \ref{tab:dep_wav} oraz \ref{tab:dep_dig} widzimy jak wyglądały średnie głębokości dla drzew wygenerowanych przy kroswalidacji.
 
-\begin{table}\label{tab:dep_wav}
-\caption{Średnie głębokości drzew wytrenowanych dla zbioru danych WAVEFORM}
+\begin{table}
+\caption{Średnie głębokości drzew wytrenowanych dla zbioru danych WAVEFORM}\label{tab:dep_wav}
  \begin{tabular}{l || P{2.5cm} | P{2.5cm} | P{2.5cm}}
   Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie \\ 
   \hline
@@ -1315,8 +1315,8 @@ W tabelach \ref{tab:dep_wav} oraz \ref{tab:dep_dig} widzimy jak wyglądały śre
  \end{tabular}
 \end{table}
 
-\begin{table}\label{tab:dep_dig}
-\caption{Średnie głębokości drzew wytrenowanych dla zbioru danych digits}
+\begin{table}
+\caption{Średnie głębokości drzew wytrenowanych dla zbioru danych digits}\label{tab:dep_dig}
  \begin{tabular}{l || P{2.5cm} | P{2.5cm} | P{2.5cm}}
   Metoda/parametr     & Drzewo decyzyjne & Drzewo decyzyjne SVM & Drzewo decyzyjne genetycznie \\ 
   \hline
