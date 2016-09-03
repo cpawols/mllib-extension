@@ -6,7 +6,7 @@ TODO
 import itertools
 import numpy as np
 import operator
-import time
+import pickle
 from collections import Counter
 from random import randint
 from sklearn.cross_validation import train_test_split
@@ -93,6 +93,7 @@ class SetAbstractionClass:
         :param decision_subset: subset of decisions.
         :return:
         """
+        #print broadcast_decision_system.shape
 
         lower_approximation = self._compute_lower_approximation(
             decision_subset, broadcast_abstraction_class, broadcast_decision_system)
@@ -157,6 +158,7 @@ class SetAbstractionClass:
         for k in range(0, range_of_subsets):
             subsets.append(
                 list(itertools.combinations(range(min(decision_distribution), max(decision_distribution) + 1), k + 1)))
+
         return [list(e) for e in reduce(operator.add, subsets)]
 
     def _get_decision_distribution(self):
@@ -191,12 +193,13 @@ class SetAbstractionClass:
 
     @staticmethod
     def get_abstraction_class_stand_alone(table):
+        #print table.shape
         abstraction_class = AbstractionClass(table)
         return abstraction_class.standalone_abstraction_class()
 
     @staticmethod
     def generate_rules_for_approximation(res, table, take, subset_col_nums, cut_rules=False, treshold=0.9,
-                                         weight=False):
+                                         weight=False, significant=False):
         """
         TODO
         :param res:
@@ -214,6 +217,8 @@ class SetAbstractionClass:
             table_tmp = SetAbstractionClass.rewrite_matrix(table, r[1])
             rules_for_approximation = GenerateRules.generate_all_rules(table_tmp, cut_rules=cut_rules,
                                                                        treshold=treshold)
+            if significant is True:
+                rules_for_approximation = GenerateRules.get_important_rules(rules_for_approximation)
 
             if weight is True:
                 counter.update(
@@ -260,6 +265,7 @@ class SetAbstractionClass:
         :param decision_set:
         :return:
         """
+
         list_of_rows = []
         for row in table:
             all_in_decision_set = True
@@ -277,36 +283,41 @@ class SetAbstractionClass:
             else:
                 list_of_rows = SetAbstractionClass.set_decision(list_of_rows, row, 0)
 
-        return np.array([row for row in list_of_rows])
+        table = np.array([row for row in list_of_rows])
+        #print table.shape
+        return table
 
-    def run_pipeline(self, subset_col_nums, subset_cardinality=2, take=5, cut_rules=False, treshold=0.9,
+    def run_pipeline(self, subset_col_nums, subset_cardinality, take=5, cut_rules=False, treshold=0.9,
                      weight=False):
         """
-        TODO - zmienic nazwe
+
         :param subset_col_nums:
         :param subset_cardinality:
         :param take:
         :return:
         """
 
-        z = sorted(list(subset_col_nums))
-        z.append(self.table.shape[1] - 1)
-        t = self.table[:, z]
-        abstraction_class = SetAbstractionClass.get_abstraction_class_stand_alone(t)
+        selected_attributes = sorted(list(subset_col_nums))
+        selected_attributes.append(self.table.shape[1] - 1)
+        subtable = self.table[:, selected_attributes]
+        #print subtable.shape
+        abstraction_class = SetAbstractionClass.get_abstraction_class_stand_alone(subtable)
+
         decision_subset = self._create_decision_subsets(subset_cardinality)
-        res = []
-        for x in decision_subset:
-            res.append(self.compute_approximation(x, abstraction_class, t))
-        table = ReduceInconsistentTable(t)
-        table = table.reduce_table()
+        computed_approximation = []
 
-        res = sorted(res)
+        for actual_decisions in decision_subset:
+            computed_approximation.append(self.compute_approximation(actual_decisions, abstraction_class, subtable))
 
-        return SetAbstractionClass.generate_rules_for_approximation(res, table, take, subset_col_nums, cut_rules,
-                                                                    treshold,
-                                                                    weight=weight)
+        computed_approximation = sorted(computed_approximation)
 
-    def select_attributes(self, subtable_num, min_s, max_s, cut_rules=False, treshold=0.9,
+        table = ReduceInconsistentTable(subtable).reduce_table()
+        # table = table.reduce_table()
+
+        return SetAbstractionClass.generate_rules_for_approximation(
+            computed_approximation, table, take, subset_col_nums, cut_rules, treshold, weight=weight)
+
+    def select_attributes(self, subtable_num, min_s, max_s, subset_cardinality=2, take=5, cut_rules=False, treshold=0.9,
                           weight=False):
         """
         Zrownolegalamy ze wzgledu na podtabele.
@@ -321,10 +332,13 @@ class SetAbstractionClass:
 
         subtable_attr_num_rdd = Configuration.sc.parallelize(subtable_attributes_numbers)
         result = subtable_attr_num_rdd.map(
-            lambda x: (1, self.run_pipeline(x, cut_rules=cut_rules, treshold=treshold,
-                                            weight=weight))).reduceByKey(
-            lambda x, y: x + y)
-
+            lambda x: (1, self.run_pipeline(x,
+                                            subset_cardinality,
+                                            take,
+                                            cut_rules=cut_rules,
+                                            treshold=treshold,
+                                            weight=weight)))\
+                    .reduceByKey(lambda x, y: x + y)
 
         return result.collect()
 
@@ -352,39 +366,57 @@ class SetAbstractionClass:
 
         return sorted([e[0] for i, e in enumerate(attributes_rank) if i < number_of_significant_attributes])
 
-
-def load_data():
-    global X_train, X_test, y_train, y_test, table
-    import scipy.io as sio
-    x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
-    X_train, X_test, y_train, y_test = train_test_split(
-        x['X'], x['Y'], test_size=0.3, random_state=42)
-    table = np.append(X_train, y_train, axis=1)
-
-
 if __name__ == "__main__":
-
-    load_data()
-
-    a = SetAbstractionClass(table)
-
-    for i in range(500, 2001, 500):
-        begin = time.time()
-        suma = 0
-        iteration = 0
-        maximum = 0
-        print "Subtables number is equal = ", i
-        res = a.select_attributes(i, 50, 105, cut_rules=True, treshold=0.8, weight=True)
-        end = time.time()
-        print 'total time', end - begin
-        print res[0][1].most_common()
-        for i in range(1, 1000, 3):
-            sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
-
-            clf = tree.DecisionTreeClassifier()
-            clf.fit(X_train[:, sorted(sel)], y_train)
-            q = clf.score(X_test[:, sorted(sel)], y_test)
-            suma += q
-            maximum = max(maximum, q)
-            iteration += 1
-            print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
+    pass
+#     import scipy.io as sio
+#     x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
+#     X_train, X_test, y_train, y_test = train_test_split(
+#         x['X'], x['Y'], test_size=0.33, random_state=42)
+#     table = np.append(X_train, y_train, axis=1)
+# #     z = [int(e) for e  in x['Y']]
+# #     print Counter(z)
+# #     table = np.array([
+# #     [1,0,1,0,0,0,2],
+# #     [0,0,0,0,0,0,0],
+# #     [1,1,1,0,0,0,3],
+# #     [1,1,1,1,1,1,3],
+# #     [2,0,1,1,7,1,3],
+# #     [1,0,0,1,1,0,1]
+# # ])
+#     # x = open('/home/pawols/Pulpit/discr', 'rw')
+#     # x = pickle.load(x)
+#     # x.astype(int)
+#     #data = np.genfromtxt("/home/pawols/Develop/Mgr/mgr/marrData.csv", delimiter=",")
+#     # X = data[:, :-1]
+#     #y = data[:, -1]
+#     #print Counter(y)
+#     #
+#     table = np.genfromtxt('/home/pawols/Develop/Mgr/mllib-extension/sztuczna_tabela.csv', delimiter=',')
+#
+#     table = table.astype(int)
+#     table = table[:200, :]
+#     # print set(table[:,-1])
+#     print table.shape
+#     X_train, X_test, y_train, y_test = train_test_split(
+#         table[:, :-1], table[:,-1], test_size=0.3, random_state=42)
+#     #
+#     clf = tree.DecisionTreeClassifier()
+#     clf.fit(X_train, y_train)
+#     print clf.score(X_test, y_test)
+#
+#
+#     a = SetAbstractionClass(table)
+#
+#     for z in range(500, 5501, 1500):
+#          res = a.select_attributes(z, 5, 15, subset_cardinality=2, take=5, cut_rules=False, treshold=0.8, weight=True)
+#          print res[0][1].most_common()[:50]
+#          #path = '/home/pawols/Develop/Mgr/Wyniki/Regulowe/BASCHOCK/rules_attr_sel_5_15_2' + str(z) + '.p'
+#          #pickle.dump(res[0][1], open(path, "wb"))
+#     #
+#          for i in range(1,500, 1):
+#             sel = [e[0] for j, e in enumerate(res[0][1].most_common()) if j < i]
+#             clf = tree.DecisionTreeClassifier()
+#             clf.fit(X_train[:, sorted(sel)], y_train)
+#             print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
+#     #
+#     #

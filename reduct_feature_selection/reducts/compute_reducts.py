@@ -1,10 +1,9 @@
 # coding=utf-8
 """Compute reducts"""
 import numpy as np
-import scipy.io as sio
+import pickle
 from collections import Counter
 from math import ceil
-from numpy.ma import ravel
 from random import randint, shuffle
 from sklearn.cross_validation import train_test_split
 from sklearn.tree import tree
@@ -12,8 +11,40 @@ from sklearn.tree import tree
 from reduct_feature_selection.reducts.distinguish_matrix import DistniguishMatrixCreator
 from settings import Configuration
 
-x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
-table = np.append(x['X'], x['Y'], axis=1)
+# x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
+# table = np.append(x['X'], x['Y'], axis=1)
+path = '/home/pawols/Develop/Mgr/experiment-results/reducts/marr/'
+
+x = open('/home/pawols/Pulpit/discr', 'rw')
+x = pickle.load(x)
+x.astype(int)
+data = np.genfromtxt("/home/pawols/Develop/Mgr/mgr/marrData.csv", delimiter=",")
+X = data[:, :-1]
+y = data[:, -1]
+
+table = np.column_stack((x, y))
+table = table.astype(int)
+
+# table = np.array([
+#     [1, 1, 0, 0, 0],
+#     [1, 1, 0, 1, 0],
+#     [2, 1, 0, 0, 1],
+#     [0, 2, 0, 0, 1],
+#     [0, 0, 1, 0, 1],
+#     [0, 0, 1, 1, 0],
+#     [2, 0, 1, 1, 1],
+#     [1, 2, 0, 0, 0],
+#     [1, 0, 1, 0, 1],
+#     [0, 2, 1, 0, 1],
+#     [1, 2, 1, 1, 1],
+#     [2, 2, 0, 1, 1]
+# ])
+# table = np.array([
+#     [0, 1, 1, 3, 1],
+#     [0, 0, 0, 3, 0],
+#     [1, 2, 1, 0, 0],
+#     [1, 0, 0, 1, 1]
+# ])
 broadcast_table = Configuration.sc.broadcast(table)
 
 
@@ -46,7 +77,8 @@ class ReductsCreator:
         :return: list of lists.
         """
         return [sorted(
-            list(np.random.choice(range(0, self.table.shape[1]), randint(self.minimum, self.maximum), replace=False)))
+            list(np.random.choice(range(0, broadcast_table.value.shape[1]), randint(self.minimum, self.maximum),
+                                  replace=False)))
                 for _ in range(self.subtable_number)]
 
     @staticmethod
@@ -71,7 +103,7 @@ class ReductsCreator:
         """
         shuffeled_attributes = ranking_of_attributes.most_common()[:]
         mean_difference = ReductsCreator.compute_mean_difference(shuffeled_attributes)
-        print mean_difference
+
         return ReductsCreator.compute_attributes_grup(mean_difference, shuffeled_attributes)
 
     @staticmethod
@@ -119,26 +151,54 @@ class ReductsCreator:
         return mean_difference
 
     @staticmethod
-    def compute_up_reduct(distinguish_table, ranking=None, iter_number=18):
+    def compute_reduct_one_version(distinguish_table):
+        """
+        Compute upreduct from given distinguish table
+        :param distinguish_table:
+        :return:
+        """
+        ds_copy = distinguish_table.copy()
+        attr_ranking = DistniguishMatrixCreator.get_attributes_frequency(distinguish_table)
+        attr_ranking = attr_ranking.most_common()
+        up_reduct = set()
+        while ds_copy != {}:
+            actual_attribute = attr_ranking[0][0]
+            del attr_ranking[0]
+            for objects, attributes in ds_copy.items():
+                if actual_attribute in attributes:
+                    up_reduct.add(actual_attribute)
+                    del ds_copy[objects]
+        return list(up_reduct)
+
+    @staticmethod
+    def compute_up_reduct(distinguish_table, ranking=None, iter_number=20):
         """
         This function return reducts
         :param distinguish_table distinguish_table
         :return: list of reducts and upredcts.
         """
         list_of_reducts = []
+
+        one_reduct = ReductsCreator.compute_reduct_one_version(distinguish_table)
+        print 'one reduct', one_reduct
+        if one_reduct != []:
+            list_of_reducts.append(one_reduct)
         for _ in range(iter_number):
             """ Make it cleaver!"""
+            local_distinguish_table = distinguish_table.copy()  # It's possible to use dict(distinguish_table)
             if ranking is None:
-                local_distinguish_table = distinguish_table.copy()  # It's possible to use dict(distinguish_table)
                 local_attributes_frequency = DistniguishMatrixCreator.get_attributes_frequency(distinguish_table)
                 local_attributes_frequency = local_attributes_frequency.most_common()[:]
                 shuffle(local_attributes_frequency)
             else:
                 at_group = ReductsCreator.get_attributes_group(ranking)
+                # print 'atGroup', at_group
                 local_attributes_frequency = ReductsCreator.shuffle_attributes_group(at_group)
+                shuffle(local_attributes_frequency)
             reduct = set()
 
-            while local_distinguish_table != {}:
+            # print 'localAttrFreq', local_attributes_frequency
+            while local_distinguish_table != {} and local_attributes_frequency != []:
                 actual_attr = local_attributes_frequency[0][0]
                 del local_attributes_frequency[0]
                 for key, value in local_distinguish_table.items():
@@ -148,7 +208,7 @@ class ReductsCreator:
             reduct = list(reduct)
             if reduct not in list_of_reducts:
                 list_of_reducts.append(reduct)
-
+        print 'list of reducts', list_of_reducts
         return list_of_reducts
 
     @staticmethod
@@ -280,6 +340,7 @@ class ComputeReductsForSubtables:
         reduct_generator = ReductsCreator(table, sorted(ds_matrix.keys()))
         list_of_reducts = reduct_generator.compute_up_reduct(ds_matrix)
         reducts = reduct_generator.check_if_reduct(table, list_of_reducts)
+
         return Counter(choosen_attributes[attr] for red in reducts for attr in red)
 
     def sparkdriver(self):
@@ -304,12 +365,12 @@ class SkowronDreamHeuristic:
     TODO - full description of algorithm.
     """
 
-    def __init__(self, decision_table, sub_number, min, max, object_subtable=False, size=200):
+    def __init__(self, sub_number, min, max, object_subtable=False, size=200):
         """
         TODO Make it in the feature.
         :return:
         """
-        self.table = decision_table
+        # self.table = decision_table
         self.sub_number = sub_number
         self.min = min
         self.max = max
@@ -322,34 +383,35 @@ class SkowronDreamHeuristic:
         :return: list of attributes.
         """
         attributes_list = [sorted(
-            list(np.random.choice(range(0, self.table.shape[1] - 1), randint(self.min, self.max),
+            list(np.random.choice(range(0, broadcast_table.value.shape[1] - 1), randint(self.min, self.max),
                                   replace=False)))
                            for _ in range(self.sub_number)]
 
         object_list = [
-            sorted(list(np.random.choice(range(0, self.table.shape[0]), self.object_subtables_size, replace=False))) for
+            sorted(list(
+                np.random.choice(range(0, broadcast_table.value.shape[0]), self.object_subtables_size, replace=False)))
+            for
             _ in
             range(self.sub_number)]
 
-        attributes = [e[:] + [self.table.shape[1] - 1] for e in attributes_list]
+        attributes = [e[:] + [broadcast_table.value.shape[1] - 1] for e in attributes_list]
         result = []
         for x, y in zip(object_list, attributes):
             result.append((x, y))
         return result
 
-    @staticmethod
-    def first_stage(table):
+    def first_stage(self, x):
         """
         TODO
         :param table:
         :return:
         """
-        # print broadcast_table.value[x[0],:][:,x[1]]
-        ds_creator = DistniguishMatrixCreator(table)
+        table1 = broadcast_table.value[x[0], :][:, x[1]]
+        ds_creator = DistniguishMatrixCreator(table1)
         ds_table = ds_creator.create_distinguish_table()
-        return Counter(e for attr in ds_table.values() for e in attr)
+        return Counter(x[1][e] for attr in ds_table.values() for e in attr)
 
-    def second_stage(self, table, ranking, choosen_attributes, up_reduct=False):
+    def second_stage(self, x, ranking, choosen_attributes, up_reduct=False):
         """
         TODO
         :param table:
@@ -357,19 +419,21 @@ class SkowronDreamHeuristic:
         :param choosen_attributes:
         :return:
         """
-        ds_creator = DistniguishMatrixCreator(table)
+        table1 = broadcast_table.value[x[0], :][:, x[1]]
+        ds_creator = DistniguishMatrixCreator(table1)
         ds_table = ds_creator.create_distinguish_table()
 
-        reduct_creator = ReductsCreator(table, sorted(ds_table.keys()), attr_rank=ranking)
-        list_of_up_reducts = reduct_creator.compute_up_reduct(ds_table)
-
+        reduct_creator = ReductsCreator(table1, sorted(ds_table.keys()), attr_rank=ranking)
+        list_of_up_reducts = reduct_creator.compute_up_reduct(ds_table, ranking)
+        print 'list of upreducts', list_of_up_reducts
         if up_reduct is False:
-            reducts = reduct_creator.check_if_reduct(table, list_of_up_reducts)
+            reducts = reduct_creator.check_if_reduct(table1, list_of_up_reducts)
         else:
             reducts = list_of_up_reducts
 
-        return ReductsCreator.renumerate_attributes_in_list_ofreducts(reducts,
-                                                                      choosen_attributes=choosen_attributes)
+        a = ReductsCreator.renumerate_attributes_in_list_ofreducts(reducts,
+                                                                   choosen_attributes=choosen_attributes)
+        return a
 
     def spark_driver(self, up_reducts=False):
         """
@@ -381,72 +445,51 @@ class SkowronDreamHeuristic:
         x_rdd = Configuration.sc.parallelize(x)
 
         ranking = x_rdd \
-            .map(lambda x: SkowronDreamHeuristic.first_stage(broadcast_table.value[x[0], :][:, x[1]])) \
+            .map(lambda x: self.first_stage(x)) \
             .reduce(lambda x, y: x + y)
-
-        reducts = x_rdd.map(lambda x: self.second_stage(broadcast_table.value[x[0], :][:, x[1]], ranking,
+        reducts = x_rdd.map(lambda x: self.second_stage(x, ranking,
                                                         choosen_attributes=x[1], up_reduct=up_reducts)).reduce(
             lambda x, y: x + y)
-        return reducts
 
+        return filter(lambda x: x != [], reducts)
 
 
 def traiin_full_tree():
     global X_train, X_test, y_train, y_test
     X_train, X_test, y_train, y_test = train_test_split(
-        x['X'], x['Y'], test_size=0.2, random_state=42)
+        table[:, :-1], table[:, -1], test_size=0.33, random_state=42)
     clf = tree.DecisionTreeClassifier()
     clf.fit(X_train, y_train)
     print clf.score(X_test, y_test)
-
-
-def load_data():
-    global x, table
-    x = sio.loadmat('/home/pawols/Develop/Mgr/mgr/BASEHOCK.mat')
-    table = np.append(x['X'], x['Y'], axis=1)
-
-
-def scale_attributes():
-    global e
-    res = Counter(e for a in r for e in a)
-    all_occurence = sum(res.values())
-    tmp = res.most_common()
-    res_scal = []
-    for e in tmp:
-        res_scal.append((e[0], 1.0 * e[1] / all_occurence))
-    return res_scal
-
-def score_knn():
-    from sklearn.neighbors import KNeighborsClassifier
-    knn = KNeighborsClassifier()
-    knn.fit(X_train[:, sorted(sel)], ravel(y_train))
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-                         metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-                         weights='uniform')
-    print i, knn.score(X_test[:, sorted(sel)], y_test)
+    # scores = cross_validation.cross_val_score(
+    # clf, table[:,:-1], table[:,-1], cv=10)
+    # print scores, sum(scores)/len(scores)
 
 
 def score_tree():
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X_train[:, sorted(sel)], y_train)
-    print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
+    for _ in range(10):
+        clf = tree.DecisionTreeClassifier()
+        clf.fit(X_train[:, sorted(sel)], y_train)
+        print len(sel), clf.score(X_test[:, sorted(sel)], y_test)
 
 
 if __name__ == "__main__":
-
-    load_data()
+    # load_data()
     traiin_full_tree()
-
-
-    heuristic = SkowronDreamHeuristic(table, 40, 500, 4550, size=600)
+    #
+    heuristic = SkowronDreamHeuristic(1500, 150, 150, size=10)
     r = heuristic.spark_driver(up_reducts=True)
+    print r
+    re = Counter(a for e in r for a in e)
+    for i in range(1, 1000, 1):
+        sel = [e[0] for j, e in enumerate(re.most_common()) if j < i]
 
-    res_scal = scale_attributes()
-
-    for i in range(1, 1050, 3):
-        sel = [e[0] for j, e in enumerate(res_scal) if j < i]
-        # score_knn()
-        score_tree()
+        avg_score = 0
+        for _ in range(10):
+            clf = tree.DecisionTreeClassifier()
+            clf.fit(X_train[:, sorted(sel)], y_train)
+            avg_score += clf.score(X_test[:, sorted(sel)], y_test)
+        print len(sel), 1.0*avg_score/10
 
 
     """

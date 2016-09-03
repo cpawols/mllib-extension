@@ -29,6 +29,7 @@ class Consistent:
         :param y:
         :return:
         """
+        print 'reduce', x, y
         if x == y:
             return x
         else:
@@ -48,6 +49,17 @@ class Consistent:
                 return False
         return True
 
+    def check_cos(self):
+        dictionary = {}
+        for row in self.table:
+            if tuple(row[:-1]) in dictionary:
+                dictionary[tuple(row[:-1])].append(row[-1])
+            else:
+                dictionary[tuple(row[:-1])] = [row[-1]]
+        for values in dictionary.values():
+            if len(set(values)) > 1:
+                return False
+        return True
 
 if __name__ == "__main__":
     table = np.array([
@@ -63,10 +75,14 @@ if __name__ == "__main__":
         [0, 2, 1, 0, 1],
         [1, 2, 1, 1, 1],
         [2, 2, 0, 1, 1],
+        [2,2,0,1,1]
     ])
+
+
 
     is_consistent = Consistent(table)
     print is_consistent.check_consistent()
+    print is_consistent.check_cos()
 
 
 
